@@ -1,0 +1,52 @@
+name: nutrikuaa_app
+description: "A new Flutter project."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.10.8 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  # --- ALMACENAMIENTO LOCAL ---
+  shared_preferences: ^2.2.2
+
+  # --- DOCUMENTOS Y PDF ---
+  pdf: ^3.10.4
+  printing: ^5.11.0
+
+  # --- BASE DE DATOS Y ARCHIVOS ---
+  sqflite: ^2.4.1
+  path: ^1.9.0
+  csv: ^6.0.0
+
+  # --- FIREBASE ---
+  firebase_core: ^2.27.0
+  firebase_auth: ^4.17.0
+  firebase_vertexai: ^0.1.1
+
+  # --- MONETIZACIÓN ---
+  purchases_flutter: ^8.0.0
+
+  # --- UI ---
+  cupertino_icons: ^1.0.8
+  url_launcher: ^6.2.5 # <--- AGREGA ESTA LÍNEA
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+# --- CONFIGURACIÓN DE FLUTTER ---
+flutter:
+  uses-material-design: true
+
+  # --- TUS ARCHIVOS (Assets) ---
+  assets:
+    - assets/ingredients.csv
+    - assets/logo.png
+
+dependency_overrides:
+  sqflite_android: 2.4.0
