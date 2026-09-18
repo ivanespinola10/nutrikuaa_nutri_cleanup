@@ -47,9 +47,35 @@ class UnifiedFoodSearchService {
       ),
     ]);
 
+    final professional = results[0];
+    final snapshotKeys = professional
+        .where((food) => food.sourceType == FoodSourceType.officialSnapshot)
+        .map(_sourceKey)
+        .whereType<String>()
+        .toSet();
+
+    final official = results[1]
+        .where((food) {
+          final key = _sourceKey(food);
+          return key == null || !snapshotKeys.contains(key);
+        })
+        .toList();
+
     return FoodSearchResults(
-      professional: results[0],
-      official: results[1],
+      professional: professional,
+      official: official,
     );
+  }
+
+  static String? _sourceKey(Food food) {
+    final sourceName = food.sourceName;
+    final sourceFoodId = food.sourceFoodId;
+    if (sourceName == null || sourceFoodId == null) return null;
+
+    return [
+      sourceName,
+      sourceFoodId,
+      food.sourceRelease ?? '',
+    ].join('|');
   }
 }
