@@ -2,9 +2,26 @@ import 'nutrition/nutrient.dart';
 
 enum FoodSourceType {
   officialDatabase,
+  officialSnapshot,
   brandLabel,
   professionalCustom,
   imported,
+}
+
+class FoodPortion {
+  final double? amount;
+  final String? measure;
+  final double gramWeight;
+  final String? modifier;
+  final int? sequence;
+
+  const FoodPortion({
+    this.amount,
+    this.measure,
+    required this.gramWeight,
+    this.modifier,
+    this.sequence,
+  });
 }
 
 class Food {
@@ -15,6 +32,7 @@ class Food {
   final FoodSourceType sourceType;
   final String? sourceName;
   final String? sourceFoodId;
+  final String? sourceRelease;
   final double? servingQuantity;
   final String? servingUnit;
   final String? householdMeasure;
@@ -23,6 +41,7 @@ class Food {
   final DateTime createdAt;
   final DateTime updatedAt;
   final List<NutrientValue> nutrients;
+  final List<FoodPortion> portions;
 
   Food({
     this.id,
@@ -32,6 +51,7 @@ class Food {
     required this.sourceType,
     this.sourceName,
     this.sourceFoodId,
+    this.sourceRelease,
     this.servingQuantity,
     this.servingUnit,
     this.householdMeasure,
@@ -40,10 +60,15 @@ class Food {
     DateTime? createdAt,
     DateTime? updatedAt,
     this.nutrients = const [],
+    this.portions = const [],
   })  : createdAt = createdAt ?? DateTime.now(),
         updatedAt = updatedAt ?? DateTime.now();
 
   bool get isBranded => brand != null && brand!.trim().isNotEmpty;
+
+  bool get isOfficial =>
+      sourceType == FoodSourceType.officialDatabase ||
+      sourceType == FoodSourceType.officialSnapshot;
 
   bool get isUserEditable =>
       sourceType == FoodSourceType.brandLabel ||
@@ -71,6 +96,7 @@ class Food {
     FoodSourceType? sourceType,
     String? sourceName,
     String? sourceFoodId,
+    String? sourceRelease,
     double? servingQuantity,
     String? servingUnit,
     String? householdMeasure,
@@ -79,6 +105,7 @@ class Food {
     DateTime? createdAt,
     DateTime? updatedAt,
     List<NutrientValue>? nutrients,
+    List<FoodPortion>? portions,
   }) {
     return Food(
       id: id ?? this.id,
@@ -88,6 +115,7 @@ class Food {
       sourceType: sourceType ?? this.sourceType,
       sourceName: sourceName ?? this.sourceName,
       sourceFoodId: sourceFoodId ?? this.sourceFoodId,
+      sourceRelease: sourceRelease ?? this.sourceRelease,
       servingQuantity: servingQuantity ?? this.servingQuantity,
       servingUnit: servingUnit ?? this.servingUnit,
       householdMeasure: householdMeasure ?? this.householdMeasure,
@@ -96,6 +124,7 @@ class Food {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       nutrients: nutrients ?? this.nutrients,
+      portions: portions ?? this.portions,
     );
   }
 }
