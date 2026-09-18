@@ -22,11 +22,7 @@ dependencies:
   path: ^1.9.0
   csv: ^6.0.0
 
-  # --- FIREBASE ---
-  firebase_core: ^2.27.0
-  firebase_auth: ^4.17.0
-  firebase_vertexai: ^0.1.1
-
+  # Cloud services are intentionally excluded from the Nutri core.
   # --- MONETIZACIÓN ---
   purchases_flutter: ^8.0.0
 
