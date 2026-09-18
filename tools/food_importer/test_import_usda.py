@@ -148,5 +148,77 @@ class FoodImporterTest(unittest.TestCase):
                 conn.close()
 
 
+    def test_accepts_latin1_food_names(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            source = root / "source"
+            source.mkdir()
+            output = root / "nutrikuaa_foods.db"
+
+            with (source / "food.csv").open(
+                "w",
+                encoding="latin-1",
+                newline="",
+            ) as handle:
+                writer = csv.DictWriter(
+                    handle,
+                    fieldnames=["fdc_id", "data_type", "description"],
+                )
+                writer.writeheader()
+                writer.writerow(
+                    {
+                        "fdc_id": "456",
+                        "data_type": "foundation_food",
+                        "description": "Café con piña",
+                    }
+                )
+
+            write_csv(
+                source / "nutrient.csv",
+                ["id", "name", "unit_name"],
+                [{"id": "1003", "name": "Protein", "unit_name": "g"}],
+            )
+            write_csv(
+                source / "food_nutrient.csv",
+                ["id", "fdc_id", "nutrient_id", "amount"],
+                [
+                    {
+                        "id": "1",
+                        "fdc_id": "456",
+                        "nutrient_id": "1003",
+                        "amount": "2.0",
+                    }
+                ],
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(IMPORTER),
+                    "--input",
+                    str(source),
+                    "--output",
+                    str(output),
+                    "--source-release",
+                    "latin1-test",
+                ],
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertEqual(
+                result.returncode,
+                0,
+                msg=result.stdout + "\n" + result.stderr,
+            )
+
+            conn = sqlite3.connect(output)
+            try:
+                name = conn.execute("SELECT name FROM foods").fetchone()[0]
+                self.assertEqual(name, "Café con piña")
+            finally:
+                conn.close()
+
+
 if __name__ == "__main__":
     unittest.main()
