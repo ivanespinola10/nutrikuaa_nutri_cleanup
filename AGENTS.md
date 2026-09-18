@@ -92,3 +92,21 @@ explicitly replaces the old UI.
 The Nutri database is `nutrikuaa_nutri.db` and migrations must preserve user
 data. Do not use destructive drop-and-recreate upgrades for professional
 records.
+
+
+---
+
+## 6. Food catalog runtime rule
+
+Official food databases must be generated offline by maintainers and bundled
+as versioned release assets.
+
+Do not add runtime web scraping, USDA/FoodData Central download dependencies,
+or mandatory food APIs to the application.
+
+`nutrikuaa_foods.db` is replaceable read-only reference data.
+`nutrikuaa_nutri.db` contains professional/user data and must never be
+overwritten by a food catalog update.
+
+Existing plans must not silently change nutritional values when the official
+catalog is upgraded; use stable references or snapshots/materialization.
