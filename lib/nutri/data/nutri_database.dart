@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -19,8 +20,9 @@ class NutriDatabase {
     final existing = _database;
     if (existing != null) return existing;
 
-    final dbPath = await getDatabasesPath();
-    final path = join(dbPath, databaseName);
+    final path = kIsWeb
+        ? databaseName
+        : join(await getDatabasesPath(), databaseName);
 
     _database = await openDatabase(
       path,
