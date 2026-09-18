@@ -54,6 +54,41 @@ class FoodLibraryService {
     );
   }
 
+  Future<int> copyAsProfessionalFood(
+    Food source, {
+    String? name,
+    String? brand,
+    String? countryCode,
+  }) {
+    final provenance = [
+      if (source.sourceName != null) source.sourceName!,
+      if (source.sourceFoodId != null) 'ID ' + source.sourceFoodId!,
+      if (source.sourceRelease != null) source.sourceRelease!,
+    ].join(' · ');
+
+    return database.createFood(
+      Food(
+        name: name ?? source.name,
+        brand: brand ?? source.brand,
+        countryCode: countryCode ?? source.countryCode,
+        sourceType: FoodSourceType.professionalCustom,
+        sourceName: provenance.isEmpty
+            ? 'Professional copy'
+            : 'Professional copy of ' + provenance,
+        sourceFoodId: source.sourceFoodId,
+        sourceRelease: source.sourceRelease,
+        servingQuantity: source.servingQuantity,
+        servingUnit: source.servingUnit,
+        householdMeasure: source.householdMeasure,
+        notes: source.notes,
+        nutrients: List.unmodifiable(source.nutrients),
+        portions: List.unmodifiable(source.portions),
+      ),
+    );
+  }
+
+  Future<void> update(Food food) => database.updateFood(food);
+
   Future<List<Food>> search(
     String query, {
     String? countryCode,
