@@ -11,7 +11,7 @@ class NutriDatabase {
   static final NutriDatabase instance = NutriDatabase._();
 
   static const databaseName = 'nutrikuaa_nutri.db';
-  static const databaseVersion = 2;
+  static const databaseVersion = 3;
 
   Database? _database;
 
@@ -70,6 +70,19 @@ class NutriDatabase {
         value_per_100g REAL NOT NULL,
         unit TEXT NOT NULL,
         PRIMARY KEY (food_id, nutrient_code),
+        FOREIGN KEY (food_id) REFERENCES foods(id) ON DELETE CASCADE
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE food_portions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        food_id INTEGER NOT NULL,
+        amount REAL,
+        measure TEXT,
+        gram_weight REAL NOT NULL,
+        modifier TEXT,
+        sequence INTEGER,
         FOREIGN KEY (food_id) REFERENCES foods(id) ON DELETE CASCADE
       )
     ''');
@@ -201,6 +214,21 @@ class NutriDatabase {
       await db.execute('ALTER TABLE foods ADD COLUMN source_release TEXT');
     }
 
+    if (oldVersion < 3) {
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS food_portions (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          food_id INTEGER NOT NULL,
+          amount REAL,
+          measure TEXT,
+          gram_weight REAL NOT NULL,
+          modifier TEXT,
+          sequence INTEGER,
+          FOREIGN KEY (food_id) REFERENCES foods(id) ON DELETE CASCADE
+        )
+      ''');
+    }
+
     // Future migrations must be additive and preserve professional data.
   }
 
@@ -215,6 +243,13 @@ class NutriDatabase {
           'food_nutrients',
           _nutrientToMap(foodId, nutrient),
           conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+      }
+
+      for (final portion in food.portions) {
+        await txn.insert(
+          'food_portions',
+          _portionToMap(foodId, portion),
         );
       }
 
@@ -254,6 +289,19 @@ class NutriDatabase {
           conflictAlgorithm: ConflictAlgorithm.replace,
         );
       }
+
+      await txn.delete(
+        'food_portions',
+        where: 'food_id = ?',
+        whereArgs: [foodId],
+      );
+
+      for (final portion in food.portions) {
+        await txn.insert(
+          'food_portions',
+          _portionToMap(foodId, portion),
+        );
+      }
     });
   }
 
@@ -269,7 +317,8 @@ class NutriDatabase {
     if (rows.isEmpty) return null;
 
     final nutrients = await _getFoodNutrients(db, id);
-    return _foodFromMap(rows.first, nutrients);
+    final portions = await _getFoodPortions(db, id);
+    return _foodFromMap(rows.first, nutrients, portions);
   }
 
   Future<List<Food>> searchFoods(
@@ -320,7 +369,8 @@ class NutriDatabase {
     for (final row in rows) {
       final id = row['id'] as int;
       final nutrients = await _getFoodNutrients(db, id);
-      foods.add(_foodFromMap(row, nutrients));
+      final portions = await _getFoodPortions(db, id);
+      foods.add(_foodFromMap(row, nutrients, portions));
     }
 
     return foods;
@@ -414,6 +464,20 @@ class NutriDatabase {
     };
   }
 
+  static Map<String, Object?> _portionToMap(
+    int foodId,
+    FoodPortion portion,
+  ) {
+    return {
+      'food_id': foodId,
+      'amount': portion.amount,
+      'measure': _nullIfBlank(portion.measure),
+      'gram_weight': portion.gramWeight,
+      'modifier': _nullIfBlank(portion.modifier),
+      'sequence': portion.sequence,
+    };
+  }
+
   static Future<List<NutrientValue>> _getFoodNutrients(
     DatabaseExecutor db,
     int foodId,
@@ -436,9 +500,34 @@ class NutriDatabase {
         .toList();
   }
 
+  static Future<List<FoodPortion>> _getFoodPortions(
+    DatabaseExecutor db,
+    int foodId,
+  ) async {
+    final rows = await db.query(
+      'food_portions',
+      where: 'food_id = ?',
+      whereArgs: [foodId],
+      orderBy: 'sequence, id',
+    );
+
+    return rows
+        .map(
+          (row) => FoodPortion(
+            amount: (row['amount'] as num?)?.toDouble(),
+            measure: row['measure'] as String?,
+            gramWeight: (row['gram_weight'] as num).toDouble(),
+            modifier: row['modifier'] as String?,
+            sequence: row['sequence'] as int?,
+          ),
+        )
+        .toList();
+  }
+
   static Food _foodFromMap(
     Map<String, Object?> row,
     List<NutrientValue> nutrients,
+    List<FoodPortion> portions,
   ) {
     return Food(
       id: row['id'] as int?,
@@ -457,6 +546,7 @@ class NutriDatabase {
       createdAt: DateTime.parse(row['created_at'] as String),
       updatedAt: DateTime.parse(row['updated_at'] as String),
       nutrients: nutrients,
+      portions: portions,
     );
   }
 
