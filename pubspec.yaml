@@ -47,6 +47,7 @@ flutter:
   assets:
     - assets/ingredients.csv
     - assets/logo.png
+    - assets/data/
 
 dependency_overrides:
   sqflite_android: 2.4.0
