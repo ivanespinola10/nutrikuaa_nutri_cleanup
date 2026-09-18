@@ -73,3 +73,22 @@ Application
 Domain
     ↓
 Data
+
+---
+
+## 5. Nutri backend migration rule
+
+The repository still contains the inherited NutriKuaa Pro industrial code.
+
+New Nutri domain/backend work must be created under `lib/nutri/`.
+
+Do not repurpose industrial concepts such as `ProyectoModel`,
+`proyecto_items`, industrial yield or industrial costing into patient,
+meal-plan or clinical nutrition concepts.
+
+The industrial database must remain isolated until a dedicated migration task
+explicitly replaces the old UI.
+
+The Nutri database is `nutrikuaa_nutri.db` and migrations must preserve user
+data. Do not use destructive drop-and-recreate upgrades for professional
+records.
