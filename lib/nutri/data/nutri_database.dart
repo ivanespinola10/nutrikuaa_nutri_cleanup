@@ -11,7 +11,7 @@ class NutriDatabase {
   static final NutriDatabase instance = NutriDatabase._();
 
   static const databaseName = 'nutrikuaa_nutri.db';
-  static const databaseVersion = 1;
+  static const databaseVersion = 2;
 
   Database? _database;
 
@@ -52,6 +52,7 @@ class NutriDatabase {
         source_type TEXT NOT NULL,
         source_name TEXT,
         source_food_id TEXT,
+        source_release TEXT,
         serving_quantity REAL,
         serving_unit TEXT,
         household_measure TEXT,
@@ -196,7 +197,10 @@ class NutriDatabase {
     int oldVersion,
     int newVersion,
   ) async {
-    // Version 1 is the initial Nutri schema.
+    if (oldVersion < 2) {
+      await db.execute('ALTER TABLE foods ADD COLUMN source_release TEXT');
+    }
+
     // Future migrations must be additive and preserve professional data.
   }
 
@@ -387,6 +391,7 @@ class NutriDatabase {
       'source_type': food.sourceType.name,
       'source_name': _nullIfBlank(food.sourceName),
       'source_food_id': _nullIfBlank(food.sourceFoodId),
+      'source_release': _nullIfBlank(food.sourceRelease),
       'serving_quantity': food.servingQuantity,
       'serving_unit': _nullIfBlank(food.servingUnit),
       'household_measure': _nullIfBlank(food.householdMeasure),
@@ -443,6 +448,7 @@ class NutriDatabase {
       sourceType: FoodSourceType.values.byName(row['source_type'] as String),
       sourceName: row['source_name'] as String?,
       sourceFoodId: row['source_food_id'] as String?,
+      sourceRelease: row['source_release'] as String?,
       servingQuantity: (row['serving_quantity'] as num?)?.toDouble(),
       servingUnit: row['serving_unit'] as String?,
       householdMeasure: row['household_measure'] as String?,
