@@ -23,9 +23,7 @@ dependencies:
   csv: ^6.0.0
 
   # Cloud services are intentionally excluded from the Nutri core.
-  # --- MONETIZACIÓN ---
-  purchases_flutter: ^8.0.0
-
+  # Monetization/licensing will be added through store-specific adapters.
   # --- UI ---
   cupertino_icons: ^1.0.8
   url_launcher: ^6.2.5 # <--- AGREGA ESTA LÍNEA
