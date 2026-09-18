@@ -1,0 +1,95 @@
+{
+  "mappings": [
+    {
+      "code": "energy_kcal",
+      "unit": "kilocalorie",
+      "source_units": ["kcal"],
+      "usda_ids": ["1008"],
+      "aliases": ["energy", "energy (atwater general factors)"]
+    },
+    {
+      "code": "protein_g",
+      "unit": "gram",
+      "source_units": ["g"],
+      "usda_ids": ["1003"],
+      "aliases": ["protein"]
+    },
+    {
+      "code": "carbohydrate_g",
+      "unit": "gram",
+      "source_units": ["g"],
+      "usda_ids": ["1005"],
+      "aliases": ["carbohydrate, by difference", "carbohydrate"]
+    },
+    {
+      "code": "fat_g",
+      "unit": "gram",
+      "source_units": ["g"],
+      "usda_ids": ["1004"],
+      "aliases": ["total lipid (fat)", "total fat"]
+    },
+    {
+      "code": "fiber_g",
+      "unit": "gram",
+      "source_units": ["g"],
+      "usda_ids": ["1079"],
+      "aliases": ["fiber, total dietary", "dietary fiber"]
+    },
+    {
+      "code": "sugars_g",
+      "unit": "gram",
+      "source_units": ["g"],
+      "usda_ids": ["2000"],
+      "aliases": ["total sugars", "sugars, total including nlea"]
+    },
+    {
+      "code": "sodium_mg",
+      "unit": "milligram",
+      "source_units": ["mg"],
+      "usda_ids": ["1093"],
+      "aliases": ["sodium, na", "sodium"]
+    },
+    {
+      "code": "calcium_mg",
+      "unit": "milligram",
+      "source_units": ["mg"],
+      "usda_ids": ["1087"],
+      "aliases": ["calcium, ca", "calcium"]
+    },
+    {
+      "code": "iron_mg",
+      "unit": "milligram",
+      "source_units": ["mg"],
+      "usda_ids": ["1089"],
+      "aliases": ["iron, fe", "iron"]
+    },
+    {
+      "code": "potassium_mg",
+      "unit": "milligram",
+      "source_units": ["mg"],
+      "usda_ids": ["1092"],
+      "aliases": ["potassium, k", "potassium"]
+    },
+    {
+      "code": "vitamin_a_ug",
+      "unit": "microgram",
+      "source_units": ["ug", "µg"],
+      "usda_ids": ["1106"],
+      "aliases": ["vitamin a, rae", "vitamin a"]
+    },
+    {
+      "code": "vitamin_c_mg",
+      "unit": "milligram",
+      "source_units": ["mg"],
+      "usda_ids": ["1162"],
+      "aliases": ["vitamin c, total ascorbic acid", "vitamin c"]
+    },
+    {
+      "code": "vitamin_d_ug",
+      "unit": "microgram",
+      "source_units": ["ug", "µg"],
+      "usda_ids": ["1114"],
+      "aliases": ["vitamin d (d2 + d3)", "vitamin d"]
+    }
+  ]
+}
