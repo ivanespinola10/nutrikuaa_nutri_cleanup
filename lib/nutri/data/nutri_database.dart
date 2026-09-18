@@ -11,7 +11,7 @@ class NutriDatabase {
   static final NutriDatabase instance = NutriDatabase._();
 
   static const databaseName = 'nutrikuaa_nutri.db';
-  static const databaseVersion = 3;
+  static const databaseVersion = 4;
 
   Database? _database;
 
@@ -200,6 +200,11 @@ class NutriDatabase {
     await db.execute(
       'CREATE INDEX idx_recipes_name ON recipes(name COLLATE NOCASE)',
     );
+    await db.execute('''
+      CREATE UNIQUE INDEX idx_official_food_snapshot
+      ON foods(source_name, source_food_id, source_release)
+      WHERE source_type = 'officialSnapshot'
+    ''');
     await db.execute(
       'CREATE INDEX idx_meals_plan_day ON meals(plan_id, day_index, sort_order)',
     );
@@ -226,6 +231,14 @@ class NutriDatabase {
           sequence INTEGER,
           FOREIGN KEY (food_id) REFERENCES foods(id) ON DELETE CASCADE
         )
+      ''');
+    }
+
+    if (oldVersion < 4) {
+      await db.execute('''
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_official_food_snapshot
+        ON foods(source_name, source_food_id, source_release)
+        WHERE source_type = 'officialSnapshot'
       ''');
     }
 
