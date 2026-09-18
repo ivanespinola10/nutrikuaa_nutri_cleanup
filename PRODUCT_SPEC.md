@@ -185,6 +185,16 @@ sin perder trazabilidad nutricional.
 La composición nutricional debe admitir un número extensible de nutrientes en
 lugar de depender de un conjunto fijo de columnas.
 
+La base oficial distribuida con el producto será un archivo local cerrado y
+versionado. No dependerá de scraping ni de descargas desde servicios externos
+para que el usuario pueda instalar o utilizar NutriKuaa.
+
+Las nuevas versiones de bases oficiales serán preparadas y validadas por
+NutriKuaa antes de incorporarse a una actualización de la aplicación.
+
+Los alimentos, marcas y recetas creados por el profesional se almacenarán
+separadamente y nunca serán reemplazados por una actualización del catálogo.
+
 Cada alimento podrá conservar:
 
 - país o región;
