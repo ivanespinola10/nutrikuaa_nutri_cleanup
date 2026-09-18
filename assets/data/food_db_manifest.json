@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "dataVersion": "development-empty",
+  "sourceName": "NutriKuaa",
+  "sourceRelease": "Official catalog not bundled yet",
+  "databaseFile": "nutrikuaa_foods.db",
+  "bundled": false
+}
