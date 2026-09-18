@@ -1,10 +1,10 @@
 import '../domain/food.dart';
 
-class FoodPortion {
+class FoodAmount {
   final Food food;
   final double grams;
 
-  const FoodPortion({
+  const FoodAmount({
     required this.food,
     required this.grams,
   });
@@ -42,7 +42,7 @@ class NutritionCalculator {
     });
   }
 
-  static NutritionTotals forPortions(Iterable<FoodPortion> portions) {
+  static NutritionTotals forPortions(Iterable<FoodAmount> portions) {
     var totals = const NutritionTotals(<String, double>{});
 
     for (final portion in portions) {
