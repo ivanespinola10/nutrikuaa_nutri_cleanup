@@ -39,12 +39,12 @@ class NutriDatabase {
     }
 
     try {
-      _database = await open();
+      _database = await open().timeout(const Duration(seconds: 8));
     } catch (_) {
       if (!kIsWeb) rethrow;
 
       await recoverDatabasePlatform();
-      _database = await open();
+      _database = await open().timeout(const Duration(seconds: 8));
     }
 
     return _database!;
