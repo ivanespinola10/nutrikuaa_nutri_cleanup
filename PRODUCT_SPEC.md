@@ -135,16 +135,68 @@ La versión inicial no pretende implementar una historia clínica completa.
 
 ## 7. Biblioteca de alimentos
 
-Debe existir una biblioteca de alimentos reutilizable.
+Debe existir una biblioteca de alimentos reutilizable y extensible.
 
 Permitirá:
 
 - buscar alimentos;
 - consultar composición nutricional;
+- utilizar bases oficiales de diferentes países y regiones;
 - crear alimentos personalizados;
+- registrar productos comerciales con nombre y marca;
+- registrar porción declarada y medida doméstica;
+- identificar la fuente de cada alimento;
 - editar alimentos creados por el usuario;
 - utilizar alimentos en recetas;
 - utilizar alimentos directamente en planes.
+
+### 7.1 Alimentos oficiales y personalizados
+
+Los alimentos oficiales y los cargados por el profesional deben mantenerse
+diferenciados.
+
+Un alimento oficial conservará su fuente y no será editable directamente.
+
+Un alimento personalizado podrá provenir de:
+
+- una etiqueta nutricional de una marca;
+- una preparación o alimento habitual del profesional;
+- una importación realizada por el usuario.
+
+Ejemplo:
+
+```text
+Yogur griego
+Marca: Lactolanda
+Porción: 150 g
+País: PY
+Fuente: Etiqueta cargada por el profesional
+```
+
+Una vez creado, el alimento queda disponible en la biblioteca profesional y
+puede agregarse inmediatamente al plan actual, reutilizarse en otros
+pacientes y aparecer con su marca en el documento entregado.
+
+El objetivo es permitir planes más familiares y accionables para el paciente
+sin perder trazabilidad nutricional.
+
+### 7.2 Estructura mundial
+
+La composición nutricional debe admitir un número extensible de nutrientes en
+lugar de depender de un conjunto fijo de columnas.
+
+Cada alimento podrá conservar:
+
+- país o región;
+- base de origen;
+- identificador en la fuente;
+- versión futura del dataset;
+- marca, cuando corresponda;
+- valores por 100 g;
+- porción y medida doméstica.
+
+Esto permitirá incorporar progresivamente bases alimentarias regionales sin
+rediseñar el núcleo del producto.
 
 ---
 
