@@ -43,3 +43,7 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Generated SQLite Web runtime
+web/sqlite3.wasm
+web/sqflite_sw.js
