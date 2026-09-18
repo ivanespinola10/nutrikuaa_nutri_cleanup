@@ -43,8 +43,8 @@ void main() {
     );
 
     final totals = NutritionCalculator.forPortions([
-      FoodPortion(food: food, grams: 100),
-      FoodPortion(food: food, grams: 50),
+      FoodAmount(food: food, grams: 100),
+      FoodAmount(food: food, grams: 50),
     ]);
 
     expect(totals.value(NutrientCodes.carbohydrate), 30);
