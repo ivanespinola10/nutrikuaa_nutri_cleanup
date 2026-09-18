@@ -26,11 +26,17 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Prepare SQLite web runtime
+        run: dart run sqflite_common_ffi_web:setup --force
+
       - name: Analyze
         run: flutter analyze --no-fatal-infos --no-fatal-warnings
 
       - name: Run Flutter tests
         run: flutter test
+
+      - name: Build web app
+        run: flutter build web --release
 
       - name: Test offline USDA catalog builder
         run: python3 tools/food_importer/test_import_usda.py
