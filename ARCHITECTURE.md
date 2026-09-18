@@ -96,11 +96,20 @@ Nutri esté estable.
 
 ## 5. Persistencia
 
-NutriKuaa Nutri utiliza una base SQLite propia:
+NutriKuaa Nutri separa físicamente los datos profesionales del catálogo oficial:
 
 ```text
-nutrikuaa_nutri.db
+nutrikuaa_nutri.db      ← escritura: pacientes, recetas, planes, alimentos propios
+nutrikuaa_foods.db      ← solo lectura: catálogo oficial versionado
 ```
+
+La base oficial se genera fuera de la aplicación mediante herramientas de
+desarrollo y se distribuye como un asset cerrado de una versión de NutriKuaa.
+
+La aplicación no debe descargar ni reconstruir el catálogo oficial durante la
+instalación. Una actualización de la app puede incluir una nueva versión de
+`nutrikuaa_foods.db`; el instalador interno compara el manifiesto y reemplaza
+únicamente esa base.
 
 La base industrial `nutrikuaa_industrial.db` no se modifica durante esta
 etapa.
@@ -108,6 +117,15 @@ etapa.
 Las migraciones futuras deben preservar datos profesionales. No se permiten
 migraciones destructivas que eliminen pacientes, recetas, planes o alimentos
 personalizados.
+
+### 5.1 Estabilidad de planes históricos
+
+Cuando un alimento oficial se utiliza dentro de una receta o plan profesional,
+su referencia/composición debe materializarse o conservarse como snapshot en
+la base privada.
+
+Así una futura actualización del catálogo oficial no cambia silenciosamente
+los cálculos de planes ya entregados.
 
 ---
 
