@@ -47,6 +47,7 @@ class _NutriWorkspacePageState extends State<NutriWorkspacePage> {
 
   bool _busy = false;
   bool _initializing = true;
+  bool _databaseReady = false;
   String? _error;
   String _status = 'Inicializando base local...';
 
@@ -85,7 +86,9 @@ class _NutriWorkspacePageState extends State<NutriWorkspacePage> {
     int? preferFoodId,
   }) async {
     try {
-      await NutriDatabase.instance.database;
+      await NutriDatabase.instance.database.timeout(
+        const Duration(seconds: 12),
+      );
       final patients = await _patients.search('', activeOnly: false);
       final foods = await _foods.search('');
 
@@ -111,6 +114,7 @@ class _NutriWorkspacePageState extends State<NutriWorkspacePage> {
         _selectedFoodId = foodId;
         _selectedTargets = targets;
         _initializing = false;
+        _databaseReady = true;
         _error = null;
         _status = 'SQLite local activo · persistencia del navegador';
       });
@@ -118,9 +122,28 @@ class _NutriWorkspacePageState extends State<NutriWorkspacePage> {
       if (!mounted) return;
       setState(() {
         _initializing = false;
-        _error = error.toString();
+        _databaseReady = false;
+        _error = 'SQLite Web: ' + error.toString();
         _status = 'No se pudo iniciar SQLite local';
       });
+    }
+  }
+
+  Future<void> _retryDatabase() async {
+    if (_busy) return;
+
+    setState(() {
+      _busy = true;
+      _initializing = true;
+      _error = null;
+      _status = 'Reintentando SQLite local...';
+    });
+
+    try {
+      await NutriDatabase.instance.close();
+      await _refreshData();
+    } finally {
+      if (mounted) setState(() => _busy = false);
     }
   }
 
@@ -373,6 +396,8 @@ class _NutriWorkspacePageState extends State<NutriWorkspacePage> {
     }
   }
 
+  bool get _actionsDisabled => _busy || !_databaseReady;
+
   void _message(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context)
@@ -491,7 +516,9 @@ class _NutriWorkspacePageState extends State<NutriWorkspacePage> {
                 ),
                 Chip(
                   avatar: Icon(
-                    _error == null ? Icons.check_circle : Icons.error_outline,
+                    _databaseReady
+                        ? Icons.check_circle
+                        : Icons.error_outline,
                     size: 18,
                   ),
                   label: Text(_status),
@@ -512,11 +539,18 @@ class _NutriWorkspacePageState extends State<NutriWorkspacePage> {
               ),
             ],
             const SizedBox(height: 16),
-            FilledButton.tonalIcon(
-              onPressed: _busy ? null : _seedDemo,
-              icon: const Icon(Icons.rocket_launch_outlined),
-              label: const Text('Cargar datos demo'),
-            ),
+            if (_databaseReady)
+              FilledButton.tonalIcon(
+                onPressed: _actionsDisabled ? null : _seedDemo,
+                icon: const Icon(Icons.rocket_launch_outlined),
+                label: const Text('Cargar datos demo'),
+              )
+            else
+              FilledButton.tonalIcon(
+                onPressed: _busy ? null : _retryDatabase,
+                icon: const Icon(Icons.refresh),
+                label: const Text('Reintentar SQLite'),
+              ),
           ],
         ),
       ),
@@ -551,7 +585,7 @@ class _NutriWorkspacePageState extends State<NutriWorkspacePage> {
           SizedBox(
             width: double.infinity,
             child: FilledButton.icon(
-              onPressed: _busy ? null : _createPatient,
+              onPressed: _actionsDisabled ? null : _createPatient,
               icon: const Icon(Icons.person_add_alt_1),
               label: const Text('Guardar paciente'),
             ),
@@ -593,7 +627,7 @@ class _NutriWorkspacePageState extends State<NutriWorkspacePage> {
           SizedBox(
             width: double.infinity,
             child: FilledButton.icon(
-              onPressed: _busy ? null : _createFood,
+              onPressed: _actionsDisabled ? null : _createFood,
               icon: const Icon(Icons.add_shopping_cart),
               label: const Text('Guardar alimento'),
             ),
@@ -622,7 +656,7 @@ class _NutriWorkspacePageState extends State<NutriWorkspacePage> {
                   ),
                 )
                 .toList(),
-            onChanged: _busy ? null : _selectPatient,
+            onChanged: _actionsDisabled ? null : _selectPatient,
           ),
           const SizedBox(height: 10),
           DropdownButtonFormField<int>(
@@ -656,7 +690,7 @@ class _NutriWorkspacePageState extends State<NutriWorkspacePage> {
           SizedBox(
             width: double.infinity,
             child: FilledButton.icon(
-              onPressed: _busy ? null : _createPlanTest,
+              onPressed: _actionsDisabled ? null : _createPlanTest,
               icon: const Icon(Icons.calculate_outlined),
               label: const Text('Crear y calcular plan'),
             ),
