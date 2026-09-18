@@ -26,8 +26,32 @@ def normalize(text: Optional[str]) -> str:
     return " ".join((text or "").strip().lower().split())
 
 
+def detect_text_encoding(path: Path) -> str:
+    """Prefer UTF-8 when valid, otherwise fall back to ISO-8859-1.
+
+    FoodData Central documentation historically describes downloadable ASCII
+    files using ISO-8859-1, while newer exports may be UTF-8 compatible.
+    Detection is intentionally local and deterministic.
+    """
+    with path.open("rb") as handle:
+        sample = handle.read(1024 * 1024)
+
+    if sample.startswith(b"\xef\xbb\xbf"):
+        return "utf-8-sig"
+
+    try:
+        sample.decode("utf-8")
+        return "utf-8"
+    except UnicodeDecodeError:
+        return "latin-1"
+
+
 def open_csv(path: Path):
-    return path.open("r", encoding="utf-8-sig", newline="")
+    return path.open(
+        "r",
+        encoding=detect_text_encoding(path),
+        newline="",
+    )
 
 
 def require_files(input_dir: Path, names: Iterable[str]) -> Dict[str, Path]:
