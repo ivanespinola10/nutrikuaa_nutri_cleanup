@@ -2,6 +2,8 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
+import 'database_platform.dart';
+
 import '../domain/food.dart';
 import '../domain/nutrition/nutrient.dart';
 import '../domain/patient.dart';
@@ -24,15 +26,26 @@ class NutriDatabase {
         ? databaseName
         : join(await getDatabasesPath(), databaseName);
 
-    _database = await openDatabase(
-      path,
-      version: databaseVersion,
-      onConfigure: (db) async {
-        await db.execute('PRAGMA foreign_keys = ON');
-      },
-      onCreate: _createSchema,
-      onUpgrade: _upgradeSchema,
-    );
+    Future<Database> open() {
+      return openDatabase(
+        path,
+        version: databaseVersion,
+        onConfigure: (db) async {
+          await db.execute('PRAGMA foreign_keys = ON');
+        },
+        onCreate: _createSchema,
+        onUpgrade: _upgradeSchema,
+      );
+    }
+
+    try {
+      _database = await open();
+    } catch (_) {
+      if (!kIsWeb) rethrow;
+
+      await recoverDatabasePlatform();
+      _database = await open();
+    }
 
     return _database!;
   }
