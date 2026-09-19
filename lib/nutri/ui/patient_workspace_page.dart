@@ -739,7 +739,7 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
                   width: 190,
                   child: _field(
                     _weight,
-                    'Peso (kg)',
+                    _imperial ? 'Peso (lb)' : 'Peso (kg)',
                     numeric: true,
                     onChanged: (_) => setState(() {}),
                   ),
@@ -748,7 +748,7 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
                   width: 190,
                   child: _field(
                     _height,
-                    'Altura (cm)',
+                    _imperial ? 'Altura (in)' : 'Altura (cm)',
                     numeric: true,
                     onChanged: (_) => setState(() {}),
                   ),
@@ -757,7 +757,7 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
                   width: 190,
                   child: _field(
                     _waist,
-                    'Cintura (cm)',
+                    _imperial ? 'Cintura (in)' : 'Cintura (cm)',
                     numeric: true,
                     onChanged: (_) => setState(() {}),
                   ),
@@ -811,11 +811,11 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
   Widget _measurementTile(PatientMeasurement measurement) {
     final parts = <String>[
       if (measurement.weightKg != null)
-        '${measurement.weightKg!.toStringAsFixed(1)} kg',
+        _displayWeight(measurement.weightKg!),
       if (measurement.heightCm != null)
-        '${measurement.heightCm!.toStringAsFixed(1)} cm',
+        _displayLength(measurement.heightCm!),
       if (measurement.waistCm != null)
-        'cintura ${measurement.waistCm!.toStringAsFixed(1)} cm',
+        'cintura ${_displayLength(measurement.waistCm!)}',
       if (measurement.bmi != null)
         'IMC ${measurement.bmi!.toStringAsFixed(1)}',
     ];
