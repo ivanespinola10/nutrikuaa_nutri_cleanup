@@ -12,6 +12,14 @@ class OfficialFoodCatalog {
   OfficialFoodCatalog({OfficialCatalogOpener? open})
       : _open = open ?? OfficialFoodCatalogInstaller.openReadOnly;
 
+  Future<int> count() async {
+    final db = await _open();
+    if (db == null) return 0;
+
+    final result = await db.rawQuery('SELECT COUNT(*) AS count FROM foods');
+    return (result.first['count'] as num?)?.toInt() ?? 0;
+  }
+
   Future<List<Food>> search(
     String query, {
     int limit = 50,
