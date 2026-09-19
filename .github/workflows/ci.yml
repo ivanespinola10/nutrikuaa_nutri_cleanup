@@ -28,7 +28,7 @@ jobs:
         run: flutter pub get
 
       - name: Prepare SQLite web runtime
-        run: dart run sqflite_common_ffi_web:setup --force
+        run: dart run tools/setup_sqlite_web.dart
 
       - name: Analyze
         run: flutter analyze --no-fatal-infos --no-fatal-warnings
