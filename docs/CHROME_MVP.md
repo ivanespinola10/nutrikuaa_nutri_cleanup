@@ -241,3 +241,94 @@ nutrición automática
   ↓
 reutilización en cualquier plan
 ```
+
+
+# V0.5 — recetas profesionales
+
+La V0.5 incorpora una biblioteca de recetas reutilizables y calculadas
+automáticamente.
+
+## Incluye
+
+- sección propia **Recetas**;
+- crear receta;
+- nombre y descripción;
+- preparación / indicaciones;
+- número de porciones;
+- rendimiento final opcional en gramos;
+- búsqueda unificada de ingredientes:
+  - alimentos propios;
+  - marcas locales;
+  - USDA Foundation Foods;
+- snapshot automático cuando se utiliza un ingrediente USDA;
+- varios ingredientes por receta;
+- edición de gramos por ingrediente;
+- eliminación de ingredientes;
+- nutrición total de la receta;
+- nutrición por porción;
+- duplicar receta;
+- editar receta mientras todavía no se utilizó en un plan;
+- protección de recetas ya usadas en planes;
+- reutilización directa desde el Planificador semanal.
+
+## Regla de integridad
+
+Una receta ya utilizada en un plan no se modifica ni se elimina directamente.
+
+Para crear una variante:
+
+```text
+Receta usada
+   ↓
+Duplicar
+   ↓
+Editar copia
+   ↓
+Nueva versión profesional
+```
+
+Esto evita que un plan entregado a un paciente cambie retroactivamente.
+
+## Prueba de aceptación V0.5
+
+1. Abrir **Recetas**.
+2. Crear `Omelette proteico`.
+3. Definir, por ejemplo:
+   - 2 porciones;
+   - rendimiento 300 g.
+4. Buscar y agregar al menos dos ingredientes.
+5. Usar al menos un alimento USDA y uno de la biblioteca profesional.
+6. Confirmar que aparecen los cálculos:
+   - energía;
+   - proteína;
+   - carbohidratos;
+   - grasas;
+   - total;
+   - por porción.
+7. Editar los gramos de un ingrediente y verificar recálculo inmediato.
+8. Guardar la receta.
+9. Volver al **Planificador**.
+10. Seleccionar **Recetas** en el agregador de comida.
+11. Buscar `Omelette proteico`.
+12. Agregar 1 porción.
+13. Confirmar que los totales del día cambian con el valor de una porción.
+14. Volver a **Recetas** e intentar modificar la receta utilizada.
+15. Nutrikuaa debe impedir la edición para proteger el plan.
+16. Pulsar **Duplicar**, modificar la copia y guardarla.
+17. Reiniciar Chrome en puerto 8080 y confirmar persistencia.
+
+## Próximo hito
+
+V0.6 cerrará la ficha profesional del paciente y objetivos:
+
+```text
+Paciente
+  ↓
+datos básicos
+  ↓
+antropometría / notas
+  ↓
+objetivos nutricionales
+  ↓
+planes e historial
+```
