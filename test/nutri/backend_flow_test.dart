@@ -369,6 +369,91 @@ void main() {
     );
   });
 
+  test('weekly productivity actions copy meals and days safely', () async {
+    final patients = PatientRepository();
+    final patientId = await patients.create(
+      Patient(firstName: 'Copy', lastName: 'Tester'),
+    );
+
+    final foods = FoodLibraryService();
+    final foodId = await foods.addProfessionalFood(
+      name: 'Oats test',
+      nutrients: const [
+        NutrientValue(
+          code: NutrientCodes.energyKcal,
+          valuePer100g: 400,
+          unit: NutrientUnit.kilocalorie,
+        ),
+      ],
+    );
+
+    final plans = MealPlanService();
+    final planId = await plans.createPlan(
+      MealPlan(
+        patientId: patientId,
+        name: 'Copy week',
+      ),
+    );
+
+    final mondayBreakfast = await plans.getOrCreateMeal(
+      planId: planId,
+      dayIndex: 0,
+      name: 'Desayuno',
+      sortOrder: 0,
+    );
+    final tuesdayBreakfast = await plans.getOrCreateMeal(
+      planId: planId,
+      dayIndex: 1,
+      name: 'Desayuno',
+      sortOrder: 0,
+    );
+
+    final itemId = await plans.addFood(
+      mealId: mondayBreakfast,
+      foodId: foodId,
+      quantityGrams: 40,
+    );
+
+    await plans.copyMealItems(
+      sourceMealId: mondayBreakfast,
+      targetMealId: tuesdayBreakfast,
+    );
+
+    var summary = await PlanNutritionService().calculate(planId);
+    expect(
+      summary.totalsForDay(1).value(NutrientCodes.energyKcal),
+      closeTo(160, 0.001),
+    );
+
+    await plans.updateFoodQuantity(
+      mealItemId: itemId,
+      quantityGrams: 50,
+    );
+
+    await plans.copyDay(
+      planId: planId,
+      sourceDayIndex: 0,
+      targetDayIndex: 2,
+    );
+
+    summary = await PlanNutritionService().calculate(planId);
+    expect(
+      summary.totalsForDay(0).value(NutrientCodes.energyKcal),
+      closeTo(200, 0.001),
+    );
+    expect(
+      summary.totalsForDay(2).value(NutrientCodes.energyKcal),
+      closeTo(200, 0.001),
+    );
+
+    await plans.clearMeal(tuesdayBreakfast);
+    summary = await PlanNutritionService().calculate(planId);
+    expect(
+      summary.totalsForDay(1).value(NutrientCodes.energyKcal),
+      closeTo(0, 0.001),
+    );
+  });
+
   test('Spanish alias finds local snapshot and hides official duplicate', () async {
     final officialCatalog = OfficialFoodCatalog(
       open: () async => officialDb,
