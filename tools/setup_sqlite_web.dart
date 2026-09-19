@@ -10,13 +10,17 @@ Future<void> main() async {
     return;
   }
 
-  final temp = await Directory.systemTemp.createTemp('nutrikuaa_sqlite_web_');
+  final tempRoot =
+      await Directory.systemTemp.createTemp('nutrikuaa_sqlite_web_');
+  final projectDir = Directory(
+    '${tempRoot.path}${Platform.pathSeparator}worker_project',
+  );
 
   try {
     stdout.writeln('Generando SQLite Web en proyecto temporal limpio...');
     await _run(
       'dart',
-      ['create', '-t', 'web', '--force', temp.path],
+      ['create', '-t', 'web', '--force', projectDir.path],
     );
 
     await _run(
@@ -28,17 +32,17 @@ Future<void> main() async {
         'sqflite_common_ffi:2.4.0+3',
         'sqlite3:3.1.2',
       ],
-      workingDirectory: temp.path,
+      workingDirectory: projectDir.path,
     );
 
     await _run(
       'dart',
       ['run', 'sqflite_common_ffi_web:setup', '--force'],
-      workingDirectory: temp.path,
+      workingDirectory: projectDir.path,
     );
 
     final generatedWeb = Directory(
-      '${temp.path}${Platform.pathSeparator}web',
+      '${projectDir.path}${Platform.pathSeparator}web',
     );
     final wasm = File(
       '${generatedWeb.path}${Platform.pathSeparator}sqlite3.wasm',
@@ -64,8 +68,8 @@ Future<void> main() async {
     stdout.writeln('  web/sqlite3.wasm');
     stdout.writeln('  web/sqflite_sw.js');
   } finally {
-    if (await temp.exists()) {
-      await temp.delete(recursive: true);
+    if (await tempRoot.exists()) {
+      await tempRoot.delete(recursive: true);
     }
   }
 }
