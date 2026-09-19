@@ -782,6 +782,13 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
               icon: const Icon(Icons.calendar_month),
               label: const Text('Nueva semana'),
             ),
+            OutlinedButton.icon(
+              onPressed: _busy || _selectedPlanId == null
+                  ? null
+                  : _duplicateCurrentWeek,
+              icon: const Icon(Icons.copy_all_outlined),
+              label: const Text('Duplicar semana'),
+            ),
           ],
         ),
       ),
