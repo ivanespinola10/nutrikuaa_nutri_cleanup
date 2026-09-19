@@ -35,26 +35,29 @@ class UnifiedFoodSearchService {
     int professionalLimit = 20,
     int officialLimit = 50,
   }) async {
-    final results = await Future.wait([
-      privateDatabase.searchFoods(
-        query,
-        countryCode: countryCode,
-        limit: professionalLimit,
-      ),
-      officialCatalog.search(
+    final professional = await privateDatabase.searchFoods(
+      query,
+      countryCode: countryCode,
+      limit: professionalLimit,
+    );
+
+    List<Food> official;
+    try {
+      official = await officialCatalog.search(
         query,
         limit: officialLimit,
-      ),
-    ]);
+      );
+    } catch (_) {
+      official = const [];
+    }
 
-    final professional = results[0];
     final snapshotKeys = professional
         .where((food) => food.sourceType == FoodSourceType.officialSnapshot)
         .map(_sourceKey)
         .whereType<String>()
         .toSet();
 
-    final official = results[1]
+    official = official
         .where((food) {
           final key = _sourceKey(food);
           return key == null || !snapshotKeys.contains(key);
