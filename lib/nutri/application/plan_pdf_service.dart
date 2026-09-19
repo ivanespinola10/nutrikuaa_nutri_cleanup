@@ -5,6 +5,7 @@ import 'package:pdf/widgets.dart' as pw;
 
 import '../data/nutri_database.dart';
 import '../data/patient_repository.dart';
+import '../domain/app_settings.dart';
 import '../domain/meal_plan.dart';
 import '../domain/nutrition/nutrient.dart';
 import '../domain/patient.dart';
@@ -15,16 +16,6 @@ import 'plan_nutrition_service.dart';
 import 'recipe_service.dart';
 
 class PlanPdfService {
-  static const _days = [
-    'Lunes',
-    'Martes',
-    'Miércoles',
-    'Jueves',
-    'Viernes',
-    'Sábado',
-    'Domingo',
-  ];
-
   final NutriDatabase database;
   final PatientRepository patients;
   final MealPlanService plans;
@@ -49,6 +40,7 @@ class PlanPdfService {
     Uint8List? logoBytes,
     bool includeNutritionSummary = true,
     bool includeRecipeInstructions = true,
+    AppSettings settings = const AppSettings(),
   }) async {
     final details = await plans.getById(planId);
     if (details == null) {
@@ -60,15 +52,20 @@ class PlanPdfService {
       throw StateError('Patient referenced by plan does not exist.');
     }
 
+    final labels = _PdfLabels(settings.languageCode);
     final targets = await patients.targetsFor(patient.id!);
     final summary = await nutrition.calculate(planId);
-    final resolved = await _resolveMeals(details);
+    final resolved = await _resolveMeals(
+      details,
+      labels: labels,
+      unitSystem: settings.unitSystem,
+    );
     final recipeInstructions = includeRecipeInstructions
         ? await _resolveRecipeInstructions(details)
         : const <_RecipeInstruction>[];
 
     final document = pw.Document(
-      title: 'Plan nutricional - ${patient.displayName}',
+      title: '${labels.planTitle} - ${patient.displayName}',
       author: profile.fullName.trim().isEmpty
           ? 'Nutrikuaa Nutri'
           : profile.fullName.trim(),
@@ -88,10 +85,12 @@ class PlanPdfService {
           profile: profile,
           logo: logo,
           primary: primary,
+          labels: labels,
         ),
         footer: (context) => _footer(
           context,
           profile: profile,
+          labels: labels,
         ),
         build: (context) => [
           pw.SizedBox(height: 10),
@@ -108,11 +107,12 @@ class PlanPdfService {
               targets: targets,
               primary: primary,
               border: border,
+              labels: labels,
             ),
           ],
           pw.SizedBox(height: 16),
           pw.Text(
-            'Plan semanal',
+            labels.weeklyPlan,
             style: pw.TextStyle(
               fontSize: 17,
               fontWeight: pw.FontWeight.bold,
@@ -133,13 +133,14 @@ class PlanPdfService {
               primary: primary,
               soft: soft,
               border: border,
+              labels: labels,
             );
           }),
           if (details.plan.notes != null &&
               details.plan.notes!.trim().isNotEmpty) ...[
             pw.SizedBox(height: 14),
             _textSection(
-              title: 'Indicaciones generales',
+              title: labels.generalInstructions,
               body: details.plan.notes!.trim(),
               primary: primary,
               border: border,
@@ -148,7 +149,7 @@ class PlanPdfService {
           if (recipeInstructions.isNotEmpty) ...[
             pw.SizedBox(height: 14),
             pw.Text(
-              'Preparaciones',
+              labels.preparations,
               style: pw.TextStyle(
                 fontSize: 15,
                 fontWeight: pw.FontWeight.bold,
@@ -192,7 +193,11 @@ class PlanPdfService {
     return document.save();
   }
 
-  Future<List<_ResolvedMeal>> _resolveMeals(MealPlanDetails details) async {
+  Future<List<_ResolvedMeal>> _resolveMeals(
+    MealPlanDetails details, {
+    required _PdfLabels labels,
+    required UnitSystem unitSystem,
+  }) async {
     final meals = <_ResolvedMeal>[];
 
     for (final mealWithItems in details.meals) {
@@ -213,8 +218,8 @@ class PlanPdfService {
             _ResolvedItem(
               label: label,
               quantity: portionText == null || portionText.isEmpty
-                  ? '${_number(grams)} g'
-                  : '$portionText (${_number(grams)} g)',
+                  ? _formatFoodWeight(grams, unitSystem)
+                  : '$portionText (${_formatFoodWeight(grams, unitSystem)})',
             ),
           );
         } else {
@@ -225,7 +230,7 @@ class PlanPdfService {
           items.add(
             _ResolvedItem(
               label: recipe.recipe.name,
-              quantity: '${_number(servings)} porción(es)',
+              quantity: '${_number(servings)} ${labels.servings}',
             ),
           );
         }
@@ -276,6 +281,7 @@ class PlanPdfService {
     required ProfessionalProfile profile,
     required pw.MemoryImage? logo,
     required PdfColor primary,
+    required _PdfLabels labels,
   }) {
     final professionalLines = <String>[
       if (profile.practiceName != null &&
@@ -312,7 +318,7 @@ class PlanPdfService {
             children: [
               pw.Text(
                 professionalLines.isEmpty
-                    ? 'Plan nutricional'
+                    ? labels.planTitle
                     : professionalLines.first,
                 style: pw.TextStyle(
                   fontSize: 15,
@@ -333,7 +339,7 @@ class PlanPdfService {
           crossAxisAlignment: pw.CrossAxisAlignment.end,
           children: [
             pw.Text(
-              'PLAN NUTRICIONAL',
+              labels.planTitle.toUpperCase(),
               style: pw.TextStyle(
                 fontSize: 12,
                 fontWeight: pw.FontWeight.bold,
@@ -356,6 +362,7 @@ class PlanPdfService {
   pw.Widget _footer(
     pw.Context context, {
     required ProfessionalProfile profile,
+    required _PdfLabels labels,
   }) {
     final contact = [
       if (profile.phone != null && profile.phone!.trim().isNotEmpty)
@@ -388,7 +395,7 @@ class PlanPdfService {
             ),
           ),
           pw.Text(
-            'Página ${context.pageNumber} de ${context.pagesCount}',
+            '${labels.page} ${context.pageNumber} ${labels.ofWord} ${context.pagesCount}',
             style: const pw.TextStyle(
               fontSize: 7.5,
               color: PdfColors.grey600,
@@ -454,6 +461,7 @@ class PlanPdfService {
     required List<NutritionTarget> targets,
     required PdfColor primary,
     required PdfColor border,
+    required _PdfLabels labels,
   }) {
     final wanted = [
       NutrientCodes.energyKcal,
@@ -485,7 +493,7 @@ class PlanPdfService {
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
           pw.Text(
-            'Objetivos diarios',
+            labels.dailyTargets,
             style: pw.TextStyle(
               fontSize: 10,
               fontWeight: pw.FontWeight.bold,
@@ -499,7 +507,7 @@ class PlanPdfService {
             children: values
                 .map(
                   (target) => pw.Text(
-                    '${_targetLabel(target.nutrientCode)}: '
+                    '${labels.nutrient(target.nutrientCode)}: '
                     '${_number(target.targetValue)} '
                     '${_unit(target.unit)}',
                     style: const pw.TextStyle(fontSize: 8.5),
@@ -520,6 +528,7 @@ class PlanPdfService {
     required PdfColor primary,
     required PdfColor soft,
     required PdfColor border,
+    required _PdfLabels labels,
   }) {
     final nonEmptyMeals = meals.where((meal) => meal.items.isNotEmpty).toList();
 
@@ -548,7 +557,7 @@ class PlanPdfService {
               children: [
                 pw.Expanded(
                   child: pw.Text(
-                    _days[dayIndex],
+                    labels.days[dayIndex],
                     style: pw.TextStyle(
                       fontSize: 12,
                       fontWeight: pw.FontWeight.bold,
@@ -574,7 +583,7 @@ class PlanPdfService {
             padding: const pw.EdgeInsets.all(10),
             child: nonEmptyMeals.isEmpty
                 ? pw.Text(
-                    'Sin alimentos ni recetas.',
+                    labels.emptyDay,
                     style: const pw.TextStyle(
                       fontSize: 9,
                       color: PdfColors.grey600,
@@ -589,7 +598,7 @@ class PlanPdfService {
                               crossAxisAlignment: pw.CrossAxisAlignment.start,
                               children: [
                                 pw.Text(
-                                  meal.name,
+                                  labels.meal(meal.name),
                                   style: pw.TextStyle(
                                     fontSize: 9.5,
                                     fontWeight: pw.FontWeight.bold,
@@ -688,23 +697,6 @@ class PlanPdfService {
     return '${two(value.day)}/${two(value.month)}/${value.year}';
   }
 
-  String _targetLabel(String code) {
-    switch (code) {
-      case NutrientCodes.energyKcal:
-        return 'Energía';
-      case NutrientCodes.protein:
-        return 'Proteína';
-      case NutrientCodes.carbohydrate:
-        return 'Carbohidratos';
-      case NutrientCodes.fat:
-        return 'Grasas';
-      case NutrientCodes.fiber:
-        return 'Fibra';
-      default:
-        return code;
-    }
-  }
-
   String _unit(NutrientUnit unit) {
     switch (unit) {
       case NutrientUnit.kilocalorie:
@@ -718,6 +710,17 @@ class PlanPdfService {
       case NutrientUnit.internationalUnit:
         return 'UI';
     }
+  }
+
+  static String _formatFoodWeight(
+    double grams,
+    UnitSystem unitSystem,
+  ) {
+    if (unitSystem == UnitSystem.imperial) {
+      final ounces = grams / 28.349523125;
+      return '${_number(ounces)} oz';
+    }
+    return '${_number(grams)} g';
   }
 
   static String _number(double value) {
@@ -758,4 +761,145 @@ class _RecipeInstruction {
     required this.name,
     required this.instructions,
   });
+}
+
+
+class _PdfLabels {
+  final String languageCode;
+
+  _PdfLabels(String languageCode)
+      : languageCode = const ['es', 'en', 'pt'].contains(languageCode)
+            ? languageCode
+            : 'es';
+
+  List<String> get days {
+    switch (languageCode) {
+      case 'en':
+        return const [
+          'Monday',
+          'Tuesday',
+          'Wednesday',
+          'Thursday',
+          'Friday',
+          'Saturday',
+          'Sunday',
+        ];
+      case 'pt':
+        return const [
+          'Segunda-feira',
+          'Terça-feira',
+          'Quarta-feira',
+          'Quinta-feira',
+          'Sexta-feira',
+          'Sábado',
+          'Domingo',
+        ];
+      default:
+        return const [
+          'Lunes',
+          'Martes',
+          'Miércoles',
+          'Jueves',
+          'Viernes',
+          'Sábado',
+          'Domingo',
+        ];
+    }
+  }
+
+  String get planTitle => _t(
+        es: 'Plan nutricional',
+        en: 'Nutrition plan',
+        pt: 'Plano nutricional',
+      );
+
+  String get weeklyPlan => _t(
+        es: 'Plan semanal',
+        en: 'Weekly plan',
+        pt: 'Plano semanal',
+      );
+
+  String get generalInstructions => _t(
+        es: 'Indicaciones generales',
+        en: 'General instructions',
+        pt: 'Orientações gerais',
+      );
+
+  String get preparations => _t(
+        es: 'Preparaciones',
+        en: 'Preparations',
+        pt: 'Preparações',
+      );
+
+  String get dailyTargets => _t(
+        es: 'Objetivos diarios',
+        en: 'Daily targets',
+        pt: 'Metas diárias',
+      );
+
+  String get emptyDay => _t(
+        es: 'Sin alimentos ni recetas.',
+        en: 'No foods or recipes.',
+        pt: 'Sem alimentos ou receitas.',
+      );
+
+  String get servings => _t(
+        es: 'porción(es)',
+        en: 'serving(s)',
+        pt: 'porção(ões)',
+      );
+
+  String get page => _t(es: 'Página', en: 'Page', pt: 'Página');
+  String get ofWord => _t(es: 'de', en: 'of', pt: 'de');
+
+  String nutrient(String code) {
+    switch (code) {
+      case NutrientCodes.energyKcal:
+        return _t(es: 'Energía', en: 'Energy', pt: 'Energia');
+      case NutrientCodes.protein:
+        return _t(es: 'Proteína', en: 'Protein', pt: 'Proteína');
+      case NutrientCodes.carbohydrate:
+        return _t(
+          es: 'Carbohidratos',
+          en: 'Carbohydrates',
+          pt: 'Carboidratos',
+        );
+      case NutrientCodes.fat:
+        return _t(es: 'Grasas', en: 'Fat', pt: 'Gorduras');
+      case NutrientCodes.fiber:
+        return _t(es: 'Fibra', en: 'Fiber', pt: 'Fibra');
+      default:
+        return code;
+    }
+  }
+
+  String meal(String value) {
+    final key = value.trim().toLowerCase();
+    const map = {
+      'desayuno': ['Breakfast', 'Café da manhã'],
+      'media mañana': ['Morning snack', 'Lanche da manhã'],
+      'almuerzo': ['Lunch', 'Almoço'],
+      'merienda': ['Afternoon snack', 'Lanche da tarde'],
+      'cena': ['Dinner', 'Jantar'],
+    };
+
+    final translated = map[key];
+    if (translated == null || languageCode == 'es') return value;
+    return languageCode == 'en' ? translated[0] : translated[1];
+  }
+
+  String _t({
+    required String es,
+    required String en,
+    required String pt,
+  }) {
+    switch (languageCode) {
+      case 'en':
+        return en;
+      case 'pt':
+        return pt;
+      default:
+        return es;
+    }
+  }
 }
