@@ -14,7 +14,7 @@ class NutriDatabase {
   static final NutriDatabase instance = NutriDatabase._();
 
   static const databaseName = 'nutrikuaa_nutri.db';
-  static const databaseVersion = 5;
+  static const databaseVersion = 6;
 
   Database? _database;
 
@@ -134,6 +134,20 @@ class NutriDatabase {
       'CREATE INDEX idx_patient_measurements_patient_date '
       'ON patient_measurements(patient_id, measured_at DESC)',
     );
+
+    await db.execute('''
+      CREATE TABLE professional_profile (
+        id INTEGER PRIMARY KEY CHECK (id = 1),
+        full_name TEXT NOT NULL DEFAULT '',
+        credentials TEXT,
+        registration_number TEXT,
+        practice_name TEXT,
+        phone TEXT,
+        email TEXT,
+        footer_text TEXT,
+        updated_at TEXT NOT NULL
+      )
+    ''');
 
 
     await db.execute('''
@@ -293,6 +307,22 @@ class NutriDatabase {
         'CREATE INDEX IF NOT EXISTS idx_patient_measurements_patient_date '
         'ON patient_measurements(patient_id, measured_at DESC)',
       );
+    }
+
+    if (oldVersion < 6) {
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS professional_profile (
+          id INTEGER PRIMARY KEY CHECK (id = 1),
+          full_name TEXT NOT NULL DEFAULT '',
+          credentials TEXT,
+          registration_number TEXT,
+          practice_name TEXT,
+          phone TEXT,
+          email TEXT,
+          footer_text TEXT,
+          updated_at TEXT NOT NULL
+        )
+      ''');
     }
 
     // Future migrations must be additive and preserve professional data.
