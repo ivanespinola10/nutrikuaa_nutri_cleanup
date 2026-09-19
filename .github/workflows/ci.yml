@@ -6,6 +6,10 @@ on:
     branches:
       - main
 
+concurrency:
+  group: nutrikuaa-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   flutter-tests:
     runs-on: ubuntu-latest
