@@ -7,10 +7,12 @@ import '../domain/app_settings.dart';
 
 class SettingsWorkspacePage extends StatefulWidget {
   final VoidCallback onDataRestored;
+  final VoidCallback onSettingsChanged;
 
   const SettingsWorkspacePage({
     super.key,
     required this.onDataRestored,
+    required this.onSettingsChanged,
   });
 
   @override
@@ -77,6 +79,7 @@ class _SettingsWorkspacePageState extends State<SettingsWorkspacePage> {
         ),
       );
       _country.text = country;
+      widget.onSettingsChanged();
       _message('Configuración guardada.');
     });
   }
