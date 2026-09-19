@@ -356,10 +356,15 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
           _message('Los gramos deben ser mayores que cero.');
           return;
         }
+        final portionNote = _usePortion && _selectedPortion != null
+            ? '${_portionAmount.text.trim()} × ${_selectedPortion!.measure ?? 'porción'}'
+            : null;
+
         await _placement.addSelectedFoodToMeal(
           mealId: mealId,
           selectedFood: food,
           quantityGrams: grams,
+          notes: portionNote,
         );
       }
 
@@ -1247,7 +1252,11 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
   Widget _mealItemTile(MealItem item) {
     final label = _itemLabels[item.id] ?? 'Elemento';
     final detail = item.itemType == MealItemType.food
-        ? '${(item.quantityGrams ?? 0).toStringAsFixed(0)} g'
+        ? [
+            '${(item.quantityGrams ?? 0).toStringAsFixed(0)} g',
+            if (item.notes != null && item.notes!.trim().isNotEmpty)
+              item.notes!.trim(),
+          ].join(' · ')
         : '${(item.servings ?? 0).toStringAsFixed(1)} porción(es)';
 
     return ListTile(
