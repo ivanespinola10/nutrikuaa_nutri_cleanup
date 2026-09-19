@@ -12,11 +12,16 @@ class NutriMainShell extends StatefulWidget {
 
 class _NutriMainShellState extends State<NutriMainShell> {
   int _index = 0;
+  int _plannerRefreshToken = 0;
 
-  static const _pages = [
-    WeeklyPlannerPage(),
-    NutriCatalogWorkspacePage(),
-  ];
+  void _selectPage(int value) {
+    setState(() {
+      _index = value;
+      if (value == 0) {
+        _plannerRefreshToken++;
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,9 +35,7 @@ class _NutriMainShellState extends State<NutriMainShell> {
               children: [
                 NavigationRail(
                   selectedIndex: _index,
-                  onDestinationSelected: (value) {
-                    setState(() => _index = value);
-                  },
+                  onDestinationSelected: _selectPage,
                   labelType: NavigationRailLabelType.all,
                   leading: const Padding(
                     padding: EdgeInsets.only(top: 14, bottom: 18),
@@ -64,7 +67,12 @@ class _NutriMainShellState extends State<NutriMainShell> {
                 Expanded(
                   child: IndexedStack(
                     index: _index,
-                    children: _pages,
+                    children: [
+                      WeeklyPlannerPage(
+                        refreshToken: _plannerRefreshToken,
+                      ),
+                      const NutriCatalogWorkspacePage(),
+                    ],
                   ),
                 ),
               ],
@@ -75,13 +83,16 @@ class _NutriMainShellState extends State<NutriMainShell> {
         return Scaffold(
           body: IndexedStack(
             index: _index,
-            children: _pages,
+            children: [
+              WeeklyPlannerPage(
+                refreshToken: _plannerRefreshToken,
+              ),
+              const NutriCatalogWorkspacePage(),
+            ],
           ),
           bottomNavigationBar: NavigationBar(
             selectedIndex: _index,
-            onDestinationSelected: (value) {
-              setState(() => _index = value);
-            },
+            onDestinationSelected: _selectPage,
             destinations: const [
               NavigationDestination(
                 icon: Icon(Icons.calendar_view_week_outlined),
