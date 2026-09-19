@@ -14,7 +14,12 @@ import '../domain/patient.dart';
 import '../domain/recipe.dart';
 
 class WeeklyPlannerPage extends StatefulWidget {
-  const WeeklyPlannerPage({super.key});
+  final int refreshToken;
+
+  const WeeklyPlannerPage({
+    super.key,
+    this.refreshToken = 0,
+  });
 
   @override
   State<WeeklyPlannerPage> createState() => _WeeklyPlannerPageState();
@@ -80,6 +85,14 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
   }
 
   @override
+  void didUpdateWidget(covariant WeeklyPlannerPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.refreshToken != widget.refreshToken) {
+      _refreshFromDatabase();
+    }
+  }
+
+  @override
   void dispose() {
     _query.dispose();
     _grams.dispose();
@@ -90,22 +103,43 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
   Future<void> _initialize() async {
     try {
       await _database.database;
-      final patients = await _patients.search('', activeOnly: false);
-      if (!mounted) return;
-
-      setState(() {
-        _patientList = patients;
-        _selectedPatientId = patients.isEmpty ? null : patients.first.id;
-      });
-
-      if (_selectedPatientId != null) {
-        await _loadPatient(_selectedPatientId!);
-      }
+      await _refreshFromDatabase();
     } catch (error) {
       if (mounted) setState(() => _error = error.toString());
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  Future<void> _refreshFromDatabase() async {
+    final patients = await _patients.search('', activeOnly: false);
+    if (!mounted) return;
+
+    if (patients.isEmpty) {
+      setState(() {
+        _patientList = const [];
+        _selectedPatientId = null;
+        _patientPlans = const [];
+        _targets = const [];
+        _selectedPlanId = null;
+        _details = null;
+        _summary = null;
+      });
+      return;
+    }
+
+    var patientId = _selectedPatientId;
+    final stillExists = patients.any((patient) => patient.id == patientId);
+    if (!stillExists) {
+      patientId = patients.first.id;
+    }
+
+    setState(() {
+      _patientList = patients;
+      _selectedPatientId = patientId;
+    });
+
+    await _loadPatient(patientId!);
   }
 
   Future<void> _loadPatient(int patientId) async {
@@ -352,17 +386,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
         actions: [
           IconButton(
             tooltip: 'Actualizar pacientes y planes',
-            onPressed: _busy
-                ? null
-                : () async {
-                    final patients =
-                        await _patients.search('', activeOnly: false);
-                    if (!mounted) return;
-                    setState(() => _patientList = patients);
-                    if (_selectedPatientId != null) {
-                      await _loadPatient(_selectedPatientId!);
-                    }
-                  },
+            onPressed: _busy ? null : _refreshFromDatabase,
             icon: const Icon(Icons.refresh),
           ),
           const Padding(
@@ -379,9 +403,20 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
 
   Widget _buildBody() {
     if (_patientList.isEmpty) {
-      return const Center(
-        child: Text(
-          'Todavía no hay pacientes. Créalo primero en Biblioteca.',
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Todavía no hay pacientes. Créalo primero en Biblioteca.',
+            ),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: _busy ? null : _refreshFromDatabase,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Actualizar pacientes'),
+            ),
+          ],
         ),
       );
     }
