@@ -13,11 +13,11 @@ Assert-LastExitCode "flutter --version"
 flutter pub get
 Assert-LastExitCode "flutter pub get"
 
-Write-Host "Actualizando runtime SQLite Web..." -ForegroundColor Cyan
+Write-Host "Generando runtime SQLite Web aislado..." -ForegroundColor Cyan
 if (Test-Path "web/sqlite3.wasm") { Remove-Item "web/sqlite3.wasm" -Force }
 if (Test-Path "web/sqflite_sw.js") { Remove-Item "web/sqflite_sw.js" -Force }
 
-dart run sqflite_common_ffi_web:setup --force
+dart run tools/setup_sqlite_web.dart
 Assert-LastExitCode "SQLite Web setup"
 
 if (-not (Test-Path "web/sqlite3.wasm")) {
