@@ -28,9 +28,9 @@ Future<void> main() async {
       [
         'pub',
         'add',
-        'sqflite_common_ffi_web:1.1.1',
-        'sqflite_common_ffi:2.4.0+3',
-        'sqlite3:3.1.2',
+        'sqflite_common_ffi_web:1.0.2',
+        'sqflite_common_ffi:2.3.7+1',
+        'sqlite3:2.9.4',
       ],
       workingDirectory: projectDir.path,
     );
