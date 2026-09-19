@@ -273,6 +273,102 @@ void main() {
     expect(duplicated.meals.single.items, hasLength(1));
   });
 
+  test('weekly plan supports reusable meals and multiple days', () async {
+    final patients = PatientRepository();
+    final patientId = await patients.create(
+      Patient(firstName: 'Weekly', lastName: 'Tester'),
+    );
+
+    final foods = FoodLibraryService();
+    final foodId = await foods.addProfessionalFood(
+      name: 'Rice test',
+      nutrients: const [
+        NutrientValue(
+          code: NutrientCodes.energyKcal,
+          valuePer100g: 130,
+          unit: NutrientUnit.kilocalorie,
+        ),
+        NutrientValue(
+          code: NutrientCodes.protein,
+          valuePer100g: 2.7,
+          unit: NutrientUnit.gram,
+        ),
+      ],
+    );
+
+    final plans = MealPlanService();
+    final planId = await plans.createPlan(
+      MealPlan(
+        patientId: patientId,
+        name: 'Weekly test',
+      ),
+    );
+
+    final mondayBreakfast = await plans.getOrCreateMeal(
+      planId: planId,
+      dayIndex: 0,
+      name: 'Desayuno',
+      sortOrder: 0,
+    );
+    final sameMondayBreakfast = await plans.getOrCreateMeal(
+      planId: planId,
+      dayIndex: 0,
+      name: 'Desayuno',
+      sortOrder: 0,
+    );
+    expect(sameMondayBreakfast, mondayBreakfast);
+
+    final tuesdayLunch = await plans.getOrCreateMeal(
+      planId: planId,
+      dayIndex: 1,
+      name: 'Almuerzo',
+      sortOrder: 2,
+    );
+
+    await plans.addFood(
+      mealId: mondayBreakfast,
+      foodId: foodId,
+      quantityGrams: 100,
+    );
+    final secondItemId = await plans.addFood(
+      mealId: mondayBreakfast,
+      foodId: foodId,
+      quantityGrams: 50,
+    );
+    await plans.addFood(
+      mealId: tuesdayLunch,
+      foodId: foodId,
+      quantityGrams: 200,
+    );
+
+    var summary = await PlanNutritionService().calculate(planId);
+    expect(
+      summary.totalsForDay(0).value(NutrientCodes.energyKcal),
+      closeTo(195, 0.001),
+    );
+    expect(
+      summary.totalsForDay(1).value(NutrientCodes.energyKcal),
+      closeTo(260, 0.001),
+    );
+
+    await plans.updateFoodQuantity(
+      mealItemId: secondItemId,
+      quantityGrams: 100,
+    );
+    summary = await PlanNutritionService().calculate(planId);
+    expect(
+      summary.totalsForDay(0).value(NutrientCodes.energyKcal),
+      closeTo(260, 0.001),
+    );
+
+    await plans.removeMealItem(secondItemId);
+    summary = await PlanNutritionService().calculate(planId);
+    expect(
+      summary.totalsForDay(0).value(NutrientCodes.energyKcal),
+      closeTo(130, 0.001),
+    );
+  });
+
   test('Spanish alias finds local snapshot and hides official duplicate', () async {
     final officialCatalog = OfficialFoodCatalog(
       open: () async => officialDb,
