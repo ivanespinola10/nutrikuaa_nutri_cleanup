@@ -31,14 +31,14 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Prepare SQLite web runtime
-        run: dart run tools/setup_sqlite_web.dart
-
       - name: Analyze
         run: flutter analyze --no-fatal-infos --no-fatal-warnings
 
       - name: Run Flutter tests
         run: flutter test
+
+      - name: Prepare SQLite web runtime
+        run: dart run tools/setup_sqlite_web.dart
 
       - name: Build web app
         run: flutter build web --release
