@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 class ProfessionalProfile {
   final String fullName;
   final String? credentials;
@@ -6,6 +8,8 @@ class ProfessionalProfile {
   final String? phone;
   final String? email;
   final String? footerText;
+  final Uint8List? logoBytes;
+  final String? logoFileName;
 
   const ProfessionalProfile({
     required this.fullName,
@@ -15,6 +19,8 @@ class ProfessionalProfile {
     this.phone,
     this.email,
     this.footerText,
+    this.logoBytes,
+    this.logoFileName,
   });
 
   ProfessionalProfile copyWith({
@@ -25,6 +31,9 @@ class ProfessionalProfile {
     String? phone,
     String? email,
     String? footerText,
+    Uint8List? logoBytes,
+    String? logoFileName,
+    bool clearLogo = false,
   }) {
     return ProfessionalProfile(
       fullName: fullName ?? this.fullName,
@@ -34,6 +43,8 @@ class ProfessionalProfile {
       phone: phone ?? this.phone,
       email: email ?? this.email,
       footerText: footerText ?? this.footerText,
+      logoBytes: clearLogo ? null : (logoBytes ?? this.logoBytes),
+      logoFileName: clearLogo ? null : (logoFileName ?? this.logoFileName),
     );
   }
 }
