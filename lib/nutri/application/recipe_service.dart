@@ -88,6 +88,21 @@ class RecipeService {
     }
 
     final db = await database.database;
+
+    final usage = Sqflite.firstIntValue(
+          await db.rawQuery(
+            'SELECT COUNT(*) FROM meal_items WHERE recipe_id = ?',
+            [recipeId],
+          ),
+        ) ??
+        0;
+
+    if (usage > 0) {
+      throw StateError(
+        'Recipe is already used in a meal plan. Duplicate it before editing.',
+      );
+    }
+
     await db.transaction((txn) async {
       await txn.update(
         'recipes',
