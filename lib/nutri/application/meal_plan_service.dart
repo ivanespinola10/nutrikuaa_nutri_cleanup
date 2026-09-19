@@ -62,6 +62,59 @@ class MealPlanService {
     });
   }
 
+  Future<int> getOrCreateMeal({
+    required int planId,
+    required int dayIndex,
+    required String name,
+    int sortOrder = 0,
+  }) async {
+    final db = await database.database;
+    final rows = await db.query(
+      'meals',
+      columns: ['id'],
+      where: 'plan_id = ? AND day_index = ? AND name = ?',
+      whereArgs: [planId, dayIndex, name.trim()],
+      limit: 1,
+    );
+
+    if (rows.isNotEmpty) {
+      return rows.first['id'] as int;
+    }
+
+    return addMeal(
+      planId: planId,
+      dayIndex: dayIndex,
+      name: name,
+      sortOrder: sortOrder,
+    );
+  }
+
+  Future<void> updateFoodQuantity({
+    required int mealItemId,
+    required double quantityGrams,
+  }) async {
+    if (quantityGrams <= 0) {
+      throw ArgumentError('Food quantity must be greater than zero.');
+    }
+
+    final db = await database.database;
+    await db.update(
+      'meal_items',
+      {'quantity_g': quantityGrams},
+      where: 'id = ? AND item_type = ?',
+      whereArgs: [mealItemId, MealItemType.food.name],
+    );
+  }
+
+  Future<void> removeMealItem(int mealItemId) async {
+    final db = await database.database;
+    await db.delete(
+      'meal_items',
+      where: 'id = ?',
+      whereArgs: [mealItemId],
+    );
+  }
+
   Future<int> addFood({
     required int mealId,
     required int foodId,
