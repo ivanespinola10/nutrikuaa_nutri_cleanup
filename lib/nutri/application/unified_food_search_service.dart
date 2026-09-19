@@ -36,16 +36,35 @@ class UnifiedFoodSearchService {
     int professionalLimit = 20,
     int officialLimit = 50,
   }) async {
+    final officialQuery =
+        OfficialFoodSearchAliases.forOfficialCatalog(query);
+
     final professional = await privateDatabase.searchFoods(
       query,
       countryCode: countryCode,
       limit: professionalLimit,
     );
 
+    if (officialQuery.toLowerCase() != query.trim().toLowerCase()) {
+      final translatedProfessional = await privateDatabase.searchFoods(
+        officialQuery,
+        countryCode: countryCode,
+        limit: professionalLimit,
+      );
+
+      final existingIds = professional.map((food) => food.id).toSet();
+      for (final food in translatedProfessional) {
+        if (!existingIds.contains(food.id)) {
+          professional.add(food);
+          existingIds.add(food.id);
+        }
+      }
+    }
+
     List<Food> official;
     try {
       official = await officialCatalog.search(
-        OfficialFoodSearchAliases.forOfficialCatalog(query),
+        officialQuery,
         limit: officialLimit,
       );
     } catch (_) {
