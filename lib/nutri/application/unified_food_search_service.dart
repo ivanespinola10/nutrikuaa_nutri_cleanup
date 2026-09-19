@@ -1,6 +1,7 @@
 import '../data/nutri_database.dart';
 import '../data/official_food_catalog.dart';
 import '../domain/food.dart';
+import 'official_food_search_aliases.dart';
 
 class FoodSearchResults {
   final List<Food> professional;
@@ -44,7 +45,7 @@ class UnifiedFoodSearchService {
     List<Food> official;
     try {
       official = await officialCatalog.search(
-        query,
+        OfficialFoodSearchAliases.forOfficialCatalog(query),
         limit: officialLimit,
       );
     } catch (_) {
