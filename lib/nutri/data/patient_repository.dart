@@ -129,6 +129,72 @@ class PatientRepository {
   Future<List<NutritionTarget>> targetsFor(int patientId) =>
       database.getNutritionTargets(patientId);
 
+  Future<int> addMeasurement(PatientMeasurement measurement) async {
+    if (measurement.weightKg != null && measurement.weightKg! <= 0) {
+      throw ArgumentError('Weight must be greater than zero.');
+    }
+    if (measurement.heightCm != null && measurement.heightCm! <= 0) {
+      throw ArgumentError('Height must be greater than zero.');
+    }
+    if (measurement.waistCm != null && measurement.waistCm! <= 0) {
+      throw ArgumentError('Waist circumference must be greater than zero.');
+    }
+
+    final db = await database.database;
+    return db.insert('patient_measurements', {
+      'patient_id': measurement.patientId,
+      'measured_at': measurement.measuredAt.toIso8601String(),
+      'weight_kg': measurement.weightKg,
+      'height_cm': measurement.heightCm,
+      'waist_cm': measurement.waistCm,
+      'notes': measurement.notes,
+    });
+  }
+
+  Future<List<PatientMeasurement>> measurementsFor(
+    int patientId, {
+    int limit = 100,
+  }) async {
+    final db = await database.database;
+    final rows = await db.query(
+      'patient_measurements',
+      where: 'patient_id = ?',
+      whereArgs: [patientId],
+      orderBy: 'measured_at DESC, id DESC',
+      limit: limit,
+    );
+
+    return rows.map(_measurementFromMap).toList();
+  }
+
+  Future<PatientMeasurement?> latestMeasurement(int patientId) async {
+    final measurements = await measurementsFor(patientId, limit: 1);
+    return measurements.isEmpty ? null : measurements.first;
+  }
+
+  Future<void> deleteMeasurement(int measurementId) async {
+    final db = await database.database;
+    await db.delete(
+      'patient_measurements',
+      where: 'id = ?',
+      whereArgs: [measurementId],
+    );
+  }
+
+  static PatientMeasurement _measurementFromMap(
+    Map<String, Object?> row,
+  ) {
+    return PatientMeasurement(
+      id: row['id'] as int,
+      patientId: row['patient_id'] as int,
+      measuredAt: DateTime.parse(row['measured_at'] as String),
+      weightKg: (row['weight_kg'] as num?)?.toDouble(),
+      heightCm: (row['height_cm'] as num?)?.toDouble(),
+      waistCm: (row['waist_cm'] as num?)?.toDouble(),
+      notes: row['notes'] as String?,
+    );
+  }
+
   static Patient _fromMap(Map<String, Object?> row) {
     return Patient(
       id: row['id'] as int,
