@@ -332,3 +332,52 @@ objetivos nutricionales
   ↓
 planes e historial
 ```
+
+
+# V0.7.1 — branding profesional local
+
+La V0.7.1 permite que cada profesional use su propio logo sin nube.
+
+## Incluye
+
+- selector local de archivos multiplataforma;
+- formatos aceptados: PNG y JPG/JPEG;
+- límite de 2 MB;
+- validación básica de firma del archivo;
+- vista previa del logo;
+- almacenamiento local del logo dentro de SQLite;
+- nombre original del archivo;
+- uso automático del logo profesional en PDFs;
+- fallback al logo Nutrikuaa;
+- opción para volver al logo Nutrikuaa en cualquier momento;
+- migración aditiva de base de datos v6 → v7.
+
+## Prueba de aceptación V0.7.1
+
+1. Abrir **Documentos**.
+2. Confirmar que inicialmente aparece el logo Nutrikuaa o el logo ya guardado.
+3. Pulsar **Cargar logo**.
+4. Elegir un PNG o JPG menor de 2 MB.
+5. Confirmar que la vista previa cambia.
+6. Generar el PDF de un paciente.
+7. Confirmar que el logo profesional aparece en la cabecera.
+8. Cerrar la app y volver a ejecutar Chrome en puerto 8080.
+9. Confirmar que el logo profesional sigue guardado.
+10. Pulsar **Usar logo Nutrikuaa**.
+11. Generar otro PDF y confirmar el fallback.
+
+## Próximo hito
+
+V0.8 cerrará la portabilidad y configuración del producto:
+
+```text
+Configuración
+   ↓
+idioma / región / unidades
+   ↓
+backup local
+   ↓
+restaurar backup
+   ↓
+datos portables
+```
