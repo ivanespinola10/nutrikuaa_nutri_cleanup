@@ -1210,12 +1210,34 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
                           ),
                         ),
                       ),
-                      OutlinedButton.icon(
-                        onPressed: () => setState(
-                          () => _selectedMealName = mealName,
-                        ),
-                        icon: const Icon(Icons.add, size: 18),
-                        label: Text(selected ? 'Seleccionada' : 'Agregar aquí'),
+                      Wrap(
+                        spacing: 6,
+                        children: [
+                          if (meal != null && meal.items.isNotEmpty)
+                            IconButton(
+                              tooltip: 'Copiar comida a otro día',
+                              onPressed: _busy
+                                  ? null
+                                  : () => _copyMealToDay(meal),
+                              icon: const Icon(Icons.copy_outlined),
+                            ),
+                          if (meal != null && meal.items.isNotEmpty)
+                            IconButton(
+                              tooltip: 'Vaciar comida',
+                              onPressed:
+                                  _busy ? null : () => _clearMeal(meal),
+                              icon: const Icon(Icons.cleaning_services_outlined),
+                            ),
+                          OutlinedButton.icon(
+                            onPressed: () => setState(
+                              () => _selectedMealName = mealName,
+                            ),
+                            icon: const Icon(Icons.add, size: 18),
+                            label: Text(
+                              selected ? 'Seleccionada' : 'Agregar aquí',
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -1249,12 +1271,24 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
       ),
       title: Text(label),
       subtitle: Text(detail),
-      trailing: IconButton(
-        tooltip: 'Eliminar',
-        onPressed: _busy || item.id == null
-            ? null
-            : () => _removeItem(item.id!),
-        icon: const Icon(Icons.delete_outline),
+      trailing: Wrap(
+        spacing: 2,
+        children: [
+          IconButton(
+            tooltip: 'Editar cantidad',
+            onPressed: _busy || item.id == null
+                ? null
+                : () => _editItem(item),
+            icon: const Icon(Icons.edit_outlined),
+          ),
+          IconButton(
+            tooltip: 'Eliminar',
+            onPressed: _busy || item.id == null
+                ? null
+                : () => _removeItem(item.id!),
+            icon: const Icon(Icons.delete_outline),
+          ),
+        ],
       ),
     );
   }
