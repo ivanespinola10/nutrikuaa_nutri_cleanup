@@ -113,6 +113,23 @@ void main() {
       'gram_weight': 150.0,
       'sequence': 1,
     });
+
+    await officialDb.insert('foods', {
+      'id': 202,
+      'source_food_id': '202',
+      'name': 'Milk, whole',
+      'data_type': 'foundation_food',
+      'source_name': 'USDA FoodData Central',
+      'source_release': 'USDA FDC 2026-04',
+    });
+
+    await officialDb.insert('food_nutrients', {
+      'food_id': 202,
+      'nutrient_code': NutrientCodes.energyKcal,
+      'value_per_100g': 61.0,
+      'unit': NutrientUnit.kilocalorie.name,
+      'source_nutrient_id': '1008',
+    });
   });
 
   tearDown(() async {
@@ -254,5 +271,38 @@ void main() {
     expect(duplicated, isNotNull);
     expect(duplicated!.meals, hasLength(1));
     expect(duplicated.meals.single.items, hasLength(1));
+
+  test('Spanish alias finds local snapshot and hides official duplicate', () async {
+    final officialCatalog = OfficialFoodCatalog(
+      open: () async => officialDb,
+    );
+    final search = UnifiedFoodSearchService(
+      officialCatalog: officialCatalog,
+    );
+
+    final initial = await search.search('leche');
+    expect(initial.official, hasLength(1));
+    expect(initial.official.first.name, 'Milk, whole');
+
+    final snapshot = await FoodSnapshotService().materializeOfficialFood(
+      initial.official.first,
+    );
+    expect(snapshot.sourceType, FoodSourceType.officialSnapshot);
+
+    final afterSnapshot = await search.search('leche');
+
+    expect(
+      afterSnapshot.professional.any(
+        (food) =>
+            food.sourceType == FoodSourceType.officialSnapshot &&
+            food.sourceFoodId == '202',
+      ),
+      isTrue,
+    );
+    expect(
+      afterSnapshot.official.any((food) => food.sourceFoodId == '202'),
+      isFalse,
+    );
+  });
   });
 }
