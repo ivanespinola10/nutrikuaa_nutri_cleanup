@@ -1,4 +1,6 @@
 import '../data/nutri_database.dart';
+import 'package:sqflite/sqflite.dart';
+
 import '../domain/recipe.dart';
 
 class RecipeIngredientInput {
@@ -68,6 +70,82 @@ class RecipeService {
 
       return recipeId;
     });
+  }
+
+  Future<void> update(
+    Recipe recipe,
+    List<RecipeIngredientInput> ingredients,
+  ) async {
+    final recipeId = recipe.id;
+    if (recipeId == null) {
+      throw ArgumentError('Recipe must have an id before update.');
+    }
+    if (recipe.name.trim().isEmpty) {
+      throw ArgumentError('Recipe name is required.');
+    }
+    if (recipe.servings <= 0) {
+      throw ArgumentError('Recipe servings must be greater than zero.');
+    }
+
+    final db = await database.database;
+    await db.transaction((txn) async {
+      await txn.update(
+        'recipes',
+        {
+          'name': recipe.name.trim(),
+          'description': recipe.description,
+          'servings': recipe.servings,
+          'yield_grams': recipe.yieldGrams,
+          'notes': recipe.notes,
+          'updated_at': DateTime.now().toIso8601String(),
+        },
+        where: 'id = ?',
+        whereArgs: [recipeId],
+      );
+
+      await txn.delete(
+        'recipe_items',
+        where: 'recipe_id = ?',
+        whereArgs: [recipeId],
+      );
+
+      for (final ingredient in ingredients) {
+        if (ingredient.quantityGrams <= 0) {
+          throw ArgumentError('Recipe ingredient quantity must be positive.');
+        }
+
+        await txn.insert('recipe_items', {
+          'recipe_id': recipeId,
+          'food_id': ingredient.foodId,
+          'quantity_g': ingredient.quantityGrams,
+          'sort_order': ingredient.sortOrder,
+        });
+      }
+    });
+  }
+
+  Future<void> delete(int recipeId) async {
+    final db = await database.database;
+
+    final usage = Sqflite.firstIntValue(
+          await db.rawQuery(
+            'SELECT COUNT(*) FROM meal_items WHERE recipe_id = ?',
+            [recipeId],
+          ),
+        ) ??
+        0;
+
+    if (usage > 0) {
+      throw StateError(
+        'Recipe is already used in a meal plan and cannot be deleted.',
+      );
+    }
+
+    await db.delete(
+      'recipes',
+      where: 'id = ?',
+      whereArgs: [recipeId],
+    );
   }
 
   Future<RecipeDetails?> getById(int id) async {
