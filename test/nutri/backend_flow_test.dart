@@ -6,16 +6,19 @@ import 'package:nutrikuaa_app/nutri/application/food_library_service.dart';
 import 'package:nutrikuaa_app/nutri/application/food_snapshot_service.dart';
 import 'package:nutrikuaa_app/nutri/application/meal_plan_service.dart';
 import 'package:nutrikuaa_app/nutri/application/plan_nutrition_service.dart';
+import 'package:nutrikuaa_app/nutri/application/plan_pdf_service.dart';
 import 'package:nutrikuaa_app/nutri/application/recipe_nutrition_service.dart';
 import 'package:nutrikuaa_app/nutri/application/recipe_service.dart';
 import 'package:nutrikuaa_app/nutri/application/unified_food_search_service.dart';
 import 'package:nutrikuaa_app/nutri/data/nutri_database.dart';
 import 'package:nutrikuaa_app/nutri/data/official_food_catalog.dart';
 import 'package:nutrikuaa_app/nutri/data/patient_repository.dart';
+import 'package:nutrikuaa_app/nutri/data/professional_profile_repository.dart';
 import 'package:nutrikuaa_app/nutri/domain/food.dart';
 import 'package:nutrikuaa_app/nutri/domain/meal_plan.dart';
 import 'package:nutrikuaa_app/nutri/domain/nutrition/nutrient.dart';
 import 'package:nutrikuaa_app/nutri/domain/patient.dart';
+import 'package:nutrikuaa_app/nutri/domain/professional_profile.dart';
 import 'package:nutrikuaa_app/nutri/domain/recipe.dart';
 
 void main() {
@@ -723,6 +726,112 @@ void main() {
     await patients.deleteMeasurement(firstMeasurementId);
     final afterDelete = await patients.measurementsFor(patientId);
     expect(afterDelete, hasLength(1));
+  });
+
+  test('professional profile persists and plan PDF is generated offline', () async {
+    final profileRepository = ProfessionalProfileRepository();
+    const profile = ProfessionalProfile(
+      fullName: 'Lic. Test Nutricionista',
+      credentials: 'Nutricionista',
+      registrationNumber: 'PY-123',
+      practiceName: 'Consulta Test',
+      phone: '+595 000 000',
+      email: 'test@example.com',
+      footerText: 'Documento de prueba',
+    );
+
+    await profileRepository.save(profile);
+    final savedProfile = await profileRepository.load();
+    expect(savedProfile.fullName, profile.fullName);
+    expect(savedProfile.practiceName, profile.practiceName);
+    expect(savedProfile.registrationNumber, profile.registrationNumber);
+
+    final patients = PatientRepository();
+    final patientId = await patients.create(
+      Patient(
+        firstName: 'PDF',
+        lastName: 'Paciente',
+      ),
+    );
+
+    await patients.setTargets(patientId, [
+      NutritionTarget(
+        patientId: patientId,
+        nutrientCode: NutrientCodes.energyKcal,
+        targetValue: 2000,
+        unit: NutrientUnit.kilocalorie,
+      ),
+      NutritionTarget(
+        patientId: patientId,
+        nutrientCode: NutrientCodes.protein,
+        targetValue: 100,
+        unit: NutrientUnit.gram,
+      ),
+    ]);
+
+    final foods = FoodLibraryService();
+    final foodId = await foods.addBrandedFood(
+      name: 'Yogur natural',
+      brand: 'Marca PDF',
+      servingQuantity: 150,
+      servingUnit: 'g',
+      householdMeasure: '1 pote',
+      nutrients: const [
+        NutrientValue(
+          code: NutrientCodes.energyKcal,
+          valuePer100g: 100,
+          unit: NutrientUnit.kilocalorie,
+        ),
+        NutrientValue(
+          code: NutrientCodes.protein,
+          valuePer100g: 10,
+          unit: NutrientUnit.gram,
+        ),
+        NutrientValue(
+          code: NutrientCodes.carbohydrate,
+          valuePer100g: 8,
+          unit: NutrientUnit.gram,
+        ),
+        NutrientValue(
+          code: NutrientCodes.fat,
+          valuePer100g: 3,
+          unit: NutrientUnit.gram,
+        ),
+      ],
+    );
+
+    final plans = MealPlanService();
+    final planId = await plans.createPlan(
+      MealPlan(
+        patientId: patientId,
+        name: 'Semana PDF',
+        startDate: DateTime(2026, 9, 21),
+        endDate: DateTime(2026, 9, 27),
+        notes: 'Mantener buena hidratación.',
+      ),
+    );
+    final breakfastId = await plans.addMeal(
+      planId: planId,
+      dayIndex: 0,
+      name: 'Desayuno',
+      sortOrder: 0,
+    );
+    await plans.addFood(
+      mealId: breakfastId,
+      foodId: foodId,
+      quantityGrams: 300,
+      notes: '2 × pote',
+    );
+
+    final bytes = await PlanPdfService().build(
+      planId: planId,
+      profile: savedProfile,
+      includeNutritionSummary: true,
+      includeRecipeInstructions: true,
+    );
+
+    expect(bytes.length, greaterThan(1000));
+    expect(String.fromCharCodes(bytes.take(5)), '%PDF-');
   });
 
   test('Spanish alias finds local snapshot and hides official duplicate', () async {
