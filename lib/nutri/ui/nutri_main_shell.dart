@@ -45,6 +45,13 @@ class _NutriMainShellState extends State<NutriMainShell> {
     });
   }
 
+  void _handleSettingsChanged() {
+    setState(() {
+      _dataEpoch++;
+      _documentRefreshToken++;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
@@ -130,6 +137,7 @@ class _NutriMainShellState extends State<NutriMainShell> {
                       ),
                       SettingsWorkspacePage(
                         onDataRestored: _handleDataRestored,
+                        onSettingsChanged: _handleSettingsChanged,
                       ),
                     ],
                   ),
@@ -163,6 +171,7 @@ class _NutriMainShellState extends State<NutriMainShell> {
               ),
               SettingsWorkspacePage(
                 onDataRestored: _handleDataRestored,
+                onSettingsChanged: _handleSettingsChanged,
               ),
             ],
           ),
