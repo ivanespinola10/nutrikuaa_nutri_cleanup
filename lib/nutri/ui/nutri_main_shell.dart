@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'nutri_catalog_workspace_page.dart';
+import 'recipe_editor_page.dart';
 import 'weekly_planner_page.dart';
 
 class NutriMainShell extends StatefulWidget {
@@ -57,6 +58,11 @@ class _NutriMainShellState extends State<NutriMainShell> {
                       label: Text('Planificador'),
                     ),
                     NavigationRailDestination(
+                      icon: Icon(Icons.restaurant_menu_outlined),
+                      selectedIcon: Icon(Icons.restaurant_menu),
+                      label: Text('Recetas'),
+                    ),
+                    NavigationRailDestination(
                       icon: Icon(Icons.inventory_2_outlined),
                       selectedIcon: Icon(Icons.inventory_2),
                       label: Text('Biblioteca'),
@@ -71,6 +77,7 @@ class _NutriMainShellState extends State<NutriMainShell> {
                       WeeklyPlannerPage(
                         refreshToken: _plannerRefreshToken,
                       ),
+                      const RecipeEditorPage(),
                       const NutriCatalogWorkspacePage(),
                     ],
                   ),
@@ -87,6 +94,7 @@ class _NutriMainShellState extends State<NutriMainShell> {
               WeeklyPlannerPage(
                 refreshToken: _plannerRefreshToken,
               ),
+              const RecipeEditorPage(),
               const NutriCatalogWorkspacePage(),
             ],
           ),
@@ -98,6 +106,11 @@ class _NutriMainShellState extends State<NutriMainShell> {
                 icon: Icon(Icons.calendar_view_week_outlined),
                 selectedIcon: Icon(Icons.calendar_view_week),
                 label: 'Planificador',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.restaurant_menu_outlined),
+                selectedIcon: Icon(Icons.restaurant_menu),
+                label: 'Recetas',
               ),
               NavigationDestination(
                 icon: Icon(Icons.inventory_2_outlined),
