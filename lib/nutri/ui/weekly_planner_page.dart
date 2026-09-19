@@ -1014,19 +1014,91 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
             const SizedBox(height: 10),
             if (_recipeMode) _recipeSearchResults() else _foodSearchResults(),
             const SizedBox(height: 12),
+            if (!_recipeMode && _availablePortions.isNotEmpty) ...[
+              Wrap(
+                spacing: 8,
+                children: [
+                  ChoiceChip(
+                    label: const Text('Gramos'),
+                    selected: !_usePortion,
+                    onSelected: (_) => setState(() => _usePortion = false),
+                  ),
+                  ChoiceChip(
+                    label: const Text('Porción doméstica'),
+                    selected: _usePortion,
+                    onSelected: (_) => setState(() {
+                      _usePortion = true;
+                      _selectedPortion ??= _availablePortions.first;
+                    }),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+            ],
             Row(
               children: [
                 Expanded(
-                  child: TextField(
-                    controller: _recipeMode ? _servings : _grams,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    decoration: InputDecoration(
-                      labelText:
-                          _recipeMode ? 'Porciones' : 'Cantidad en gramos',
-                    ),
-                  ),
+                  child: _recipeMode
+                      ? TextField(
+                          controller: _servings,
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          decoration:
+                              const InputDecoration(labelText: 'Porciones'),
+                        )
+                      : _usePortion && _availablePortions.isNotEmpty
+                          ? Row(
+                              children: [
+                                Expanded(
+                                  child: TextField(
+                                    controller: _portionAmount,
+                                    keyboardType:
+                                        const TextInputType.numberWithOptions(
+                                      decimal: true,
+                                    ),
+                                    decoration: const InputDecoration(
+                                      labelText: 'Cantidad',
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  flex: 2,
+                                  child: DropdownButtonFormField<FoodPortion>(
+                                    value: _selectedPortion,
+                                    isExpanded: true,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Medida',
+                                    ),
+                                    items: _availablePortions
+                                        .map(
+                                          (portion) => DropdownMenuItem(
+                                            value: portion,
+                                            child: Text(
+                                              '${portion.measure ?? 'porción'} · ${portion.gramWeight.toStringAsFixed(0)} g',
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                        )
+                                        .toList(),
+                                    onChanged: (value) => setState(
+                                      () => _selectedPortion = value,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            )
+                          : TextField(
+                              controller: _grams,
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                decimal: true,
+                              ),
+                              decoration: const InputDecoration(
+                                labelText: 'Cantidad en gramos',
+                              ),
+                            ),
                 ),
                 const SizedBox(width: 10),
                 FilledButton.icon(
