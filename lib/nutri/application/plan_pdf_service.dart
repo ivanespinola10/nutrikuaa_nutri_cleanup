@@ -10,6 +10,7 @@ import '../domain/nutrition/nutrient.dart';
 import '../domain/patient.dart';
 import '../domain/professional_profile.dart';
 import 'meal_plan_service.dart';
+import 'nutrition_calculator.dart';
 import 'plan_nutrition_service.dart';
 import 'recipe_service.dart';
 
