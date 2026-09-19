@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'nutri_workspace_page.dart';
+import 'nutri_catalog_workspace_page.dart';
 
 class NutrikuaaNutriApp extends StatelessWidget {
   const NutrikuaaNutriApp({super.key});
@@ -29,7 +29,7 @@ class NutrikuaaNutriApp extends StatelessWidget {
           margin: EdgeInsets.zero,
         ),
       ),
-      home: const NutriWorkspacePage(),
+      home: const NutriCatalogWorkspacePage(),
     );
   }
 }
