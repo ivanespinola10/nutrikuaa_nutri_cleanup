@@ -269,6 +269,65 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
     setState(() => _foodResults = foods);
   }
 
+  List<FoodPortion> get _availablePortions {
+    final food = _selectedFood;
+    if (food == null) return const [];
+
+    final portions = <FoodPortion>[...food.portions];
+    if (portions.isEmpty &&
+        food.householdMeasure != null &&
+        food.servingQuantity != null &&
+        food.servingQuantity! > 0 &&
+        food.servingUnit?.toLowerCase() == 'g') {
+      portions.add(
+        FoodPortion(
+          amount: 1,
+          measure: food.householdMeasure,
+          gramWeight: food.servingQuantity!,
+        ),
+      );
+    }
+    return portions;
+  }
+
+  void _selectFood(Food food) {
+    final portions = <FoodPortion>[...food.portions];
+    if (portions.isEmpty &&
+        food.householdMeasure != null &&
+        food.servingQuantity != null &&
+        food.servingQuantity! > 0 &&
+        food.servingUnit?.toLowerCase() == 'g') {
+      portions.add(
+        FoodPortion(
+          amount: 1,
+          measure: food.householdMeasure,
+          gramWeight: food.servingQuantity!,
+        ),
+      );
+    }
+
+    setState(() {
+      _selectedFood = food;
+      _selectedPortion = portions.isEmpty ? null : portions.first;
+      _usePortion = false;
+    });
+  }
+
+  double _selectedFoodGrams() {
+    if (!_usePortion) {
+      return double.tryParse(_grams.text.replaceAll(',', '.')) ?? 0;
+    }
+
+    final portion = _selectedPortion;
+    final requested =
+        double.tryParse(_portionAmount.text.replaceAll(',', '.')) ?? 0;
+    if (portion == null || requested <= 0) return 0;
+
+    final baseAmount =
+        portion.amount == null || portion.amount! <= 0 ? 1.0 : portion.amount!;
+    return portion.gramWeight * requested / baseAmount;
+  }
+
   Future<void> _addSelected() async {
     final planId = _selectedPlanId;
     if (planId == null) {
@@ -306,7 +365,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
           _message('Selecciona un alimento.');
           return;
         }
-        final grams = double.tryParse(_grams.text.replaceAll(',', '.')) ?? 0;
+        final grams = _selectedFoodGrams();
         if (grams <= 0) {
           _message('Los gramos deben ser mayores que cero.');
           return;
@@ -795,7 +854,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
                 : 'Biblioteca profesional',
           ),
           trailing: OutlinedButton(
-            onPressed: () => setState(() => _selectedFood = food),
+            onPressed: () => _selectFood(food),
             child: Text(selected ? 'Elegido' : 'Elegir'),
           ),
         );
