@@ -1,8 +1,14 @@
 {
   "schemaVersion": 1,
-  "dataVersion": "development-empty",
-  "sourceName": "NutriKuaa",
-  "sourceRelease": "Official catalog not bundled yet",
+  "dataVersion": "USDA FoodData Central Foundation Foods 2026-04",
+  "sourceName": "USDA FoodData Central",
+  "sourceRelease": "USDA FoodData Central Foundation Foods 2026-04",
   "databaseFile": "nutrikuaa_foods.db",
-  "bundled": false
+  "sha256": "cf8ed7d5e348b0afb9e54c9a04099491b8aa7e1950bc2448212b55f445e784b6",
+  "builtAtUtc": "2026-09-19T00:34:23.259108+00:00",
+  "networkRequiredAtRuntime": false,
+  "bundled": true,
+  "catalogKind": "foundation",
+  "releaseDate": "2026-04-30",
+  "distribution": "bundled-offline"
 }
