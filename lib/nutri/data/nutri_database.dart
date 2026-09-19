@@ -14,7 +14,7 @@ class NutriDatabase {
   static final NutriDatabase instance = NutriDatabase._();
 
   static const databaseName = 'nutrikuaa_nutri.db';
-  static const databaseVersion = 7;
+  static const databaseVersion = 8;
 
   Database? _database;
 
@@ -147,6 +147,16 @@ class NutriDatabase {
         footer_text TEXT,
         logo_bytes BLOB,
         logo_file_name TEXT,
+        updated_at TEXT NOT NULL
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE app_settings (
+        id INTEGER PRIMARY KEY CHECK (id = 1),
+        language_code TEXT NOT NULL DEFAULT 'es',
+        country_code TEXT NOT NULL DEFAULT 'PY',
+        unit_system TEXT NOT NULL DEFAULT 'metric',
         updated_at TEXT NOT NULL
       )
     ''');
@@ -334,6 +344,18 @@ class NutriDatabase {
       await db.execute(
         'ALTER TABLE professional_profile ADD COLUMN logo_file_name TEXT',
       );
+    }
+
+    if (oldVersion < 8) {
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS app_settings (
+          id INTEGER PRIMARY KEY CHECK (id = 1),
+          language_code TEXT NOT NULL DEFAULT 'es',
+          country_code TEXT NOT NULL DEFAULT 'PY',
+          unit_system TEXT NOT NULL DEFAULT 'metric',
+          updated_at TEXT NOT NULL
+        )
+      ''');
     }
 
     // Future migrations must be additive and preserve professional data.
