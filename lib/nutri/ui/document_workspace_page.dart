@@ -1,0 +1,494 @@
+import 'dart:typed_data';
+
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:pdf/pdf.dart';
+import 'package:printing/printing.dart';
+
+import '../application/meal_plan_service.dart';
+import '../application/plan_pdf_service.dart';
+import '../data/patient_repository.dart';
+import '../data/professional_profile_repository.dart';
+import '../domain/meal_plan.dart';
+import '../domain/patient.dart';
+import '../domain/professional_profile.dart';
+
+class DocumentWorkspacePage extends StatefulWidget {
+  final int refreshToken;
+
+  const DocumentWorkspacePage({
+    super.key,
+    this.refreshToken = 0,
+  });
+
+  @override
+  State<DocumentWorkspacePage> createState() => _DocumentWorkspacePageState();
+}
+
+class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
+  final PatientRepository _patients = PatientRepository();
+  final MealPlanService _plans = MealPlanService();
+  final ProfessionalProfileRepository _profileRepository =
+      ProfessionalProfileRepository();
+  final PlanPdfService _pdfService = PlanPdfService();
+
+  final _fullName = TextEditingController();
+  final _credentials = TextEditingController();
+  final _registration = TextEditingController();
+  final _practice = TextEditingController();
+  final _phone = TextEditingController();
+  final _email = TextEditingController();
+  final _footer = TextEditingController();
+
+  List<Patient> _patientList = const [];
+  List<MealPlan> _planList = const [];
+  int? _selectedPatientId;
+  int? _selectedPlanId;
+
+  Uint8List? _logoBytes;
+  Uint8List? _pdfBytes;
+
+  bool _includeNutrition = true;
+  bool _includeRecipeInstructions = true;
+  bool _loading = true;
+  bool _busy = false;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _initialize();
+  }
+
+  @override
+  void didUpdateWidget(covariant DocumentWorkspacePage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.refreshToken != widget.refreshToken) {
+      _refreshPatients();
+    }
+  }
+
+  @override
+  void dispose() {
+    for (final controller in [
+      _fullName,
+      _credentials,
+      _registration,
+      _practice,
+      _phone,
+      _email,
+      _footer,
+    ]) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
+  Future<void> _initialize() async {
+    try {
+      final profile = await _profileRepository.load();
+      final asset = await rootBundle.load('assets/logo.png');
+
+      if (!mounted) return;
+      setState(() {
+        _logoBytes = asset.buffer.asUint8List();
+        _applyProfile(profile);
+      });
+
+      await _refreshPatients();
+    } catch (error) {
+      if (mounted) setState(() => _error = error.toString());
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  void _applyProfile(ProfessionalProfile profile) {
+    _fullName.text = profile.fullName;
+    _credentials.text = profile.credentials ?? '';
+    _registration.text = profile.registrationNumber ?? '';
+    _practice.text = profile.practiceName ?? '';
+    _phone.text = profile.phone ?? '';
+    _email.text = profile.email ?? '';
+    _footer.text = profile.footerText ?? '';
+  }
+
+  ProfessionalProfile _profileFromForm() {
+    return ProfessionalProfile(
+      fullName: _fullName.text.trim(),
+      credentials: _nullIfBlank(_credentials.text),
+      registrationNumber: _nullIfBlank(_registration.text),
+      practiceName: _nullIfBlank(_practice.text),
+      phone: _nullIfBlank(_phone.text),
+      email: _nullIfBlank(_email.text),
+      footerText: _nullIfBlank(_footer.text),
+    );
+  }
+
+  Future<void> _refreshPatients() async {
+    final patients = await _patients.search('', activeOnly: false);
+    if (!mounted) return;
+
+    var patientId = _selectedPatientId;
+    if (!patients.any((patient) => patient.id == patientId)) {
+      patientId = patients.isEmpty ? null : patients.first.id;
+    }
+
+    setState(() {
+      _patientList = patients;
+      _selectedPatientId = patientId;
+      _pdfBytes = null;
+    });
+
+    if (patientId != null) {
+      await _loadPlans(patientId);
+    } else {
+      setState(() {
+        _planList = const [];
+        _selectedPlanId = null;
+      });
+    }
+  }
+
+  Future<void> _loadPlans(int patientId) async {
+    final plans = await _plans.listForPatient(patientId);
+    if (!mounted) return;
+
+    var planId = _selectedPlanId;
+    if (!plans.any((plan) => plan.id == planId)) {
+      planId = plans.isEmpty ? null : plans.first.id;
+    }
+
+    setState(() {
+      _selectedPatientId = patientId;
+      _planList = plans;
+      _selectedPlanId = planId;
+      _pdfBytes = null;
+    });
+  }
+
+  Future<void> _saveProfile() async {
+    await _execute(() async {
+      final profile = _profileFromForm();
+      await _profileRepository.save(profile);
+      _message('Identidad profesional guardada.');
+    });
+  }
+
+  Future<void> _generatePdf() async {
+    final planId = _selectedPlanId;
+    if (planId == null) {
+      _message('Selecciona un paciente con un plan.');
+      return;
+    }
+
+    await _execute(() async {
+      final profile = _profileFromForm();
+      await _profileRepository.save(profile);
+
+      final bytes = await _pdfService.build(
+        planId: planId,
+        profile: profile,
+        logoBytes: _logoBytes,
+        includeNutritionSummary: _includeNutrition,
+        includeRecipeInstructions: _includeRecipeInstructions,
+      );
+
+      if (!mounted) return;
+      setState(() => _pdfBytes = bytes);
+      _message('PDF generado.');
+    });
+  }
+
+  Future<void> _execute(Future<void> Function() action) async {
+    if (_busy) return;
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+
+    try {
+      await action();
+    } catch (error) {
+      if (mounted) setState(() => _error = error.toString());
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  String? _nullIfBlank(String value) {
+    final trimmed = value.trim();
+    return trimmed.isEmpty ? null : trimmed;
+  }
+
+  void _message(String text) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(text)));
+  }
+
+  String get _pdfFileName {
+    final patient = _patientList
+        .where((patient) => patient.id == _selectedPatientId)
+        .cast<Patient?>()
+        .firstOrNull;
+    final name = patient?.displayName.trim().replaceAll(' ', '_') ?? 'paciente';
+    return 'Nutrikuaa_Plan_$name.pdf';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text(
+          'Documentos',
+          style: TextStyle(fontWeight: FontWeight.w700),
+        ),
+        actions: const [
+          Padding(
+            padding: EdgeInsets.only(right: 18),
+            child: Center(child: Text('V0.7')),
+          ),
+        ],
+      ),
+      body: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(18, 18, 18, 48),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 1180),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _professionalCard(),
+                      const SizedBox(height: 14),
+                      _documentCard(),
+                      if (_error != null) ...[
+                        const SizedBox(height: 10),
+                        SelectableText(
+                          _error!,
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.error,
+                          ),
+                        ),
+                      ],
+                      if (_pdfBytes != null) ...[
+                        const SizedBox(height: 16),
+                        _previewCard(),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            ),
+    );
+  }
+
+  Widget _professionalCard() {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              'Identidad profesional',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              'Estos datos quedan guardados localmente y aparecerán en tus documentos.',
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(child: _field(_fullName, 'Nombre profesional')),
+                const SizedBox(width: 8),
+                Expanded(child: _field(_credentials, 'Título / credencial')),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: _field(
+                    _registration,
+                    'Registro / matrícula profesional',
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _field(
+                    _practice,
+                    'Consultorio / marca profesional',
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(child: _field(_phone, 'Teléfono')),
+                const SizedBox(width: 8),
+                Expanded(child: _field(_email, 'Email')),
+              ],
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _footer,
+              decoration: const InputDecoration(
+                labelText: 'Pie del documento (opcional)',
+                hintText: 'Ej.: Consultas con cita previa',
+              ),
+            ),
+            const SizedBox(height: 10),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: OutlinedButton.icon(
+                onPressed: _busy ? null : _saveProfile,
+                icon: const Icon(Icons.save_outlined),
+                label: const Text('Guardar identidad'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _documentCard() {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              'Generar plan para el paciente',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: DropdownButtonFormField<int>(
+                    value: _selectedPatientId,
+                    isExpanded: true,
+                    decoration: const InputDecoration(labelText: 'Paciente'),
+                    items: _patientList
+                        .map(
+                          (patient) => DropdownMenuItem(
+                            value: patient.id,
+                            child: Text(patient.displayName),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: _busy
+                        ? null
+                        : (id) {
+                            if (id != null) _loadPlans(id);
+                          },
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: DropdownButtonFormField<int>(
+                    value: _selectedPlanId,
+                    isExpanded: true,
+                    decoration: const InputDecoration(labelText: 'Plan / semana'),
+                    items: _planList
+                        .map(
+                          (plan) => DropdownMenuItem(
+                            value: plan.id,
+                            child: Text(plan.name),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: _busy
+                        ? null
+                        : (id) => setState(() {
+                            _selectedPlanId = id;
+                            _pdfBytes = null;
+                          }),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 14,
+              runSpacing: 4,
+              children: [
+                FilterChip(
+                  label: const Text('Mostrar resumen nutricional diario'),
+                  selected: _includeNutrition,
+                  onSelected: (value) => setState(() {
+                    _includeNutrition = value;
+                    _pdfBytes = null;
+                  }),
+                ),
+                FilterChip(
+                  label: const Text('Incluir preparación de recetas'),
+                  selected: _includeRecipeInstructions,
+                  onSelected: (value) => setState(() {
+                    _includeRecipeInstructions = value;
+                    _pdfBytes = null;
+                  }),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: _busy || _selectedPlanId == null
+                  ? null
+                  : _generatePdf,
+              icon: const Icon(Icons.picture_as_pdf_outlined),
+              label: const Text('Generar vista previa PDF'),
+            ),
+            if (_planList.isEmpty && _selectedPatientId != null) ...[
+              const SizedBox(height: 8),
+              const Text(
+                'Este paciente todavía no tiene planes para exportar.',
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _previewCard() {
+    final bytes = _pdfBytes!;
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: SizedBox(
+        height: 760,
+        child: PdfPreview(
+          build: (_) async => bytes,
+          initialPageFormat: PdfPageFormat.a4,
+          canChangeOrientation: false,
+          canChangePageFormat: false,
+          allowPrinting: true,
+          allowSharing: true,
+          pdfFileName: _pdfFileName,
+        ),
+      ),
+    );
+  }
+
+  Widget _field(
+    TextEditingController controller,
+    String label,
+  ) {
+    return TextField(
+      controller: controller,
+      decoration: InputDecoration(labelText: label),
+    );
+  }
+}
+
+extension _FirstOrNullExtension<E> on Iterable<E> {
+  E? get firstOrNull => isEmpty ? null : first;
+}
