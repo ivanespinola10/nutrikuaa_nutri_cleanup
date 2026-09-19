@@ -15,12 +15,16 @@ class NutriMainShell extends StatefulWidget {
 class _NutriMainShellState extends State<NutriMainShell> {
   int _index = 0;
   int _plannerRefreshToken = 0;
+  int _patientRefreshToken = 0;
 
   void _selectPage(int value) {
     setState(() {
       _index = value;
       if (value == 0) {
         _plannerRefreshToken++;
+      }
+      if (value == 1) {
+        _patientRefreshToken++;
       }
     });
   }
@@ -83,7 +87,9 @@ class _NutriMainShellState extends State<NutriMainShell> {
                       WeeklyPlannerPage(
                         refreshToken: _plannerRefreshToken,
                       ),
-                      const PatientWorkspacePage(),
+                      PatientWorkspacePage(
+                        refreshToken: _patientRefreshToken,
+                      ),
                       const RecipeEditorPage(),
                       const NutriCatalogWorkspacePage(),
                     ],
@@ -101,7 +107,9 @@ class _NutriMainShellState extends State<NutriMainShell> {
               WeeklyPlannerPage(
                 refreshToken: _plannerRefreshToken,
               ),
-              const PatientWorkspacePage(),
+              PatientWorkspacePage(
+                refreshToken: _patientRefreshToken,
+              ),
               const RecipeEditorPage(),
               const NutriCatalogWorkspacePage(),
             ],
