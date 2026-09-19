@@ -616,6 +616,115 @@ void main() {
     );
   });
 
+  test('patient workspace persists profile targets measurements and history', () async {
+    final patients = PatientRepository();
+    final patientId = await patients.create(
+      Patient(
+        firstName: 'Patient',
+        lastName: 'Profile',
+        dateOfBirth: DateTime(1990, 5, 10),
+        email: 'patient@example.com',
+        phone: '+595000000',
+        notes: 'Initial note',
+      ),
+    );
+
+    await patients.setTargets(patientId, [
+      NutritionTarget(
+        patientId: patientId,
+        nutrientCode: NutrientCodes.energyKcal,
+        targetValue: 2200,
+        unit: NutrientUnit.kilocalorie,
+      ),
+      NutritionTarget(
+        patientId: patientId,
+        nutrientCode: NutrientCodes.protein,
+        targetValue: 130,
+        unit: NutrientUnit.gram,
+      ),
+      NutritionTarget(
+        patientId: patientId,
+        nutrientCode: NutrientCodes.carbohydrate,
+        targetValue: 250,
+        unit: NutrientUnit.gram,
+      ),
+    ]);
+
+    final firstMeasurementId = await patients.addMeasurement(
+      PatientMeasurement(
+        patientId: patientId,
+        measuredAt: DateTime(2026, 9, 1),
+        weightKg: 80,
+        heightCm: 180,
+        waistCm: 90,
+      ),
+    );
+    expect(firstMeasurementId, greaterThan(0));
+
+    await patients.addMeasurement(
+      PatientMeasurement(
+        patientId: patientId,
+        measuredAt: DateTime(2026, 9, 19),
+        weightKg: 78,
+        heightCm: 180,
+        waistCm: 87,
+        notes: 'Follow-up',
+      ),
+    );
+
+    final measurements = await patients.measurementsFor(patientId);
+    expect(measurements, hasLength(2));
+    expect(measurements.first.weightKg, 78);
+    expect(measurements.first.bmi, closeTo(24.074, 0.001));
+
+    final current = await patients.getById(patientId);
+    expect(current, isNotNull);
+
+    await patients.update(
+      Patient(
+        id: patientId,
+        firstName: 'Patient',
+        lastName: 'Profile Updated',
+        dateOfBirth: current!.dateOfBirth,
+        email: current.email,
+        phone: current.phone,
+        notes: 'Updated note',
+        createdAt: current.createdAt,
+      ),
+    );
+
+    final updated = await patients.getById(patientId);
+    expect(updated!.lastName, 'Profile Updated');
+    expect(updated.notes, 'Updated note');
+
+    final targets = await patients.targetsFor(patientId);
+    expect(targets, hasLength(3));
+    expect(
+      targets
+          .firstWhere((target) => target.nutrientCode == NutrientCodes.energyKcal)
+          .targetValue,
+      2200,
+    );
+
+    final plans = MealPlanService();
+    await plans.createPlan(
+      MealPlan(
+        patientId: patientId,
+        name: 'Patient history plan',
+        startDate: DateTime(2026, 9, 21),
+        endDate: DateTime(2026, 9, 27),
+      ),
+    );
+
+    final history = await plans.listForPatient(patientId);
+    expect(history, hasLength(1));
+    expect(history.first.name, 'Patient history plan');
+
+    await patients.deleteMeasurement(firstMeasurementId);
+    final afterDelete = await patients.measurementsFor(patientId);
+    expect(afterDelete, hasLength(1));
+  });
+
   test('Spanish alias finds local snapshot and hides official duplicate', () async {
     final officialCatalog = OfficialFoodCatalog(
       open: () async => officialDb,
