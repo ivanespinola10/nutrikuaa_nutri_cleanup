@@ -107,3 +107,59 @@ alimentos + recetas
   ↓
 totales en tiempo real
 ```
+
+
+# V0.3 — constructor semanal
+
+La V0.3 convierte el laboratorio técnico en un flujo profesional de planificación.
+
+## Alcance
+
+- navegación Planificador / Biblioteca;
+- selección de paciente;
+- creación de semana nueva;
+- 7 días;
+- 5 comidas por día:
+  - Desayuno
+  - Media mañana
+  - Almuerzo
+  - Merienda
+  - Cena
+- múltiples alimentos por comida;
+- recetas existentes reutilizables;
+- alimentos propios o USDA;
+- snapshot automático al usar USDA;
+- eliminación de elementos;
+- cálculo diario en tiempo real;
+- resumen semanal visible por día;
+- persistencia SQLite local.
+
+## Prueba de aceptación
+
+1. Abrir **Planificador**.
+2. Seleccionar un paciente.
+3. Pulsar **Nueva semana**.
+4. Confirmar que aparecen Lunes a Domingo.
+5. Elegir Lunes y Desayuno.
+6. Buscar `leche` o cualquier alimento propio.
+7. Elegir un resultado y agregar 150 g.
+8. Agregar un segundo alimento a la misma comida.
+9. Confirmar que ambos permanecen en Desayuno.
+10. Confirmar que los totales del lunes se actualizan.
+11. Cambiar a Martes.
+12. Agregar otro alimento en Almuerzo.
+13. Confirmar que el resumen semanal muestra valores distintos para Lunes y Martes.
+14. Eliminar un elemento y confirmar recálculo.
+15. Reiniciar Chrome en puerto 8080 y confirmar que la semana continúa guardada.
+
+## Fuera de V0.3
+
+- editor completo de recetas;
+- drag & drop;
+- copia rápida de día;
+- plantillas;
+- PDF;
+- Food Swap;
+- optimización matemática.
+
+Estos módulos se agregan después de validar la ergonomía del constructor semanal.
