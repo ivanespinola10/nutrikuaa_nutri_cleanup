@@ -115,6 +115,142 @@ class MealPlanService {
     );
   }
 
+  Future<void> updateRecipeServings({
+    required int mealItemId,
+    required double servings,
+  }) async {
+    if (servings <= 0) {
+      throw ArgumentError('Recipe servings must be greater than zero.');
+    }
+
+    final db = await database.database;
+    await db.update(
+      'meal_items',
+      {'servings': servings},
+      where: 'id = ? AND item_type = ?',
+      whereArgs: [mealItemId, MealItemType.recipe.name],
+    );
+  }
+
+  Future<void> clearMeal(int mealId) async {
+    final db = await database.database;
+    await db.delete(
+      'meal_items',
+      where: 'meal_id = ?',
+      whereArgs: [mealId],
+    );
+  }
+
+  Future<void> copyMealItems({
+    required int sourceMealId,
+    required int targetMealId,
+    bool replaceTarget = true,
+  }) async {
+    final db = await database.database;
+
+    await db.transaction((txn) async {
+      if (replaceTarget) {
+        await txn.delete(
+          'meal_items',
+          where: 'meal_id = ?',
+          whereArgs: [targetMealId],
+        );
+      }
+
+      final rows = await txn.query(
+        'meal_items',
+        where: 'meal_id = ?',
+        whereArgs: [sourceMealId],
+        orderBy: 'sort_order, id',
+      );
+
+      for (final row in rows) {
+        await txn.insert('meal_items', {
+          'meal_id': targetMealId,
+          'item_type': row['item_type'],
+          'food_id': row['food_id'],
+          'recipe_id': row['recipe_id'],
+          'quantity_g': row['quantity_g'],
+          'servings': row['servings'],
+          'notes': row['notes'],
+          'sort_order': row['sort_order'],
+        });
+      }
+    });
+  }
+
+  Future<void> copyDay({
+    required int planId,
+    required int sourceDayIndex,
+    required int targetDayIndex,
+    bool replaceTarget = true,
+  }) async {
+    if (sourceDayIndex == targetDayIndex) {
+      throw ArgumentError('Source and target day must be different.');
+    }
+
+    final db = await database.database;
+
+    await db.transaction((txn) async {
+      final sourceMeals = await txn.query(
+        'meals',
+        where: 'plan_id = ? AND day_index = ?',
+        whereArgs: [planId, sourceDayIndex],
+        orderBy: 'sort_order, id',
+      );
+
+      for (final sourceMeal in sourceMeals) {
+        final name = sourceMeal['name'] as String;
+        final sortOrder = sourceMeal['sort_order'] as int? ?? 0;
+
+        final targetRows = await txn.query(
+          'meals',
+          columns: ['id'],
+          where: 'plan_id = ? AND day_index = ? AND name = ?',
+          whereArgs: [planId, targetDayIndex, name],
+          limit: 1,
+        );
+
+        final targetMealId = targetRows.isNotEmpty
+            ? targetRows.first['id'] as int
+            : await txn.insert('meals', {
+                'plan_id': planId,
+                'day_index': targetDayIndex,
+                'name': name,
+                'sort_order': sortOrder,
+              });
+
+        if (replaceTarget) {
+          await txn.delete(
+            'meal_items',
+            where: 'meal_id = ?',
+            whereArgs: [targetMealId],
+          );
+        }
+
+        final items = await txn.query(
+          'meal_items',
+          where: 'meal_id = ?',
+          whereArgs: [sourceMeal['id']],
+          orderBy: 'sort_order, id',
+        );
+
+        for (final item in items) {
+          await txn.insert('meal_items', {
+            'meal_id': targetMealId,
+            'item_type': item['item_type'],
+            'food_id': item['food_id'],
+            'recipe_id': item['recipe_id'],
+            'quantity_g': item['quantity_g'],
+            'servings': item['servings'],
+            'notes': item['notes'],
+            'sort_order': item['sort_order'],
+          });
+        }
+      }
+    });
+  }
+
   Future<int> addFood({
     required int mealId,
     required int foodId,
