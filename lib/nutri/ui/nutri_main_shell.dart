@@ -4,6 +4,7 @@ import 'document_workspace_page.dart';
 import 'nutri_catalog_workspace_page.dart';
 import 'patient_workspace_page.dart';
 import 'recipe_editor_page.dart';
+import 'settings_workspace_page.dart';
 import 'weekly_planner_page.dart';
 
 class NutriMainShell extends StatefulWidget {
@@ -18,6 +19,7 @@ class _NutriMainShellState extends State<NutriMainShell> {
   int _plannerRefreshToken = 0;
   int _patientRefreshToken = 0;
   int _documentRefreshToken = 0;
+  int _dataEpoch = 0;
 
   void _selectPage(int value) {
     setState(() {
@@ -31,6 +33,15 @@ class _NutriMainShellState extends State<NutriMainShell> {
       if (value == 3) {
         _documentRefreshToken++;
       }
+    });
+  }
+
+  void _handleDataRestored() {
+    setState(() {
+      _dataEpoch++;
+      _plannerRefreshToken++;
+      _patientRefreshToken++;
+      _documentRefreshToken++;
     });
   }
 
@@ -87,6 +98,11 @@ class _NutriMainShellState extends State<NutriMainShell> {
                       selectedIcon: Icon(Icons.inventory_2),
                       label: Text('Biblioteca'),
                     ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.settings_outlined),
+                      selectedIcon: Icon(Icons.settings),
+                      label: Text('Configuración'),
+                    ),
                   ],
                 ),
                 const VerticalDivider(width: 1),
@@ -95,16 +111,26 @@ class _NutriMainShellState extends State<NutriMainShell> {
                     index: _index,
                     children: [
                       WeeklyPlannerPage(
+                        key: ValueKey('planner-$_dataEpoch'),
                         refreshToken: _plannerRefreshToken,
                       ),
                       PatientWorkspacePage(
+                        key: ValueKey('patients-$_dataEpoch'),
                         refreshToken: _patientRefreshToken,
                       ),
-                      const RecipeEditorPage(),
+                      RecipeEditorPage(
+                        key: ValueKey('recipes-$_dataEpoch'),
+                      ),
                       DocumentWorkspacePage(
+                        key: ValueKey('documents-$_dataEpoch'),
                         refreshToken: _documentRefreshToken,
                       ),
-                      const NutriCatalogWorkspacePage(),
+                      NutriCatalogWorkspacePage(
+                        key: ValueKey('library-$_dataEpoch'),
+                      ),
+                      SettingsWorkspacePage(
+                        onDataRestored: _handleDataRestored,
+                      ),
                     ],
                   ),
                 ),
@@ -118,16 +144,26 @@ class _NutriMainShellState extends State<NutriMainShell> {
             index: _index,
             children: [
               WeeklyPlannerPage(
+                key: ValueKey('planner-$_dataEpoch'),
                 refreshToken: _plannerRefreshToken,
               ),
               PatientWorkspacePage(
+                key: ValueKey('patients-$_dataEpoch'),
                 refreshToken: _patientRefreshToken,
               ),
-              const RecipeEditorPage(),
+              RecipeEditorPage(
+                key: ValueKey('recipes-$_dataEpoch'),
+              ),
               DocumentWorkspacePage(
+                key: ValueKey('documents-$_dataEpoch'),
                 refreshToken: _documentRefreshToken,
               ),
-              const NutriCatalogWorkspacePage(),
+              NutriCatalogWorkspacePage(
+                key: ValueKey('library-$_dataEpoch'),
+              ),
+              SettingsWorkspacePage(
+                onDataRestored: _handleDataRestored,
+              ),
             ],
           ),
           bottomNavigationBar: NavigationBar(
@@ -158,6 +194,11 @@ class _NutriMainShellState extends State<NutriMainShell> {
                 icon: Icon(Icons.inventory_2_outlined),
                 selectedIcon: Icon(Icons.inventory_2),
                 label: 'Biblioteca',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.settings_outlined),
+                selectedIcon: Icon(Icons.settings),
+                label: 'Configuración',
               ),
             ],
           ),
