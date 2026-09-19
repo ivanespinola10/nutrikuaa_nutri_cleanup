@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:sqflite/sqflite.dart';
 
 import '../domain/professional_profile.dart';
@@ -30,6 +32,8 @@ class ProfessionalProfileRepository {
       phone: row['phone'] as String?,
       email: row['email'] as String?,
       footerText: row['footer_text'] as String?,
+      logoBytes: row['logo_bytes'] as Uint8List?,
+      logoFileName: row['logo_file_name'] as String?,
     );
   }
 
@@ -46,6 +50,8 @@ class ProfessionalProfileRepository {
         'phone': _nullIfBlank(profile.phone),
         'email': _nullIfBlank(profile.email),
         'footer_text': _nullIfBlank(profile.footerText),
+        'logo_bytes': profile.logoBytes,
+        'logo_file_name': _nullIfBlank(profile.logoFileName),
         'updated_at': DateTime.now().toIso8601String(),
       },
       conflictAlgorithm: ConflictAlgorithm.replace,
