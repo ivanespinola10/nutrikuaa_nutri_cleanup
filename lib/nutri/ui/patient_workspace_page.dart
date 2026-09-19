@@ -111,6 +111,30 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
     super.dispose();
   }
 
+  bool get _imperial => _settings.unitSystem == UnitSystem.imperial;
+
+  double? _weightInputToKg(double? value) {
+    if (value == null) return null;
+    return _imperial ? value / 2.2046226218 : value;
+  }
+
+  double? _lengthInputToCm(double? value) {
+    if (value == null) return null;
+    return _imperial ? value * 2.54 : value;
+  }
+
+  String _displayWeight(double valueKg) {
+    final value = _imperial ? valueKg * 2.2046226218 : valueKg;
+    final unit = _imperial ? 'lb' : 'kg';
+    return '${value.toStringAsFixed(1)} $unit';
+  }
+
+  String _displayLength(double valueCm) {
+    final value = _imperial ? valueCm / 2.54 : valueCm;
+    final unit = _imperial ? 'in' : 'cm';
+    return '${value.toStringAsFixed(1)} $unit';
+  }
+
   double? _optionalNumber(TextEditingController controller) {
     final text = controller.text.trim().replaceAll(',', '.');
     if (text.isEmpty) return null;
@@ -344,9 +368,9 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
       return;
     }
 
-    final weight = _optionalNumber(_weight);
-    final height = _optionalNumber(_height);
-    final waist = _optionalNumber(_waist);
+    final weight = _weightInputToKg(_optionalNumber(_weight));
+    final height = _lengthInputToCm(_optionalNumber(_height));
+    final waist = _lengthInputToCm(_optionalNumber(_waist));
 
     if (weight == null && height == null && waist == null) {
       _message('Ingresa al menos una medición.');
@@ -686,9 +710,9 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
     final draft = PatientMeasurement(
       patientId: _selectedPatientId ?? 0,
       measuredAt: DateTime.now(),
-      weightKg: _optionalNumber(_weight),
-      heightCm: _optionalNumber(_height),
-      waistCm: _optionalNumber(_waist),
+      weightKg: _weightInputToKg(_optionalNumber(_weight)),
+      heightCm: _lengthInputToCm(_optionalNumber(_height)),
+      waistCm: _lengthInputToCm(_optionalNumber(_waist)),
     );
 
     return Card(
