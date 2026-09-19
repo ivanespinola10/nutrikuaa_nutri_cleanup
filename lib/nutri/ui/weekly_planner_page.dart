@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../application/food_placement_service.dart';
 import '../application/meal_plan_service.dart';
 import '../application/plan_nutrition_service.dart';
+import '../application/portion_converter.dart';
 import '../application/recipe_service.dart';
 import '../application/unified_food_search_service.dart';
 import '../data/nutri_database.dart';
@@ -307,9 +308,10 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
         double.tryParse(_portionAmount.text.replaceAll(',', '.')) ?? 0;
     if (portion == null || requested <= 0) return 0;
 
-    final baseAmount =
-        portion.amount == null || portion.amount! <= 0 ? 1.0 : portion.amount!;
-    return portion.gramWeight * requested / baseAmount;
+    return PortionConverter.toGrams(
+      portion: portion,
+      requestedAmount: requested,
+    );
   }
 
   Future<void> _addSelected() async {
