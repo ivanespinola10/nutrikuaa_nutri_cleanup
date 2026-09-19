@@ -591,8 +591,27 @@ void main() {
       closeTo(210, 0.001),
     );
 
-    expect(
-      () => recipes.delete(recipeId),
+    await expectLater(
+      recipes.delete(recipeId),
+      throwsA(isA<StateError>()),
+    );
+
+    await expectLater(
+      recipes.update(
+        Recipe(
+          id: recipeId,
+          name: 'Should stay immutable in used plan',
+          servings: 2,
+          yieldGrams: 240,
+          createdAt: current.recipe.createdAt,
+        ),
+        [
+          RecipeIngredientInput(
+            foodId: eggId,
+            quantityGrams: 200,
+          ),
+        ],
+      ),
       throwsA(isA<StateError>()),
     );
   });
