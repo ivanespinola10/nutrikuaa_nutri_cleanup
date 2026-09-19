@@ -163,3 +163,81 @@ La V0.3 convierte el laboratorio técnico en un flujo profesional de planificaci
 - optimización matemática.
 
 Estos módulos se agregan después de validar la ergonomía del constructor semanal.
+
+
+# V0.4 — productividad del nutricionista
+
+La V0.4 reduce pasos repetitivos dentro del planificador semanal.
+
+## Incluye
+
+- editar gramos de un alimento ya agregado;
+- editar porciones de una receta;
+- eliminar elementos;
+- vaciar una comida completa;
+- copiar una comida al mismo horario de otro día;
+- copiar un día completo a otro día;
+- duplicar una semana completa;
+- seleccionar gramos o porciones domésticas cuando el alimento dispone de ellas;
+- registrar medida casera y gramos de porción en alimentos propios o de marca.
+
+## Conversión de porciones
+
+Nutrikuaa conserva los cálculos internamente en gramos.
+
+Ejemplo:
+
+```text
+Yogur
+1 pote = 150 g
+
+2 potes
+↓
+300 g internos
+↓
+cálculo nutricional
+```
+
+El texto de la medida puede utilizarse después para PDF y comunicación al
+paciente.
+
+## Prueba de aceptación V0.4
+
+1. Abrir una semana existente.
+2. En Lunes / Desayuno agregar un alimento con 150 g.
+3. Pulsar editar y cambiar a 180 g.
+4. Confirmar que los totales del lunes cambian inmediatamente.
+5. Agregar un segundo alimento.
+6. Usar **Copiar comida** y copiar Desayuno a Martes.
+7. Confirmar que Martes recibe los mismos elementos.
+8. Usar **Copiar día** de Lunes a Miércoles.
+9. Confirmar que todas las comidas del lunes se reproducen en miércoles.
+10. Vaciar una comida y confirmar recálculo.
+11. Pulsar **Duplicar semana** y confirmar una nueva semana con los mismos
+    alimentos.
+12. En Biblioteca crear un alimento con:
+    - medida casera: `1 pote`;
+    - porción habitual: `150 g`.
+13. Volver al Planificador, buscar ese alimento y elegir **Porción doméstica**.
+14. Agregar 2 porciones y comprobar que Nutrikuaa calcula como 300 g.
+15. Reiniciar Chrome en puerto 8080 y confirmar persistencia.
+
+## Próximo hito después de V0.4
+
+V0.5 será el editor profesional de recetas:
+
+```text
+Receta
+  ↓
+ingredientes
+  ↓
+cantidades
+  ↓
+rendimiento
+  ↓
+porciones
+  ↓
+nutrición automática
+  ↓
+reutilización en cualquier plan
+```
