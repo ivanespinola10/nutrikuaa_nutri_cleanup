@@ -7,7 +7,12 @@ import '../domain/nutrition/nutrient.dart';
 import '../domain/patient.dart';
 
 class PatientWorkspacePage extends StatefulWidget {
-  const PatientWorkspacePage({super.key});
+  final int refreshToken;
+
+  const PatientWorkspacePage({
+    super.key,
+    this.refreshToken = 0,
+  });
 
   @override
   State<PatientWorkspacePage> createState() => _PatientWorkspacePageState();
@@ -51,6 +56,14 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
   void initState() {
     super.initState();
     _refreshPatients();
+  }
+
+  @override
+  void didUpdateWidget(covariant PatientWorkspacePage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.refreshToken != widget.refreshToken) {
+      _refreshPatients(selectId: _selectedPatientId);
+    }
   }
 
   @override
