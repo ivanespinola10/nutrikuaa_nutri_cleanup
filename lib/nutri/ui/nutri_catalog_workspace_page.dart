@@ -632,7 +632,7 @@ class _NutriCatalogWorkspacePageState
                   onSubmitted: (_) => _runSearch(),
                   decoration: const InputDecoration(
                     labelText: 'Buscar',
-                    hintText: 'Ej.: milk, yogurt, rice, chicken',
+                    hintText: 'Ej.: leche, arroz, pollo, yogurt',
                     prefixIcon: Icon(Icons.search),
                   ),
                 ),
