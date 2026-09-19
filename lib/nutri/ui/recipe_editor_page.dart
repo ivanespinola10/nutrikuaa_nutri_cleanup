@@ -261,7 +261,7 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
       return;
     }
 
-    final yield = _number(_yieldGrams);
+    final yieldWeight = _number(_yieldGrams);
     final inputs = List.generate(
       _ingredients.length,
       (index) => RecipeIngredientInput(
@@ -283,7 +283,7 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
                 ? null
                 : _description.text.trim(),
             servings: servings,
-            yieldGrams: yield > 0 ? yield : null,
+            yieldGrams: yieldWeight > 0 ? yieldWeight : null,
             notes: _notes.text.trim().isEmpty ? null : _notes.text.trim(),
           ),
           inputs,
@@ -302,7 +302,7 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
                 ? null
                 : _description.text.trim(),
             servings: servings,
-            yieldGrams: yield > 0 ? yield : null,
+            yieldGrams: yieldWeight > 0 ? yieldWeight : null,
             notes: _notes.text.trim().isEmpty ? null : _notes.text.trim(),
             createdAt: current.recipe.createdAt,
           ),
