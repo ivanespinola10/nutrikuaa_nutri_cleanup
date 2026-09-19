@@ -238,14 +238,13 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
       return;
     }
 
-    final mealId = await _plans.getOrCreateMeal(
-      planId: planId,
-      dayIndex: _selectedDay,
-      name: _selectedMealName,
-      sortOrder: _mealNames.indexOf(_selectedMealName),
-    );
-
     await _execute(() async {
+      final mealId = await _plans.getOrCreateMeal(
+        planId: planId,
+        dayIndex: _selectedDay,
+        name: _selectedMealName,
+        sortOrder: _mealNames.indexOf(_selectedMealName),
+      );
       if (_recipeMode) {
         final recipe = _selectedRecipe;
         if (recipe == null) {
@@ -350,8 +349,23 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
           'Planificador semanal',
           style: TextStyle(fontWeight: FontWeight.w700),
         ),
-        actions: const [
-          Padding(
+        actions: [
+          IconButton(
+            tooltip: 'Actualizar pacientes y planes',
+            onPressed: _busy
+                ? null
+                : () async {
+                    final patients =
+                        await _patients.search('', activeOnly: false);
+                    if (!mounted) return;
+                    setState(() => _patientList = patients);
+                    if (_selectedPatientId != null) {
+                      await _loadPatient(_selectedPatientId!);
+                    }
+                  },
+            icon: const Icon(Icons.refresh),
+          ),
+          const Padding(
             padding: EdgeInsets.only(right: 18),
             child: Center(child: Text('V0.3')),
           ),
