@@ -6,6 +6,7 @@ import 'package:nutrikuaa_app/nutri/application/food_library_service.dart';
 import 'package:nutrikuaa_app/nutri/application/food_snapshot_service.dart';
 import 'package:nutrikuaa_app/nutri/application/meal_plan_service.dart';
 import 'package:nutrikuaa_app/nutri/application/plan_nutrition_service.dart';
+import 'package:nutrikuaa_app/nutri/application/recipe_nutrition_service.dart';
 import 'package:nutrikuaa_app/nutri/application/recipe_service.dart';
 import 'package:nutrikuaa_app/nutri/application/unified_food_search_service.dart';
 import 'package:nutrikuaa_app/nutri/data/nutri_database.dart';
@@ -451,6 +452,148 @@ void main() {
     expect(
       summary.totalsForDay(1).value(NutrientCodes.energyKcal),
       closeTo(0, 0.001),
+    );
+  });
+
+  test('recipe editor flow calculates, updates and reuses recipes', () async {
+    final foods = FoodLibraryService();
+
+    final eggId = await foods.addProfessionalFood(
+      name: 'Egg test',
+      nutrients: const [
+        NutrientValue(
+          code: NutrientCodes.energyKcal,
+          valuePer100g: 150,
+          unit: NutrientUnit.kilocalorie,
+        ),
+        NutrientValue(
+          code: NutrientCodes.protein,
+          valuePer100g: 12,
+          unit: NutrientUnit.gram,
+        ),
+      ],
+    );
+
+    final cheeseId = await foods.addProfessionalFood(
+      name: 'Cheese test',
+      nutrients: const [
+        NutrientValue(
+          code: NutrientCodes.energyKcal,
+          valuePer100g: 300,
+          unit: NutrientUnit.kilocalorie,
+        ),
+        NutrientValue(
+          code: NutrientCodes.protein,
+          valuePer100g: 20,
+          unit: NutrientUnit.gram,
+        ),
+      ],
+    );
+
+    final recipes = RecipeService();
+    final recipeId = await recipes.create(
+      Recipe(
+        name: 'Omelette test',
+        servings: 2,
+        yieldGrams: 220,
+      ),
+      [
+        RecipeIngredientInput(
+          foodId: eggId,
+          quantityGrams: 200,
+          sortOrder: 0,
+        ),
+        RecipeIngredientInput(
+          foodId: cheeseId,
+          quantityGrams: 20,
+          sortOrder: 1,
+        ),
+      ],
+    );
+
+    final nutrition = RecipeNutritionService(recipes: recipes);
+    var summary = await nutrition.calculate(recipeId);
+
+    expect(
+      summary.total.value(NutrientCodes.energyKcal),
+      closeTo(360, 0.001),
+    );
+    expect(
+      summary.perServing.value(NutrientCodes.energyKcal),
+      closeTo(180, 0.001),
+    );
+    expect(
+      summary.perServing.value(NutrientCodes.protein),
+      closeTo(14, 0.001),
+    );
+
+    final current = await recipes.getById(recipeId);
+    expect(current, isNotNull);
+
+    await recipes.update(
+      Recipe(
+        id: recipeId,
+        name: 'Omelette updated',
+        servings: 2,
+        yieldGrams: 240,
+        createdAt: current!.recipe.createdAt,
+      ),
+      [
+        RecipeIngredientInput(
+          foodId: eggId,
+          quantityGrams: 200,
+          sortOrder: 0,
+        ),
+        RecipeIngredientInput(
+          foodId: cheeseId,
+          quantityGrams: 40,
+          sortOrder: 1,
+        ),
+      ],
+    );
+
+    summary = await nutrition.calculate(recipeId);
+    expect(
+      summary.total.value(NutrientCodes.energyKcal),
+      closeTo(420, 0.001),
+    );
+    expect(
+      summary.perServing.value(NutrientCodes.energyKcal),
+      closeTo(210, 0.001),
+    );
+
+    final patients = PatientRepository();
+    final patientId = await patients.create(
+      Patient(firstName: 'Recipe', lastName: 'Tester'),
+    );
+
+    final plans = MealPlanService();
+    final planId = await plans.createPlan(
+      MealPlan(
+        patientId: patientId,
+        name: 'Recipe plan',
+      ),
+    );
+    final breakfast = await plans.addMeal(
+      planId: planId,
+      dayIndex: 0,
+      name: 'Desayuno',
+    );
+    await plans.addRecipe(
+      mealId: breakfast,
+      recipeId: recipeId,
+      servings: 1,
+    );
+
+    final planSummary = await PlanNutritionService().calculate(planId);
+    expect(
+      planSummary.totalsForDay(0).value(NutrientCodes.energyKcal),
+      closeTo(210, 0.001),
+    );
+
+    expect(
+      () => recipes.delete(recipeId),
+      throwsA(isA<StateError>()),
     );
   });
 
