@@ -44,6 +44,8 @@ class _NutriCatalogWorkspacePageState
   final _customProtein = TextEditingController(text: '10');
   final _customCarbs = TextEditingController(text: '8');
   final _customFat = TextEditingController(text: '3');
+  final _customServingGrams = TextEditingController();
+  final _customHouseholdMeasure = TextEditingController();
 
   final _searchQuery = TextEditingController(text: 'milk');
   final _grams = TextEditingController(text: '150');
@@ -87,6 +89,8 @@ class _NutriCatalogWorkspacePageState
       _customProtein,
       _customCarbs,
       _customFat,
+      _customServingGrams,
+      _customHouseholdMeasure,
       _searchQuery,
       _grams,
     ]) {
@@ -262,24 +266,32 @@ class _NutriCatalogWorkspacePageState
       ];
 
       final brand = _customBrand.text.trim();
+      final servingGrams = _number(_customServingGrams);
+      final household = _customHouseholdMeasure.text.trim();
       final id = brand.isEmpty
           ? await _foods.addProfessionalFood(
               name: name,
               countryCode: 'PY',
+              servingQuantity: servingGrams > 0 ? servingGrams : null,
+              servingUnit: servingGrams > 0 ? 'g' : null,
+              householdMeasure: household.isEmpty ? null : household,
               nutrients: nutrients,
             )
           : await _foods.addBrandedFood(
               name: name,
               brand: brand,
               countryCode: 'PY',
-              servingQuantity: 100,
-              servingUnit: 'g',
+              servingQuantity: servingGrams > 0 ? servingGrams : null,
+              servingUnit: servingGrams > 0 ? 'g' : null,
+              householdMeasure: household.isEmpty ? null : household,
               nutrients: nutrients,
             );
 
       _selectedFood = await NutriDatabase.instance.getFood(id);
       _customName.clear();
       _customBrand.clear();
+      _customServingGrams.clear();
+      _customHouseholdMeasure.clear();
       await _refreshProfessionalCount();
       await _runSearch();
       _message('Alimento guardado en tu biblioteca.');
@@ -600,6 +612,25 @@ class _NutriCatalogWorkspacePageState
               Expanded(child: _field(_customCarbs, 'Carb. g', numeric: true)),
               const SizedBox(width: 8),
               Expanded(child: _field(_customFat, 'Grasa g', numeric: true)),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: _field(
+                  _customServingGrams,
+                  'Porción habitual (g)',
+                  numeric: true,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _field(
+                  _customHouseholdMeasure,
+                  'Medida casera (ej. 1 pote)',
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 12),
