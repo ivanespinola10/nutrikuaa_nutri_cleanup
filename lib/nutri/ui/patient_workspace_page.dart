@@ -693,15 +693,30 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
               children: [
                 SizedBox(
                   width: 190,
-                  child: _field(_weight, 'Peso (kg)', numeric: true),
+                  child: _field(
+                    _weight,
+                    'Peso (kg)',
+                    numeric: true,
+                    onChanged: (_) => setState(() {}),
+                  ),
                 ),
                 SizedBox(
                   width: 190,
-                  child: _field(_height, 'Altura (cm)', numeric: true),
+                  child: _field(
+                    _height,
+                    'Altura (cm)',
+                    numeric: true,
+                    onChanged: (_) => setState(() {}),
+                  ),
                 ),
                 SizedBox(
                   width: 190,
-                  child: _field(_waist, 'Cintura (cm)', numeric: true),
+                  child: _field(
+                    _waist,
+                    'Cintura (cm)',
+                    numeric: true,
+                    onChanged: (_) => setState(() {}),
+                  ),
                 ),
                 Container(
                   width: 180,
@@ -848,12 +863,14 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
     String label, {
     String? hint,
     bool numeric = false,
+    ValueChanged<String>? onChanged,
   }) {
     return TextField(
       controller: controller,
       keyboardType: numeric
           ? const TextInputType.numberWithOptions(decimal: true)
           : TextInputType.text,
+      onChanged: onChanged,
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
