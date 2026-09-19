@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'document_workspace_page.dart';
 import 'nutri_catalog_workspace_page.dart';
 import 'patient_workspace_page.dart';
 import 'recipe_editor_page.dart';
@@ -16,6 +17,7 @@ class _NutriMainShellState extends State<NutriMainShell> {
   int _index = 0;
   int _plannerRefreshToken = 0;
   int _patientRefreshToken = 0;
+  int _documentRefreshToken = 0;
 
   void _selectPage(int value) {
     setState(() {
@@ -25,6 +27,9 @@ class _NutriMainShellState extends State<NutriMainShell> {
       }
       if (value == 1) {
         _patientRefreshToken++;
+      }
+      if (value == 3) {
+        _documentRefreshToken++;
       }
     });
   }
@@ -73,6 +78,11 @@ class _NutriMainShellState extends State<NutriMainShell> {
                       label: Text('Recetas'),
                     ),
                     NavigationRailDestination(
+                      icon: Icon(Icons.picture_as_pdf_outlined),
+                      selectedIcon: Icon(Icons.picture_as_pdf),
+                      label: Text('Documentos'),
+                    ),
+                    NavigationRailDestination(
                       icon: Icon(Icons.inventory_2_outlined),
                       selectedIcon: Icon(Icons.inventory_2),
                       label: Text('Biblioteca'),
@@ -91,6 +101,9 @@ class _NutriMainShellState extends State<NutriMainShell> {
                         refreshToken: _patientRefreshToken,
                       ),
                       const RecipeEditorPage(),
+                      DocumentWorkspacePage(
+                        refreshToken: _documentRefreshToken,
+                      ),
                       const NutriCatalogWorkspacePage(),
                     ],
                   ),
@@ -111,6 +124,9 @@ class _NutriMainShellState extends State<NutriMainShell> {
                 refreshToken: _patientRefreshToken,
               ),
               const RecipeEditorPage(),
+              DocumentWorkspacePage(
+                refreshToken: _documentRefreshToken,
+              ),
               const NutriCatalogWorkspacePage(),
             ],
           ),
@@ -132,6 +148,11 @@ class _NutriMainShellState extends State<NutriMainShell> {
                 icon: Icon(Icons.restaurant_menu_outlined),
                 selectedIcon: Icon(Icons.restaurant_menu),
                 label: 'Recetas',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.picture_as_pdf_outlined),
+                selectedIcon: Icon(Icons.picture_as_pdf),
+                label: 'Documentos',
               ),
               NavigationDestination(
                 icon: Icon(Icons.inventory_2_outlined),
