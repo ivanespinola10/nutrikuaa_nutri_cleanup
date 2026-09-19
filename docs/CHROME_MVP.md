@@ -1,97 +1,109 @@
-# Chrome MVP V0.1
+# NutriKuaa Nutri — Chrome MVP
 
-This milestone validates the Nutrikuaa Nutri backend inside Flutter Web before
-the production USDA catalog is connected to the browser UI.
+## V0.1 — aprobado
 
-## What the browser test exercises
+La primera prueba confirmó:
 
-The screen uses the real application services and the local SQLite schema:
+- SQLite Web operativo;
+- persistencia entre reinicios en localhost:8080;
+- pacientes;
+- alimentos personalizados;
+- objetivos nutricionales;
+- creación de plan;
+- lectura desde SQLite;
+- cálculo de energía y macronutrientes.
 
-1. Create a patient.
-2. Persist energy and protein targets.
-3. Create a branded or professional food.
-4. Select patient + food + grams.
-5. Create a plan.
-6. Create the first meal.
-7. Persist the meal item.
-8. Read the plan back from SQLite.
-9. Calculate energy, protein, carbohydrate and fat totals.
-10. Compare energy/protein with the saved target.
+## V0.2 — catálogo oficial + biblioteca profesional
 
-The "Cargar datos demo" button creates a reusable demo patient and yogurt so
-the first smoke test can be completed with two clicks.
-
-## Browser persistence
-
-Chrome uses `sqflite_common_ffi_web`, backed by SQLite WASM and browser
-IndexedDB.
-
-Keep the same debug port between sessions so Chrome reuses the same browser
-storage origin.
-
-Recommended port:
+Esta etapa añade una segunda base local:
 
 ```text
-8080
+nutrikuaa_nutri.db
+  pacientes
+  objetivos
+  alimentos/marcas del profesional
+  snapshots usados en planes
+  recetas y planes
+
+nutrikuaa_foods.db
+  USDA FoodData Central Foundation Foods
+  release 2026-04
+  solo referencia
 ```
 
-## One-time Windows preparation
+El catálogo USDA se distribuye dentro de la aplicación. Chrome lo instala en
+IndexedDB desde el asset local; la app no consulta ni descarga USDA durante el
+uso.
 
-From the repository root:
+### Catálogo incluido
+
+La compilación actual contiene:
+
+- 469 Foundation Foods;
+- 3.841 valores nutricionales normalizados;
+- 187 porciones/medidas disponibles;
+- fuente: USDA FoodData Central Foundation Foods 2026-04.
+
+## Preparar y ejecutar
 
 ```powershell
-git fetch origin
-git checkout feature/nutri-backend-foundation
-git pull
+git pull origin feature/nutri-backend-foundation
+flutter clean
 .\scripts\prepare_chrome.ps1
-```
-
-The script runs:
-
-```text
-flutter pub get
-dart run sqflite_common_ffi_web:setup --force
-flutter analyze --no-fatal-infos --no-fatal-warnings
-```
-
-The setup command creates the web SQLite runtime files required by the browser:
-
-- `web/sqlite3.wasm`
-- `web/sqflite_sw.js`
-
-## Run in Chrome
-
-```powershell
 flutter run -d chrome --web-port 8080
 ```
 
-## Fast acceptance test
+## Prueba de aceptación V0.2
 
-1. Confirm the top badge says that local SQLite is active.
-2. Click **Cargar datos demo**.
-3. Confirm patient **Paciente Chrome** is selected.
-4. Confirm food **Yogur griego Chrome · Demo PY** is selected.
-5. Leave quantity at **150 g**.
-6. Click **Crear y calcular plan**.
-7. Confirm the result shows approximately:
-   - 145.5 kcal
-   - 13.5 g protein
-   - 9.0 g carbohydrate
-   - 6.0 g fat
-8. Stop the app.
-9. Run the same command again on port 8080.
-10. Confirm the patient and food are still present.
+1. Confirmar que se muestran dos estados activos:
+   - Base profesional activa.
+   - USDA activo.
+2. En **Buscar alimento**, escribir `milk`.
+3. Confirmar que los alimentos propios aparecen en **Mi biblioteca** cuando
+   coinciden con la búsqueda.
+4. Confirmar resultados en **USDA Foundation Foods**.
+5. Elegir un alimento USDA con **Usar**.
+6. Elegir un paciente.
+7. Dejar una cantidad, por ejemplo 150 g.
+8. Pulsar **Guardar y calcular plan**.
+9. Confirmar que aparecen los totales nutricionales.
+10. Volver a buscar el mismo alimento.
+11. El registro utilizado ya debe aparecer desde la biblioteca profesional
+    como snapshot y no duplicarse como resultado oficial equivalente.
 
-## Out of scope for this first browser milestone
+El snapshot conserva:
 
-- Production USDA/FoodData Central browser catalog.
-- Official catalog snapshot selection from the UI.
-- Full weekly planner.
-- Recipe editor.
-- PDF generation.
-- Food Swap.
-- Mathematical optimization.
-- Licensing/store integration.
+- fuente;
+- FDC ID;
+- release;
+- composición nutricional usada;
+- porciones disponibles.
 
-Those are intentionally excluded so the first Chrome run isolates the core
-platform, persistence and nutrition flow.
+Una actualización futura del catálogo oficial no modifica ese plan histórico.
+
+## Nota de idioma
+
+Foundation Foods utiliza descripciones oficiales en inglés. En esta etapa
+buscar `milk`, `rice`, `chicken`, `egg`, etc.
+
+La capa multilingüe de nombres/sinónimos se implementará más adelante sin
+modificar los valores oficiales ni perder trazabilidad.
+
+## Después de V0.2
+
+Con catálogo + snapshots aprobados, el siguiente hito es sustituir el
+laboratorio por el constructor semanal real:
+
+```text
+Paciente
+  ↓
+Plan
+  ↓
+Lun Mar Mié Jue Vie Sáb Dom
+  ↓
+Desayuno / Media mañana / Almuerzo / Merienda / Cena
+  ↓
+alimentos + recetas
+  ↓
+totales en tiempo real
+```
