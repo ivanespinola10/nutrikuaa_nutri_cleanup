@@ -911,6 +911,15 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
                 ),
               ),
             ),
+            const SizedBox(height: 10),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: OutlinedButton.icon(
+                onPressed: _busy ? null : _copyCurrentDay,
+                icon: const Icon(Icons.copy_outlined),
+                label: Text('Copiar ${_days[_selectedDay]} a otro día'),
+              ),
+            ),
             const SizedBox(height: 14),
             Wrap(
               spacing: 12,
