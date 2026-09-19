@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../application/meal_plan_service.dart';
+import '../data/app_settings_repository.dart';
 import '../data/patient_repository.dart';
+import '../domain/app_settings.dart';
 import '../domain/meal_plan.dart';
 import '../domain/nutrition/nutrient.dart';
 import '../domain/patient.dart';
@@ -21,6 +23,7 @@ class PatientWorkspacePage extends StatefulWidget {
 class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
   final PatientRepository _patients = PatientRepository();
   final MealPlanService _plans = MealPlanService();
+  final AppSettingsRepository _settingsRepository = AppSettingsRepository();
 
   final _firstName = TextEditingController();
   final _lastName = TextEditingController();
@@ -48,6 +51,7 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
   int? _selectedPatientId;
   String? _sex;
   bool _isActive = true;
+  AppSettings _settings = const AppSettings();
   bool _loading = true;
   bool _busy = false;
   String? _error;
@@ -55,7 +59,23 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
   @override
   void initState() {
     super.initState();
-    _refreshPatients();
+    _initialize();
+  }
+
+  Future<void> _initialize() async {
+    try {
+      final settings = await _settingsRepository.load();
+      if (!mounted) return;
+      setState(() => _settings = settings);
+      await _refreshPatients();
+    } catch (error) {
+      if (mounted) {
+        setState(() {
+          _error = error.toString();
+          _loading = false;
+        });
+      }
+    }
   }
 
   @override
