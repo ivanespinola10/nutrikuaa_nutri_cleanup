@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'nutri_catalog_workspace_page.dart';
+import 'patient_workspace_page.dart';
 import 'recipe_editor_page.dart';
 import 'weekly_planner_page.dart';
 
@@ -58,6 +59,11 @@ class _NutriMainShellState extends State<NutriMainShell> {
                       label: Text('Planificador'),
                     ),
                     NavigationRailDestination(
+                      icon: Icon(Icons.people_outline),
+                      selectedIcon: Icon(Icons.people),
+                      label: Text('Pacientes'),
+                    ),
+                    NavigationRailDestination(
                       icon: Icon(Icons.restaurant_menu_outlined),
                       selectedIcon: Icon(Icons.restaurant_menu),
                       label: Text('Recetas'),
@@ -77,6 +83,7 @@ class _NutriMainShellState extends State<NutriMainShell> {
                       WeeklyPlannerPage(
                         refreshToken: _plannerRefreshToken,
                       ),
+                      const PatientWorkspacePage(),
                       const RecipeEditorPage(),
                       const NutriCatalogWorkspacePage(),
                     ],
@@ -94,6 +101,7 @@ class _NutriMainShellState extends State<NutriMainShell> {
               WeeklyPlannerPage(
                 refreshToken: _plannerRefreshToken,
               ),
+              const PatientWorkspacePage(),
               const RecipeEditorPage(),
               const NutriCatalogWorkspacePage(),
             ],
@@ -106,6 +114,11 @@ class _NutriMainShellState extends State<NutriMainShell> {
                 icon: Icon(Icons.calendar_view_week_outlined),
                 selectedIcon: Icon(Icons.calendar_view_week),
                 label: 'Planificador',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.people_outline),
+                selectedIcon: Icon(Icons.people),
+                label: 'Pacientes',
               ),
               NavigationDestination(
                 icon: Icon(Icons.restaurant_menu_outlined),
