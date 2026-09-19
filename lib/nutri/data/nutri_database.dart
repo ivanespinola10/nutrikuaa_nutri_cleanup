@@ -14,7 +14,7 @@ class NutriDatabase {
   static final NutriDatabase instance = NutriDatabase._();
 
   static const databaseName = 'nutrikuaa_nutri.db';
-  static const databaseVersion = 4;
+  static const databaseVersion = 5;
 
   Database? _database;
 
@@ -117,6 +117,24 @@ class NutriDatabase {
         updated_at TEXT NOT NULL
       )
     ''');
+    await db.execute('''
+      CREATE TABLE patient_measurements (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        patient_id INTEGER NOT NULL,
+        measured_at TEXT NOT NULL,
+        weight_kg REAL,
+        height_cm REAL,
+        waist_cm REAL,
+        notes TEXT,
+        FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE
+      )
+    ''');
+
+    await db.execute(
+      'CREATE INDEX idx_patient_measurements_patient_date '
+      'ON patient_measurements(patient_id, measured_at DESC)',
+    );
+
 
     await db.execute('''
       CREATE TABLE nutrition_targets (
@@ -255,6 +273,26 @@ class NutriDatabase {
         ON foods(source_name, source_food_id, source_release)
         WHERE source_type = 'officialSnapshot'
       ''');
+    }
+
+    if (oldVersion < 5) {
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS patient_measurements (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          patient_id INTEGER NOT NULL,
+          measured_at TEXT NOT NULL,
+          weight_kg REAL,
+          height_cm REAL,
+          waist_cm REAL,
+          notes TEXT,
+          FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE
+        )
+      ''');
+
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_patient_measurements_patient_date '
+        'ON patient_measurements(patient_id, measured_at DESC)',
+      );
     }
 
     // Future migrations must be additive and preserve professional data.
