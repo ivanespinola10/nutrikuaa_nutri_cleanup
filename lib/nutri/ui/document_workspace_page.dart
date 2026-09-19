@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pdf/pdf.dart';
@@ -45,7 +46,9 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
   int? _selectedPatientId;
   int? _selectedPlanId;
 
-  Uint8List? _logoBytes;
+  Uint8List? _nutrikuaaLogoBytes;
+  Uint8List? _customLogoBytes;
+  String? _customLogoFileName;
   Uint8List? _pdfBytes;
 
   bool _includeNutrition = true;
@@ -91,7 +94,9 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
 
       if (!mounted) return;
       setState(() {
-        _logoBytes = asset.buffer.asUint8List();
+        _nutrikuaaLogoBytes = asset.buffer.asUint8List();
+        _customLogoBytes = profile.logoBytes;
+        _customLogoFileName = profile.logoFileName;
         _applyProfile(profile);
       });
 
@@ -122,6 +127,8 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
       phone: _nullIfBlank(_phone.text),
       email: _nullIfBlank(_email.text),
       footerText: _nullIfBlank(_footer.text),
+      logoBytes: _customLogoBytes,
+      logoFileName: _customLogoFileName,
     );
   }
 
@@ -167,6 +174,77 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
     });
   }
 
+  Future<void> _pickLogo() async {
+    const typeGroup = XTypeGroup(
+      label: 'Logos',
+      extensions: ['png', 'jpg', 'jpeg'],
+      mimeTypes: ['image/png', 'image/jpeg'],
+      webWildCards: ['image/png', 'image/jpeg'],
+    );
+
+    final file = await openFile(
+      acceptedTypeGroups: const [typeGroup],
+    );
+    if (file == null) return;
+
+    final bytes = await file.readAsBytes();
+    if (bytes.isEmpty) {
+      _message('El archivo está vacío.');
+      return;
+    }
+    if (bytes.length > 2 * 1024 * 1024) {
+      _message('El logo debe pesar menos de 2 MB.');
+      return;
+    }
+    if (!_isPngOrJpeg(bytes)) {
+      _message('Usa un archivo PNG o JPG válido.');
+      return;
+    }
+
+    if (!mounted) return;
+    setState(() {
+      _customLogoBytes = bytes;
+      _customLogoFileName = file.name;
+      _pdfBytes = null;
+    });
+
+    await _profileRepository.save(_profileFromForm());
+    _message('Logo profesional guardado.');
+  }
+
+  Future<void> _useNutrikuaaLogo() async {
+    setState(() {
+      _customLogoBytes = null;
+      _customLogoFileName = null;
+      _pdfBytes = null;
+    });
+
+    await _profileRepository.save(_profileFromForm());
+    _message('Se usará el logo de Nutrikuaa.');
+  }
+
+  bool _isPngOrJpeg(Uint8List bytes) {
+    if (bytes.length >= 8 &&
+        bytes[0] == 0x89 &&
+        bytes[1] == 0x50 &&
+        bytes[2] == 0x4E &&
+        bytes[3] == 0x47 &&
+        bytes[4] == 0x0D &&
+        bytes[5] == 0x0A &&
+        bytes[6] == 0x1A &&
+        bytes[7] == 0x0A) {
+      return true;
+    }
+
+    return bytes.length >= 3 &&
+        bytes[0] == 0xFF &&
+        bytes[1] == 0xD8 &&
+        bytes[2] == 0xFF;
+  }
+
+  Uint8List? get _activeLogoBytes =>
+      _customLogoBytes ?? _nutrikuaaLogoBytes;
+
   Future<void> _saveProfile() async {
     await _execute(() async {
       final profile = _profileFromForm();
@@ -189,7 +267,7 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
       final bytes = await _pdfService.build(
         planId: planId,
         profile: profile,
-        logoBytes: _logoBytes,
+        logoBytes: _activeLogoBytes,
         includeNutritionSummary: _includeNutrition,
         includeRecipeInstructions: _includeRecipeInstructions,
       );
@@ -248,7 +326,7 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
         actions: const [
           Padding(
             padding: EdgeInsets.only(right: 18),
-            child: Center(child: Text('V0.7')),
+            child: Center(child: Text('V0.7.1')),
           ),
         ],
       ),
@@ -343,7 +421,9 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
                 hintText: 'Ej.: Consultas con cita previa',
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 14),
+            _brandingRow(),
+            const SizedBox(height: 12),
             Align(
               alignment: Alignment.centerLeft,
               child: OutlinedButton.icon(
@@ -354,6 +434,85 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _brandingRow() {
+    final logo = _activeLogoBytes;
+    final usingCustom = _customLogoBytes != null;
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outlineVariant,
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            width: 96,
+            height: 72,
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.outlineVariant,
+              ),
+            ),
+            child: logo == null
+                ? const Icon(Icons.image_outlined)
+                : Image.memory(
+                    logo,
+                    fit: BoxFit.contain,
+                    errorBuilder: (_, __, ___) =>
+                        const Icon(Icons.broken_image_outlined),
+                  ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  usingCustom ? 'Logo profesional' : 'Logo Nutrikuaa',
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  usingCustom
+                      ? (_customLogoFileName ?? 'Logo personalizado')
+                      : 'Se usa como respaldo mientras no cargues uno propio.',
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    OutlinedButton.icon(
+                      onPressed: _busy ? null : _pickLogo,
+                      icon: const Icon(Icons.upload_file_outlined),
+                      label: Text(
+                        usingCustom ? 'Cambiar logo' : 'Cargar logo',
+                      ),
+                    ),
+                    if (usingCustom)
+                      TextButton.icon(
+                        onPressed: _busy ? null : _useNutrikuaaLogo,
+                        icon: const Icon(Icons.restart_alt),
+                        label: const Text('Usar logo Nutrikuaa'),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
