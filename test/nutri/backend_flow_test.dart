@@ -271,6 +271,7 @@ void main() {
     expect(duplicated, isNotNull);
     expect(duplicated!.meals, hasLength(1));
     expect(duplicated.meals.single.items, hasLength(1));
+  });
 
   test('Spanish alias finds local snapshot and hides official duplicate', () async {
     final officialCatalog = OfficialFoodCatalog(
@@ -303,6 +304,5 @@ void main() {
       afterSnapshot.official.any((food) => food.sourceFoodId == '202'),
       isFalse,
     );
-  });
   });
 }
