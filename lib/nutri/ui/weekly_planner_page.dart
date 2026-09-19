@@ -383,6 +383,211 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
     });
   }
 
+  Future<void> _editItem(MealItem item) async {
+    final planId = _selectedPlanId;
+    if (planId == null || item.id == null) return;
+
+    final initial = item.itemType == MealItemType.food
+        ? item.quantityGrams ?? 0
+        : item.servings ?? 1;
+    final controller = TextEditingController(
+      text: initial.toStringAsFixed(
+        item.itemType == MealItemType.food ? 0 : 1,
+      ),
+    );
+
+    final value = await showDialog<double>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(
+          item.itemType == MealItemType.food
+              ? 'Editar cantidad'
+              : 'Editar porciones',
+        ),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          decoration: InputDecoration(
+            labelText: item.itemType == MealItemType.food
+                ? 'Gramos'
+                : 'Porciones',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () {
+              final parsed = double.tryParse(
+                controller.text.replaceAll(',', '.'),
+              );
+              Navigator.pop(context, parsed);
+            },
+            child: const Text('Guardar'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+
+    if (value == null || value <= 0) return;
+
+    await _execute(() async {
+      if (item.itemType == MealItemType.food) {
+        await _plans.updateFoodQuantity(
+          mealItemId: item.id!,
+          quantityGrams: value,
+        );
+      } else {
+        await _plans.updateRecipeServings(
+          mealItemId: item.id!,
+          servings: value,
+        );
+      }
+      await _loadPlan(planId);
+      _message('Cantidad actualizada.');
+    });
+  }
+
+  Future<void> _copyMealToDay(MealWithItems meal) async {
+    final planId = _selectedPlanId;
+    if (planId == null || meal.meal.id == null) return;
+
+    final targetDay = await showDialog<int>(
+      context: context,
+      builder: (context) => SimpleDialog(
+        title: Text('Copiar ${meal.meal.name} a...'),
+        children: List.generate(7, (index) {
+          if (index == _selectedDay) return const SizedBox.shrink();
+          return SimpleDialogOption(
+            onPressed: () => Navigator.pop(context, index),
+            child: Text(_days[index]),
+          );
+        }),
+      ),
+    );
+
+    if (targetDay == null) return;
+
+    await _execute(() async {
+      final targetMealId = await _plans.getOrCreateMeal(
+        planId: planId,
+        dayIndex: targetDay,
+        name: meal.meal.name,
+        sortOrder: meal.meal.sortOrder,
+      );
+      await _plans.copyMealItems(
+        sourceMealId: meal.meal.id!,
+        targetMealId: targetMealId,
+        replaceTarget: true,
+      );
+      await _loadPlan(planId);
+      _message('${meal.meal.name} copiado a ${_days[targetDay]}.');
+    });
+  }
+
+  Future<void> _clearMeal(MealWithItems meal) async {
+    if (meal.meal.id == null || meal.items.isEmpty) return;
+    final planId = _selectedPlanId;
+    if (planId == null) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Vaciar comida'),
+        content: Text(
+          '¿Eliminar todos los elementos de ${meal.meal.name}?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Vaciar'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    await _execute(() async {
+      await _plans.clearMeal(meal.meal.id!);
+      await _loadPlan(planId);
+      _message('${meal.meal.name} vaciado.');
+    });
+  }
+
+  Future<void> _copyCurrentDay() async {
+    final planId = _selectedPlanId;
+    if (planId == null) return;
+
+    final targetDay = await showDialog<int>(
+      context: context,
+      builder: (context) => SimpleDialog(
+        title: Text('Copiar ${_days[_selectedDay]} a...'),
+        children: List.generate(7, (index) {
+          if (index == _selectedDay) return const SizedBox.shrink();
+          return SimpleDialogOption(
+            onPressed: () => Navigator.pop(context, index),
+            child: Text(_days[index]),
+          );
+        }),
+      ),
+    );
+
+    if (targetDay == null) return;
+
+    await _execute(() async {
+      await _plans.copyDay(
+        planId: planId,
+        sourceDayIndex: _selectedDay,
+        targetDayIndex: targetDay,
+        replaceTarget: true,
+      );
+      await _loadPlan(planId);
+      _message(
+        '${_days[_selectedDay]} copiado a ${_days[targetDay]}.',
+      );
+    });
+  }
+
+  Future<void> _duplicateCurrentWeek() async {
+    final planId = _selectedPlanId;
+    final details = _details;
+    final patientId = _selectedPatientId;
+    if (planId == null || details == null || patientId == null) return;
+
+    await _execute(() async {
+      final sourceStart = details.plan.startDate ?? DateTime.now();
+      final newStart = sourceStart.add(const Duration(days: 7));
+      final newEnd = newStart.add(const Duration(days: 6));
+      final name =
+          'Semana ${_two(newStart.day)}/${_two(newStart.month)}/${newStart.year}';
+
+      final newPlanId = await _plans.duplicatePlan(
+        planId,
+        newName: name,
+        newStartDate: newStart,
+        newEndDate: newEnd,
+      );
+
+      final plans = await _plans.listForPatient(patientId);
+      if (!mounted) return;
+      setState(() {
+        _patientPlans = plans;
+        _selectedPlanId = newPlanId;
+      });
+      await _loadPlan(newPlanId);
+      _message('Semana duplicada.');
+    });
+  }
+
   Future<void> _removeItem(int itemId) async {
     final planId = _selectedPlanId;
     if (planId == null) return;
