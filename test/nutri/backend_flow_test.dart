@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -730,7 +732,20 @@ void main() {
 
   test('professional profile persists and plan PDF is generated offline', () async {
     final profileRepository = ProfessionalProfileRepository();
-    const profile = ProfessionalProfile(
+    final logoBytes = Uint8List.fromList([
+      0x89,
+      0x50,
+      0x4E,
+      0x47,
+      0x0D,
+      0x0A,
+      0x1A,
+      0x0A,
+      0x01,
+      0x02,
+      0x03,
+    ]);
+    final profile = ProfessionalProfile(
       fullName: 'Lic. Test Nutricionista',
       credentials: 'Nutricionista',
       registrationNumber: 'PY-123',
@@ -738,6 +753,8 @@ void main() {
       phone: '+595 000 000',
       email: 'test@example.com',
       footerText: 'Documento de prueba',
+      logoBytes: logoBytes,
+      logoFileName: 'logo_test.png',
     );
 
     await profileRepository.save(profile);
@@ -745,6 +762,8 @@ void main() {
     expect(savedProfile.fullName, profile.fullName);
     expect(savedProfile.practiceName, profile.practiceName);
     expect(savedProfile.registrationNumber, profile.registrationNumber);
+    expect(savedProfile.logoFileName, 'logo_test.png');
+    expect(savedProfile.logoBytes, orderedEquals(logoBytes));
 
     final patients = PatientRepository();
     final patientId = await patients.create(
