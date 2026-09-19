@@ -1,23 +1,10 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 
-SqfliteFfiWebOptions _options({bool basicWorker = false}) {
-  return SqfliteFfiWebOptions(
-    sqlite3WasmUri: Uri.parse('sqlite3.wasm?v=2'),
-    sharedWorkerUri: Uri.parse('sqflite_sw.js?v=2'),
-    indexedDbName: 'nutrikuaa_nutri_web_v1',
-    forceAsBasicWorker: basicWorker ? true : null,
-  );
-}
-
 Future<void> configureDatabasePlatform() async {
-  databaseFactory = createDatabaseFactoryFfiWeb(
-    options: _options(),
-  );
+  databaseFactory = databaseFactoryFfiWeb;
 }
 
 Future<void> recoverDatabasePlatform() async {
-  databaseFactory = createDatabaseFactoryFfiWeb(
-    options: _options(basicWorker: true),
-  );
+  databaseFactory = databaseFactoryFfiWebBasicWebWorker;
 }
