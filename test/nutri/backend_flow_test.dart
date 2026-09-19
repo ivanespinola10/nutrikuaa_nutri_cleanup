@@ -7,15 +7,18 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:nutrikuaa_app/nutri/application/food_library_service.dart';
 import 'package:nutrikuaa_app/nutri/application/food_snapshot_service.dart';
 import 'package:nutrikuaa_app/nutri/application/meal_plan_service.dart';
+import 'package:nutrikuaa_app/nutri/application/nutri_backup_service.dart';
 import 'package:nutrikuaa_app/nutri/application/plan_nutrition_service.dart';
 import 'package:nutrikuaa_app/nutri/application/plan_pdf_service.dart';
 import 'package:nutrikuaa_app/nutri/application/recipe_nutrition_service.dart';
 import 'package:nutrikuaa_app/nutri/application/recipe_service.dart';
 import 'package:nutrikuaa_app/nutri/application/unified_food_search_service.dart';
+import 'package:nutrikuaa_app/nutri/data/app_settings_repository.dart';
 import 'package:nutrikuaa_app/nutri/data/nutri_database.dart';
 import 'package:nutrikuaa_app/nutri/data/official_food_catalog.dart';
 import 'package:nutrikuaa_app/nutri/data/patient_repository.dart';
 import 'package:nutrikuaa_app/nutri/data/professional_profile_repository.dart';
+import 'package:nutrikuaa_app/nutri/domain/app_settings.dart';
 import 'package:nutrikuaa_app/nutri/domain/food.dart';
 import 'package:nutrikuaa_app/nutri/domain/meal_plan.dart';
 import 'package:nutrikuaa_app/nutri/domain/nutrition/nutrient.dart';
@@ -847,6 +850,155 @@ void main() {
       profile: savedProfile,
       includeNutritionSummary: true,
       includeRecipeInstructions: true,
+    );
+
+    expect(bytes.length, greaterThan(1000));
+    expect(String.fromCharCodes(bytes.take(5)), '%PDF-');
+  });
+
+  test('V0.8 backup restores portable data settings and logo', () async {
+    final settingsRepository = AppSettingsRepository();
+    await settingsRepository.save(
+      const AppSettings(
+        languageCode: 'en',
+        countryCode: 'US',
+        unitSystem: UnitSystem.imperial,
+      ),
+    );
+
+    final profileRepository = ProfessionalProfileRepository();
+    final logo = Uint8List.fromList([1, 2, 3, 4, 5, 6]);
+    await profileRepository.save(
+      ProfessionalProfile(
+        fullName: 'Backup Nutritionist',
+        practiceName: 'Portable Practice',
+        logoBytes: logo,
+        logoFileName: 'portable_logo.png',
+      ),
+    );
+
+    final patients = PatientRepository();
+    final patientId = await patients.create(
+      Patient(
+        firstName: 'Portable',
+        lastName: 'Patient',
+      ),
+    );
+
+    final foods = FoodLibraryService();
+    final foodId = await foods.addProfessionalFood(
+      name: 'Portable food',
+      nutrients: const [
+        NutrientValue(
+          code: NutrientCodes.energyKcal,
+          valuePer100g: 120,
+          unit: NutrientUnit.kilocalorie,
+        ),
+      ],
+    );
+
+    final plans = MealPlanService();
+    final planId = await plans.createPlan(
+      MealPlan(
+        patientId: patientId,
+        name: 'Portable plan',
+      ),
+    );
+    final mealId = await plans.addMeal(
+      planId: planId,
+      dayIndex: 0,
+      name: 'Desayuno',
+    );
+    await plans.addFood(
+      mealId: mealId,
+      foodId: foodId,
+      quantityGrams: 100,
+    );
+
+    final backup = NutriBackupService();
+    final bytes = await backup.exportBackup();
+    expect(bytes.length, greaterThan(100));
+
+    final summary = await backup.inspect(bytes);
+    expect(summary.patientCount, 1);
+    expect(summary.planCount, 1);
+    expect(summary.foodCount, 1);
+
+    await patients.create(
+      Patient(
+        firstName: 'Should',
+        lastName: 'Disappear',
+      ),
+    );
+    await settingsRepository.save(const AppSettings());
+
+    final restored = await backup.restoreBackup(bytes);
+    expect(restored.patientCount, 1);
+    expect(restored.planCount, 1);
+
+    final restoredPatients = await patients.search('', activeOnly: false);
+    expect(restoredPatients, hasLength(1));
+    expect(restoredPatients.single.displayName, 'Portable Patient');
+
+    final restoredSettings = await settingsRepository.load();
+    expect(restoredSettings.languageCode, 'en');
+    expect(restoredSettings.countryCode, 'US');
+    expect(restoredSettings.unitSystem, UnitSystem.imperial);
+
+    final restoredProfile = await profileRepository.load();
+    expect(restoredProfile.fullName, 'Backup Nutritionist');
+    expect(restoredProfile.logoFileName, 'portable_logo.png');
+    expect(restoredProfile.logoBytes, orderedEquals(logo));
+
+    final restoredPlan = await plans.getById(planId);
+    expect(restoredPlan, isNotNull);
+    expect(restoredPlan!.meals.single.items.single.quantityGrams, 100);
+  });
+
+  test('PDF accepts English and imperial international settings', () async {
+    final patients = PatientRepository();
+    final patientId = await patients.create(
+      Patient(firstName: 'International', lastName: 'Patient'),
+    );
+
+    final foods = FoodLibraryService();
+    final foodId = await foods.addProfessionalFood(
+      name: 'International food',
+      nutrients: const [
+        NutrientValue(
+          code: NutrientCodes.energyKcal,
+          valuePer100g: 100,
+          unit: NutrientUnit.kilocalorie,
+        ),
+      ],
+    );
+
+    final plans = MealPlanService();
+    final planId = await plans.createPlan(
+      MealPlan(
+        patientId: patientId,
+        name: 'International week',
+      ),
+    );
+    final mealId = await plans.addMeal(
+      planId: planId,
+      dayIndex: 0,
+      name: 'Desayuno',
+    );
+    await plans.addFood(
+      mealId: mealId,
+      foodId: foodId,
+      quantityGrams: 100,
+    );
+
+    final bytes = await PlanPdfService().build(
+      planId: planId,
+      profile: const ProfessionalProfile(fullName: 'International RD'),
+      settings: const AppSettings(
+        languageCode: 'en',
+        countryCode: 'US',
+        unitSystem: UnitSystem.imperial,
+      ),
     );
 
     expect(bytes.length, greaterThan(1000));
