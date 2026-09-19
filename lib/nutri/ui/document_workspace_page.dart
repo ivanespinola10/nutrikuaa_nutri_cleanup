@@ -8,8 +8,10 @@ import 'package:printing/printing.dart';
 
 import '../application/meal_plan_service.dart';
 import '../application/plan_pdf_service.dart';
+import '../data/app_settings_repository.dart';
 import '../data/patient_repository.dart';
 import '../data/professional_profile_repository.dart';
+import '../domain/app_settings.dart';
 import '../domain/meal_plan.dart';
 import '../domain/patient.dart';
 import '../domain/professional_profile.dart';
@@ -31,6 +33,7 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
   final MealPlanService _plans = MealPlanService();
   final ProfessionalProfileRepository _profileRepository =
       ProfessionalProfileRepository();
+  final AppSettingsRepository _settingsRepository = AppSettingsRepository();
   final PlanPdfService _pdfService = PlanPdfService();
 
   final _fullName = TextEditingController();
@@ -50,6 +53,7 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
   Uint8List? _customLogoBytes;
   String? _customLogoFileName;
   Uint8List? _pdfBytes;
+  AppSettings _settings = const AppSettings();
 
   bool _includeNutrition = true;
   bool _includeRecipeInstructions = true;
@@ -90,6 +94,7 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
   Future<void> _initialize() async {
     try {
       final profile = await _profileRepository.load();
+      final settings = await _settingsRepository.load();
       final asset = await rootBundle.load('assets/logo.png');
 
       if (!mounted) return;
@@ -97,6 +102,7 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
         _nutrikuaaLogoBytes = asset.buffer.asUint8List();
         _customLogoBytes = profile.logoBytes;
         _customLogoFileName = profile.logoFileName;
+        _settings = settings;
         _applyProfile(profile);
       });
 
@@ -271,6 +277,7 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
         logoBytes: _activeLogoBytes,
         includeNutritionSummary: _includeNutrition,
         includeRecipeInstructions: _includeRecipeInstructions,
+        settings: _settings,
       );
 
       if (!mounted) return;
