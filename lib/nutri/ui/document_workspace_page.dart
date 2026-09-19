@@ -179,6 +179,7 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
       label: 'Logos',
       extensions: ['png', 'jpg', 'jpeg'],
       mimeTypes: ['image/png', 'image/jpeg'],
+      uniformTypeIdentifiers: ['public.png', 'public.jpeg'],
       webWildCards: ['image/png', 'image/jpeg'],
     );
 
