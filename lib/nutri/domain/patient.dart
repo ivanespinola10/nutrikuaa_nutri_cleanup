@@ -52,3 +52,35 @@ class NutritionTarget {
     this.maximumValue,
   });
 }
+
+
+class PatientMeasurement {
+  final int? id;
+  final int patientId;
+  final DateTime measuredAt;
+  final double? weightKg;
+  final double? heightCm;
+  final double? waistCm;
+  final String? notes;
+
+  const PatientMeasurement({
+    this.id,
+    required this.patientId,
+    required this.measuredAt,
+    this.weightKg,
+    this.heightCm,
+    this.waistCm,
+    this.notes,
+  });
+
+  double? get bmi {
+    final weight = weightKg;
+    final height = heightCm;
+    if (weight == null || height == null || weight <= 0 || height <= 0) {
+      return null;
+    }
+
+    final meters = height / 100;
+    return weight / (meters * meters);
+  }
+}
