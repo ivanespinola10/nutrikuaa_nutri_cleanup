@@ -38,6 +38,8 @@ class FoodLibraryService {
     required String name,
     required List<NutrientValue> nutrients,
     String? countryCode,
+    double? servingQuantity,
+    String? servingUnit,
     String? householdMeasure,
     String? notes,
   }) {
@@ -47,6 +49,8 @@ class FoodLibraryService {
         countryCode: countryCode,
         sourceType: FoodSourceType.professionalCustom,
         sourceName: 'Professional library',
+        servingQuantity: servingQuantity,
+        servingUnit: servingUnit,
         householdMeasure: householdMeasure,
         notes: notes,
         nutrients: nutrients,
