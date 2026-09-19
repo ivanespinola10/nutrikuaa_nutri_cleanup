@@ -5,6 +5,7 @@ import '../application/food_placement_service.dart';
 import '../application/meal_plan_service.dart';
 import '../application/plan_nutrition_service.dart';
 import '../application/unified_food_search_service.dart';
+import '../data/app_settings_repository.dart';
 import '../data/nutri_database.dart';
 import '../data/official_food_catalog.dart';
 import '../data/official_food_catalog_installer.dart';
@@ -266,12 +267,14 @@ class _NutriCatalogWorkspacePageState
       ];
 
       final brand = _customBrand.text.trim();
+      final settings = await AppSettingsRepository().load();
+      final countryCode = settings.countryCode;
       final servingGrams = _number(_customServingGrams);
       final household = _customHouseholdMeasure.text.trim();
       final id = brand.isEmpty
           ? await _foods.addProfessionalFood(
               name: name,
-              countryCode: 'PY',
+              countryCode: countryCode,
               servingQuantity: servingGrams > 0 ? servingGrams : null,
               servingUnit: servingGrams > 0 ? 'g' : null,
               householdMeasure: household.isEmpty ? null : household,
@@ -280,7 +283,7 @@ class _NutriCatalogWorkspacePageState
           : await _foods.addBrandedFood(
               name: name,
               brand: brand,
-              countryCode: 'PY',
+              countryCode: countryCode,
               servingQuantity: servingGrams > 0 ? servingGrams : null,
               servingUnit: servingGrams > 0 ? 'g' : null,
               householdMeasure: household.isEmpty ? null : household,
