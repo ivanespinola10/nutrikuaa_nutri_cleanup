@@ -1,0 +1,136 @@
+name: Build Official Food Catalog
+
+on:
+  push:
+    branches:
+      - feature/nutri-backend-foundation
+    paths:
+      - '.github/workflows/build-official-food-catalog.yml'
+      - 'tools/food_importer/import_usda.py'
+      - 'tools/food_importer/nutrient_mapping.json'
+
+permissions:
+  contents: write
+
+jobs:
+  build-catalog:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: feature/nutri-backend-foundation
+          fetch-depth: 0
+
+      - name: Download USDA Foundation Foods 04/2026
+        run: |
+          rm -rf .catalog_source
+          mkdir -p .catalog_source
+          curl --fail --location --retry 3 \
+            "https://fdc.nal.usda.gov/fdc-datasets/FoodData_Central_foundation_food_csv_2026-04-30.zip" \
+            --output .catalog_source/foundation.zip
+          unzip -q .catalog_source/foundation.zip -d .catalog_source/extracted
+
+      - name: Locate FoodData Central CSV directory
+        id: locate
+        shell: bash
+        run: |
+          FOOD_FILE="$(find .catalog_source/extracted -type f -name food.csv | head -n 1)"
+          if [ -z "$FOOD_FILE" ]; then
+            echo "food.csv not found"
+            exit 1
+          fi
+          INPUT_DIR="$(dirname "$FOOD_FILE")"
+          echo "input_dir=$INPUT_DIR" >> "$GITHUB_OUTPUT"
+          echo "Using $INPUT_DIR"
+
+      - name: Build NutriKuaa official SQLite catalog
+        run: |
+          rm -f assets/data/nutrikuaa_foods.db
+          rm -f assets/data/nutrikuaa_foods.db.manifest.json
+          python3 tools/food_importer/import_usda.py \
+            --input "${{ steps.locate.outputs.input_dir }}" \
+            --output "assets/data/nutrikuaa_foods.db" \
+            --source-release "USDA FoodData Central Foundation Foods 2026-04"
+
+      - name: Finalize bundled manifest
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          generated = Path("assets/data/nutrikuaa_foods.db.manifest.json")
+          target = Path("assets/data/food_db_manifest.json")
+
+          data = json.loads(generated.read_text(encoding="utf-8"))
+          data["bundled"] = True
+          data["catalogKind"] = "foundation"
+          data["releaseDate"] = "2026-04-30"
+          data["distribution"] = "bundled-offline"
+          target.write_text(
+              json.dumps(data, indent=2, ensure_ascii=False) + "\n",
+              encoding="utf-8",
+          )
+          generated.unlink()
+          PY
+
+      - name: Validate generated catalog
+        run: |
+          python3 - <<'PY'
+          import json
+          import sqlite3
+          from pathlib import Path
+
+          db_path = Path("assets/data/nutrikuaa_foods.db")
+          manifest_path = Path("assets/data/food_db_manifest.json")
+
+          if not db_path.exists() or db_path.stat().st_size == 0:
+              raise SystemExit("Generated catalog is missing or empty")
+
+          manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+          if not manifest.get("bundled"):
+              raise SystemExit("Manifest is not marked bundled")
+
+          conn = sqlite3.connect(db_path)
+          try:
+              food_count = conn.execute("SELECT COUNT(*) FROM foods").fetchone()[0]
+              nutrient_count = conn.execute(
+                  "SELECT COUNT(*) FROM food_nutrients"
+              ).fetchone()[0]
+              portion_count = conn.execute(
+                  "SELECT COUNT(*) FROM food_portions"
+              ).fetchone()[0]
+              source_release = conn.execute(
+                  "SELECT value FROM catalog_metadata WHERE key = 'source_release'"
+              ).fetchone()[0]
+          finally:
+              conn.close()
+
+          if food_count < 100:
+              raise SystemExit(f"Unexpectedly small food catalog: {food_count}")
+          if nutrient_count < food_count:
+              raise SystemExit(
+                  f"Unexpectedly small nutrient table: {nutrient_count}"
+              )
+
+          print(f"Foods: {food_count}")
+          print(f"Nutrient values: {nutrient_count}")
+          print(f"Portions: {portion_count}")
+          print(f"Release: {source_release}")
+          print(f"Database bytes: {db_path.stat().st_size}")
+          PY
+
+      - name: Commit official catalog to branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/data/nutrikuaa_foods.db assets/data/food_db_manifest.json
+
+          if git diff --cached --quiet; then
+            echo "Catalog already current."
+            exit 0
+          fi
+
+          git commit -m "data(food): bundle USDA Foundation Foods 2026-04 catalog"
+          git push origin HEAD:feature/nutri-backend-foundation
