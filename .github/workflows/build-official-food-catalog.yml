@@ -52,7 +52,8 @@ jobs:
           python3 tools/food_importer/import_usda.py \
             --input "${{ steps.locate.outputs.input_dir }}" \
             --output "assets/data/nutrikuaa_foods.db" \
-            --source-release "USDA FoodData Central Foundation Foods 2026-04"
+            --source-release "USDA FoodData Central Foundation Foods 2026-04" \
+            --data-type "foundation_food"
 
       - name: Finalize bundled manifest
         run: |
@@ -107,6 +108,12 @@ jobs:
           finally:
               conn.close()
 
+          print(f"Foods: {food_count}")
+          print(f"Nutrient values: {nutrient_count}")
+          print(f"Portions: {portion_count}")
+          print(f"Release: {source_release}")
+          print(f"Database bytes: {db_path.stat().st_size}")
+
           if food_count < 100:
               raise SystemExit(f"Unexpectedly small food catalog: {food_count}")
           if nutrient_count < food_count:
@@ -114,11 +121,16 @@ jobs:
                   f"Unexpectedly small nutrient table: {nutrient_count}"
               )
 
-          print(f"Foods: {food_count}")
-          print(f"Nutrient values: {nutrient_count}")
-          print(f"Portions: {portion_count}")
-          print(f"Release: {source_release}")
-          print(f"Database bytes: {db_path.stat().st_size}")
+          if source_release != "USDA FoodData Central Foundation Foods 2026-04":
+              raise SystemExit(f"Unexpected source release: {source_release}")
+
+          print("Catalog validation: OK")
+          # Values were printed above before assertions on purpose.
+          # This makes a future schema/data issue diagnosable from CI logs.
+          # Do not remove these diagnostics.
+          # 
+          # Duplicate prints below were removed.
+          #
           PY
 
       - name: Commit official catalog to branch
