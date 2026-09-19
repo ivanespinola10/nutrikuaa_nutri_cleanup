@@ -55,6 +55,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
   final _query = TextEditingController();
   final _grams = TextEditingController(text: '150');
   final _servings = TextEditingController(text: '1');
+  final _portionAmount = TextEditingController(text: '1');
 
   List<Patient> _patientList = const [];
   List<MealPlan> _patientPlans = const [];
@@ -72,8 +73,10 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
   int _selectedDay = 0;
   String _selectedMealName = 'Desayuno';
   Food? _selectedFood;
+  FoodPortion? _selectedPortion;
   Recipe? _selectedRecipe;
   bool _recipeMode = false;
+  bool _usePortion = false;
   bool _loading = true;
   bool _busy = false;
   String? _error;
@@ -97,6 +100,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
     _query.dispose();
     _grams.dispose();
     _servings.dispose();
+    _portionAmount.dispose();
     super.dispose();
   }
 
@@ -391,7 +395,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
           ),
           const Padding(
             padding: EdgeInsets.only(right: 18),
-            child: Center(child: Text('V0.3')),
+            child: Center(child: Text('V0.4')),
           ),
         ],
       ),
