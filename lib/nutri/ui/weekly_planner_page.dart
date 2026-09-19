@@ -73,6 +73,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
   int _selectedDay = 0;
   String _selectedMealName = 'Desayuno';
   Food? _selectedFood;
+  List<FoodPortion> _portionOptions = const [];
   FoodPortion? _selectedPortion;
   Recipe? _selectedRecipe;
   bool _recipeMode = false;
@@ -269,26 +270,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
     setState(() => _foodResults = foods);
   }
 
-  List<FoodPortion> get _availablePortions {
-    final food = _selectedFood;
-    if (food == null) return const [];
-
-    final portions = <FoodPortion>[...food.portions];
-    if (portions.isEmpty &&
-        food.householdMeasure != null &&
-        food.servingQuantity != null &&
-        food.servingQuantity! > 0 &&
-        food.servingUnit?.toLowerCase() == 'g') {
-      portions.add(
-        FoodPortion(
-          amount: 1,
-          measure: food.householdMeasure,
-          gramWeight: food.servingQuantity!,
-        ),
-      );
-    }
-    return portions;
-  }
+  List<FoodPortion> get _availablePortions => _portionOptions;
 
   void _selectFood(Food food) {
     final portions = <FoodPortion>[...food.portions];
@@ -308,7 +290,9 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
 
     setState(() {
       _selectedFood = food;
-      _selectedPortion = portions.isEmpty ? null : portions.first;
+      _portionOptions = List.unmodifiable(portions);
+      _selectedPortion =
+          _portionOptions.isEmpty ? null : _portionOptions.first;
       _usePortion = false;
     });
   }
@@ -983,6 +967,9 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
                     setState(() {
                       _recipeMode = true;
                       _selectedFood = null;
+                      _portionOptions = const [];
+                      _selectedPortion = null;
+                      _usePortion = false;
                     });
                     _search();
                   },
