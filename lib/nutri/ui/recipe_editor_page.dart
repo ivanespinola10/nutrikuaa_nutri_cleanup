@@ -293,7 +293,7 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
       } else {
         final current = await _recipes.getById(currentId);
         if (current == null) {
-          throw StateError('La receta ya no existe.');
+          throw StateError(NutriI18n.t('La receta ya no existe.'));
         }
 
         await _recipes.update(
@@ -314,7 +314,9 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
       }
 
       await _refreshRecipes(selectId: recipeId);
-      _message(currentId == null ? 'Receta creada.' : 'Receta actualizada.');
+      _message(currentId == null
+          ? NutriI18n.t('Receta creada.')
+          : NutriI18n.t('Receta actualizada.'));
     });
   }
 
@@ -325,7 +327,7 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
     await _execute(() async {
       final newId = await _recipes.duplicate(
         id,
-        newName: '${_name.text.trim()} (copia)',
+        newName: '${_name.text.trim()} ${_copySuffix()}',
       );
       await _refreshRecipes(selectId: newId);
       _message(NutriI18n.t('Receta duplicada.'));
@@ -447,7 +449,7 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
                       leading: const Icon(Icons.restaurant_menu),
                       title: Text(recipe.name),
                       subtitle: Text(
-                        '${recipe.servings.toStringAsFixed(1)} porción(es)',
+                        _servingsText(recipe.servings),
                       ),
                       onTap: () => _loadRecipe(recipe.id!),
                     );
@@ -573,7 +575,7 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
                     decoration: InputDecoration(
                       labelText: NutriI18n.t('Rendimiento final g (opcional)'),
                       helperText: _ingredientWeight > 0
-                          ? 'Ingredientes: ${_ingredientWeight.toStringAsFixed(0)} g'
+                          ? _ingredientsWeightText(_ingredientWeight)
                           : null,
                     ),
                   ),
@@ -599,8 +601,8 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
                   icon: const Icon(Icons.save_outlined),
                   label: Text(
                     _editingRecipeId == null
-                        ? 'Guardar receta'
-                        : 'Guardar cambios',
+                        ? NutriI18n.t('Guardar receta')
+                        : NutriI18n.t('Guardar cambios'),
                   ),
                 ),
                 if (_editingRecipeId != null)
@@ -691,7 +693,7 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
       subtitle: Text(
         food.sourceType == FoodSourceType.officialDatabase
             ? 'USDA · FDC ${food.sourceFoodId}'
-            : 'Biblioteca profesional',
+            : NutriI18n.t('Biblioteca profesional'),
       ),
       trailing: FilledButton.tonal(
         onPressed: _busy ? null : () => _addIngredient(food),
@@ -708,7 +710,7 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              'Ingredientes (${_ingredients.length})',
+              _ingredientsCountText(_ingredients.length),
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w800,
@@ -778,8 +780,8 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
             const SizedBox(height: 4),
             Text(
               servings > 0
-                  ? 'Por receta completa y por 1 de ${servings.toStringAsFixed(1)} porción(es).'
-                  : 'Define un número de porciones válido.',
+                  ? _nutritionDescription(servings)
+                  : NutriI18n.t('Define un número de porciones válido.'),
             ),
             const SizedBox(height: 12),
             Wrap(
@@ -818,6 +820,56 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
     );
   }
 
+  String _copySuffix() {
+    if (NutriI18n.languageCode == 'en') return '(copy)';
+    if (NutriI18n.languageCode == 'pt') return '(cópia)';
+    return '(copia)';
+  }
+
+  String _servingsText(double servings) {
+    final value = servings.toStringAsFixed(1);
+    if (NutriI18n.languageCode == 'en') return '$value serving(s)';
+    if (NutriI18n.languageCode == 'pt') return '$value porção(ões)';
+    return '$value porción(es)';
+  }
+
+  String _ingredientsWeightText(double grams) {
+    final value = grams.toStringAsFixed(0);
+    if (NutriI18n.languageCode == 'en') return 'Ingredients: $value g';
+    if (NutriI18n.languageCode == 'pt') return 'Ingredientes: $value g';
+    return 'Ingredientes: $value g';
+  }
+
+  String _ingredientsCountText(int count) {
+    if (NutriI18n.languageCode == 'en') return 'Ingredients ($count)';
+    return 'Ingredientes ($count)';
+  }
+
+  String _nutritionDescription(double servings) {
+    final value = servings.toStringAsFixed(1);
+    if (NutriI18n.languageCode == 'en') {
+      return 'Whole recipe and per 1 of $value serving(s).';
+    }
+    if (NutriI18n.languageCode == 'pt') {
+      return 'Receita completa e por 1 de $value porção(ões).';
+    }
+    return 'Por receta completa y por 1 de $value porción(es).';
+  }
+
+  String _perServingText(double value, String unit) {
+    final amount = value.toStringAsFixed(1);
+    if (NutriI18n.languageCode == 'en') return '$amount $unit / serving';
+    if (NutriI18n.languageCode == 'pt') return '$amount $unit / porção';
+    return '$amount $unit / porción';
+  }
+
+  String _totalText(double value, String unit) {
+    final amount = value.toStringAsFixed(1);
+    if (NutriI18n.languageCode == 'en') return '$amount $unit total';
+    if (NutriI18n.languageCode == 'pt') return '$amount $unit total';
+    return '$amount $unit total';
+  }
+
   Widget _nutritionMetric(
     String label,
     double total,
@@ -834,17 +886,17 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label),
+          Text(NutriI18n.t(label)),
           const SizedBox(height: 4),
           Text(
-            '${perServing.toStringAsFixed(1)} $unit / porción',
+            _perServingText(perServing, unit),
             style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w800,
             ),
           ),
           Text(
-            '${total.toStringAsFixed(1)} $unit total',
+            _totalText(total, unit),
             style: Theme.of(context).textTheme.bodySmall,
           ),
         ],
