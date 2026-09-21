@@ -340,7 +340,7 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(NutriI18n.t('Eliminar receta')),
-        content: const Text(NutriI18n.t('La receta se eliminará si todavía no está utilizada en un plan.'),
+        content: Text(NutriI18n.t('La receta se eliminará si todavía no está utilizada en un plan.'),
         ),
         actions: [
           TextButton(
@@ -392,7 +392,7 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(NutriI18n.t('Recetas'),
+        title: Text(NutriI18n.t('Recetas'),
           style: TextStyle(fontWeight: FontWeight.w700),
         ),
         actions: const [
@@ -630,7 +630,7 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(NutriI18n.t('Agregar ingredientes'),
+            Text(NutriI18n.t('Agregar ingredientes'),
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 10),
@@ -772,7 +772,7 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(NutriI18n.t('Nutrición calculada'),
+            Text(NutriI18n.t('Nutrición calculada'),
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 4),
