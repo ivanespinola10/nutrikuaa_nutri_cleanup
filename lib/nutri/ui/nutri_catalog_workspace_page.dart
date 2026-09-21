@@ -497,8 +497,7 @@ class _NutriCatalogWorkspacePageState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Catálogo + biblioteca profesional',
+            const Text(NutriI18n.t('Catálogo + biblioteca profesional'),
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 8),
@@ -562,7 +561,7 @@ class _NutriCatalogWorkspacePageState
   Widget _patientCard() {
     return _section(
       number: '1',
-      title: 'Paciente',
+      title: NutriI18n.t('Paciente'),
       subtitle: '${_patientList.length} guardado(s)',
       child: Column(
         children: [
@@ -596,8 +595,8 @@ class _NutriCatalogWorkspacePageState
   Widget _customFoodCard() {
     return _section(
       number: '2',
-      title: 'Alimento propio o de marca',
-      subtitle: 'Editable por el profesional',
+      title: NutriI18n.t('Alimento propio o de marca'),
+      subtitle: NutriI18n.t('Editable por el profesional'),
       child: Column(
         children: [
           _field(_customName, 'Nombre del alimento'),
@@ -655,8 +654,8 @@ class _NutriCatalogWorkspacePageState
   Widget _searchCard() {
     return _section(
       number: '3',
-      title: 'Buscar alimento',
-      subtitle: 'Tu biblioteca primero · USDA después',
+      title: NutriI18n.t('Buscar alimento'),
+      subtitle: NutriI18n.t('Tu biblioteca primero · USDA después'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -684,7 +683,7 @@ class _NutriCatalogWorkspacePageState
           if (_searchResults.professional.isNotEmpty) ...[
             const _ResultHeader(
               icon: Icons.bookmark_added_outlined,
-              title: 'Mi biblioteca',
+              title: NutriI18n.t('Mi biblioteca'),
             ),
             const SizedBox(height: 6),
             ..._searchResults.professional.map(
@@ -757,8 +756,8 @@ class _NutriCatalogWorkspacePageState
 
     return _section(
       number: '4',
-      title: 'Crear prueba de plan',
-      subtitle: 'Día 1 · Desayuno',
+      title: NutriI18n.t('Crear prueba de plan'),
+      subtitle: NutriI18n.t('Día 1 · Desayuno'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -789,8 +788,7 @@ class _NutriCatalogWorkspacePageState
           ),
           if (food?.sourceType == FoodSourceType.officialDatabase) ...[
             const SizedBox(height: 6),
-            Text(
-              'Al agregarlo, Nutrikuaa guardará un snapshot con fuente, FDC ID y release.',
+            Text(NutriI18n.t('Al agregarlo, Nutrikuaa guardará un snapshot con fuente, FDC ID y release.'),
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ],
@@ -816,8 +814,7 @@ class _NutriCatalogWorkspacePageState
       return const Card(
         child: Padding(
           padding: EdgeInsets.all(22),
-          child: Text(
-            'Selecciona un alimento de tu biblioteca o de USDA y crea el plan para ver el resultado.',
+          child: Text(NutriI18n.t('Selecciona un alimento de tu biblioteca o de USDA y crea el plan para ver el resultado.'),
           ),
         ),
       );
