@@ -444,7 +444,7 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(NutriI18n.t('Pacientes'),
+        title: Text(NutriI18n.t('Pacientes'),
           style: TextStyle(fontWeight: FontWeight.w700),
         ),
         actions: const [
@@ -591,7 +591,7 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(NutriI18n.t('Ficha del paciente'),
+            Text(NutriI18n.t('Ficha del paciente'),
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 12),
@@ -679,11 +679,11 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(NutriI18n.t('Objetivos nutricionales diarios'),
+            Text(NutriI18n.t('Objetivos nutricionales diarios'),
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 4),
-            const Text(NutriI18n.t('Los objetivos los define el profesional. Nutrikuaa los usa para comparar el plan.'),
+            Text(NutriI18n.t('Los objetivos los define el profesional. Nutrikuaa los usa para comparar el plan.'),
             ),
             const SizedBox(height: 12),
             Wrap(
@@ -719,11 +719,11 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(NutriI18n.t('Evaluación antropométrica'),
+            Text(NutriI18n.t('Evaluación antropométrica'),
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 4),
-            const Text(NutriI18n.t('Registro longitudinal. El IMC se muestra solo como cálculo kg/m².'),
+            Text(NutriI18n.t('Registro longitudinal. El IMC se muestra solo como cálculo kg/m².'),
             ),
             const SizedBox(height: 12),
             Wrap(
