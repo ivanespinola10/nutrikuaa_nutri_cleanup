@@ -335,7 +335,7 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
         actions: const [
           Padding(
             padding: EdgeInsets.only(right: 18),
-            child: Center(child: Text('V0.7.1')),
+            child: Center(child: Text('V0.8.2')),
           ),
         ],
       ),
