@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../localization/nutri_i18n.dart';
+
 import '../application/food_library_service.dart';
 import '../application/food_placement_service.dart';
 import '../application/meal_plan_service.dart';
@@ -190,7 +192,7 @@ class _NutriCatalogWorkspacePageState
   Future<void> _createPatient() async {
     final first = _firstName.text.trim();
     if (first.isEmpty) {
-      _message('Escribe el nombre del paciente.');
+      _message(NutriI18n.t('Escribe el nombre del paciente.'));
       return;
     }
 
@@ -231,14 +233,14 @@ class _NutriCatalogWorkspacePageState
       _firstName.clear();
       _lastName.clear();
       await _refreshPatients(preferId: id);
-      _message('Paciente guardado.');
+      _message(NutriI18n.t('Paciente guardado.'));
     });
   }
 
   Future<void> _createCustomFood() async {
     final name = _customName.text.trim();
     if (name.isEmpty) {
-      _message('Escribe el nombre del alimento.');
+      _message(NutriI18n.t('Escribe el nombre del alimento.'));
       return;
     }
 
@@ -297,7 +299,7 @@ class _NutriCatalogWorkspacePageState
       _customHouseholdMeasure.clear();
       await _refreshProfessionalCount();
       await _runSearch();
-      _message('Alimento guardado en tu biblioteca.');
+      _message(NutriI18n.t('Alimento guardado en tu biblioteca.'));
     });
   }
 
@@ -332,15 +334,15 @@ class _NutriCatalogWorkspacePageState
     final grams = _number(_grams);
 
     if (patientId == null) {
-      _message('Selecciona un paciente.');
+      _message(NutriI18n.t('Selecciona un paciente.'));
       return;
     }
     if (food == null) {
-      _message('Busca y selecciona un alimento.');
+      _message(NutriI18n.t('Busca y selecciona un alimento.'));
       return;
     }
     if (grams <= 0) {
-      _message('La cantidad debe ser mayor que cero.');
+      _message(NutriI18n.t('La cantidad debe ser mayor que cero.'));
       return;
     }
 
@@ -396,7 +398,7 @@ class _NutriCatalogWorkspacePageState
     } catch (error) {
       if (!mounted) return;
       setState(() => _error = error.toString());
-      _message('Ocurrió un error. Revisa el diagnóstico superior.');
+      _message(NutriI18n.t('Ocurrió un error. Revisa el diagnóstico superior.'));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -583,7 +585,7 @@ class _NutriCatalogWorkspacePageState
             child: FilledButton.icon(
               onPressed: _busy || !_privateReady ? null : _createPatient,
               icon: const Icon(Icons.person_add_alt_1),
-              label: const Text('Guardar paciente'),
+              label: Text(NutriI18n.t('Guardar paciente')),
             ),
           ),
         ],
@@ -642,7 +644,7 @@ class _NutriCatalogWorkspacePageState
             child: FilledButton.icon(
               onPressed: _busy || !_privateReady ? null : _createCustomFood,
               icon: const Icon(Icons.add_shopping_cart),
-              label: const Text('Guardar en mi biblioteca'),
+              label: Text(NutriI18n.t('Guardar en mi biblioteca')),
             ),
           ),
         ],
@@ -664,9 +666,9 @@ class _NutriCatalogWorkspacePageState
                 child: TextField(
                   controller: _searchQuery,
                   onSubmitted: (_) => _runSearch(),
-                  decoration: const InputDecoration(
-                    labelText: 'Buscar',
-                    hintText: 'Ej.: leche, arroz, pollo, yogurt',
+                  decoration: InputDecoration(
+                    labelText: NutriI18n.t('Buscar'),
+                    hintText: NutriI18n.t('Ej.: leche, arroz, pollo, yogurt'),
                     prefixIcon: Icon(Icons.search),
                   ),
                 ),
@@ -674,7 +676,7 @@ class _NutriCatalogWorkspacePageState
               const SizedBox(width: 10),
               FilledButton(
                 onPressed: _busy ? null : _runSearch,
-                child: const Text('Buscar'),
+                child: Text(NutriI18n.t('Buscar')),
               ),
             ],
           ),
@@ -703,7 +705,7 @@ class _NutriCatalogWorkspacePageState
           if (_searchResults.isEmpty)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 18),
-              child: Text('No se encontraron alimentos para esta búsqueda.'),
+              child: Text(NutriI18n.t('No se encontraron alimentos para esta búsqueda.')),
             ),
         ],
       ),
@@ -763,7 +765,7 @@ class _NutriCatalogWorkspacePageState
           DropdownButtonFormField<int>(
             value: _selectedPatientId,
             isExpanded: true,
-            decoration: const InputDecoration(labelText: 'Paciente'),
+            decoration: InputDecoration(labelText: NutriI18n.t('Paciente')),
             items: _patientList
                 .map(
                   (patient) => DropdownMenuItem(
@@ -776,7 +778,7 @@ class _NutriCatalogWorkspacePageState
           ),
           const SizedBox(height: 10),
           InputDecorator(
-            decoration: const InputDecoration(labelText: 'Alimento seleccionado'),
+            decoration: InputDecoration(labelText: NutriI18n.t('Alimento seleccionado')),
             child: Text(
               food == null
                   ? 'Busca un alimento arriba y pulsa “Usar”'
@@ -800,7 +802,7 @@ class _NutriCatalogWorkspacePageState
             child: FilledButton.icon(
               onPressed: _busy || !_privateReady ? null : _createPlan,
               icon: const Icon(Icons.calculate_outlined),
-              label: const Text('Guardar y calcular plan'),
+              label: Text(NutriI18n.t('Guardar y calcular plan')),
             ),
           ),
         ],
