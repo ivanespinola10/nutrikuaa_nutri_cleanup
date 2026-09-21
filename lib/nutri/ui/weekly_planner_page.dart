@@ -640,8 +640,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Planificador semanal',
+        title: const Text(NutriI18n.t('Planificador semanal'),
           style: TextStyle(fontWeight: FontWeight.w700),
         ),
         actions: [
@@ -668,8 +667,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
-              'Todavía no hay pacientes. Créalo primero en Biblioteca.',
+            const Text(NutriI18n.t('Todavía no hay pacientes. Créalo primero en Biblioteca.'),
             ),
             const SizedBox(height: 12),
             OutlinedButton.icon(
@@ -796,8 +794,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
           children: [
             const Icon(Icons.calendar_view_week_outlined, size: 48),
             const SizedBox(height: 12),
-            const Text(
-              'Este paciente todavía no tiene una semana de alimentación.',
+            const Text(NutriI18n.t('Este paciente todavía no tiene una semana de alimentación.'),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 14),
@@ -819,8 +816,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Resumen semanal',
+            const Text(NutriI18n.t('Resumen semanal'),
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 12),
@@ -1113,8 +1109,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
   Widget _foodSearchResults() {
     final combined = _foodResults.combined.take(8).toList();
     if (combined.isEmpty) {
-      return const Text(
-        'Busca un alimento de tu biblioteca o del catálogo oficial.',
+      return const Text(NutriI18n.t('Busca un alimento de tu biblioteca o del catálogo oficial.'),
       );
     }
 
@@ -1153,8 +1148,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
 
   Widget _recipeSearchResults() {
     if (_recipeResults.isEmpty) {
-      return const Text(
-        'No hay recetas para esta búsqueda. Las recetas guardadas podrán reutilizarse aquí.',
+      return const Text(NutriI18n.t('No hay recetas para esta búsqueda. Las recetas guardadas podrán reutilizarse aquí.'),
       );
     }
 
