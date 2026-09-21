@@ -681,7 +681,7 @@ class _NutriCatalogWorkspacePageState
           ),
           const SizedBox(height: 14),
           if (_searchResults.professional.isNotEmpty) ...[
-            const _ResultHeader(
+            _ResultHeader(
               icon: Icons.bookmark_added_outlined,
               title: NutriI18n.t('Mi biblioteca'),
             ),
@@ -815,10 +815,13 @@ class _NutriCatalogWorkspacePageState
   Widget _resultCard() {
     final summary = _summary;
     if (summary == null) {
-      return const Card(
+      return Card(
         child: Padding(
-          padding: EdgeInsets.all(22),
-          child: Text(NutriI18n.t('Selecciona un alimento de tu biblioteca o de USDA y crea el plan para ver el resultado.'),
+          padding: const EdgeInsets.all(22),
+          child: Text(
+            NutriI18n.t(
+              'Selecciona un alimento de tu biblioteca o de USDA y crea el plan para ver el resultado.',
+            ),
           ),
         ),
       );
