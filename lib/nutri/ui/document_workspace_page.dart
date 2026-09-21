@@ -487,14 +487,16 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  usingCustom ? 'Logo profesional' : 'Logo Nutrikuaa',
+                  usingCustom
+                      ? NutriI18n.t('Logo profesional')
+                      : NutriI18n.t('Logo Nutrikuaa'),
                   style: const TextStyle(fontWeight: FontWeight.w800),
                 ),
                 const SizedBox(height: 3),
                 Text(
                   usingCustom
-                      ? (_customLogoFileName ?? 'Logo personalizado')
-                      : 'Se usa como respaldo mientras no cargues uno propio.',
+                      ? (_customLogoFileName ?? NutriI18n.t('Logo personalizado'))
+                      : NutriI18n.t('Se usa como respaldo mientras no cargues uno propio.'),
                 ),
                 const SizedBox(height: 8),
                 Wrap(
@@ -505,7 +507,9 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
                       onPressed: _busy ? null : _pickLogo,
                       icon: const Icon(Icons.upload_file_outlined),
                       label: Text(
-                        usingCustom ? 'Cambiar logo' : 'Cargar logo',
+                        usingCustom
+                            ? NutriI18n.t('Cambiar logo')
+                            : NutriI18n.t('Cargar logo'),
                       ),
                     ),
                     if (usingCustom)
@@ -648,7 +652,7 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
   ) {
     return TextField(
       controller: controller,
-      decoration: InputDecoration(labelText: label),
+      decoration: InputDecoration(labelText: NutriI18n.t(label)),
     );
   }
 }
