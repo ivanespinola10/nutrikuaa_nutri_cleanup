@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../localization/nutri_i18n.dart';
+
 import '../application/meal_plan_service.dart';
 import '../data/app_settings_repository.dart';
 import '../data/patient_repository.dart';
@@ -274,14 +276,14 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
   Future<void> _savePatient() async {
     final first = _firstName.text.trim();
     if (first.isEmpty) {
-      _message('El nombre es obligatorio.');
+      _message(NutriI18n.t('El nombre es obligatorio.'));
       return;
     }
 
     final birthText = _birthDate.text.trim();
     final birthDate = _parseBirthDate();
     if (birthText.isNotEmpty && birthDate == null) {
-      _message('Usa fecha AAAA-MM-DD.');
+      _message(NutriI18n.t('Usa fecha AAAA-MM-DD.'));
       return;
     }
 
@@ -364,7 +366,7 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
   Future<void> _addMeasurement() async {
     final patientId = _selectedPatientId;
     if (patientId == null) {
-      _message('Guarda primero la ficha del paciente.');
+      _message(NutriI18n.t('Guarda primero la ficha del paciente.'));
       return;
     }
 
@@ -373,7 +375,7 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
     final waist = _lengthInputToCm(_optionalNumber(_waist));
 
     if (weight == null && height == null && waist == null) {
-      _message('Ingresa al menos una medición.');
+      _message(NutriI18n.t('Ingresa al menos una medición.'));
       return;
     }
 
@@ -395,7 +397,7 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
         _measurements = measurements;
         _clearMeasurementDraft();
       });
-      _message('Evaluación guardada.');
+      _message(NutriI18n.t('Evaluación guardada.'));
     });
   }
 
@@ -482,13 +484,13 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
             child: FilledButton.icon(
               onPressed: _busy ? null : _newPatient,
               icon: const Icon(Icons.person_add_alt_1),
-              label: const Text('Nuevo paciente'),
+              label: Text(NutriI18n.t('Nuevo paciente')),
             ),
           ),
         ),
         Expanded(
           child: _patientList.isEmpty
-              ? const Center(child: Text('Todavía no hay pacientes.'))
+              ? const Center(child: Text(NutriI18n.t('Todavía no hay pacientes.')))
               : ListView.builder(
                   itemCount: _patientList.length,
                   itemBuilder: (context, index) {
@@ -557,7 +559,7 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
               child: DropdownButtonFormField<int>(
                 value: _selectedPatientId,
                 isExpanded: true,
-                decoration: const InputDecoration(labelText: 'Paciente'),
+                decoration: InputDecoration(labelText: NutriI18n.t('Paciente')),
                 items: _patientList
                     .map(
                       (patient) => DropdownMenuItem(
@@ -573,7 +575,7 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
             ),
             const SizedBox(width: 8),
             IconButton(
-              tooltip: 'Nuevo paciente',
+              tooltip: NutriI18n.t('Nuevo paciente'),
               onPressed: _newPatient,
               icon: const Icon(Icons.person_add_alt_1),
             ),
@@ -616,13 +618,13 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
                 Expanded(
                   child: DropdownButtonFormField<String>(
                     value: _sex,
-                    decoration: const InputDecoration(
-                      labelText: 'Sexo (opcional)',
+                    decoration: InputDecoration(
+                      labelText: NutriI18n.t('Sexo (opcional)'),
                     ),
-                    items: const [
-                      DropdownMenuItem(value: 'female', child: Text('Femenino')),
-                      DropdownMenuItem(value: 'male', child: Text('Masculino')),
-                      DropdownMenuItem(value: 'other', child: Text('Otro')),
+                    items: [
+                      DropdownMenuItem(value: 'female', child: Text(NutriI18n.t('Femenino'))),
+                      DropdownMenuItem(value: 'male', child: Text(NutriI18n.t('Masculino'))),
+                      DropdownMenuItem(value: 'other', child: Text(NutriI18n.t('Otro'))),
                     ],
                     onChanged: (value) => setState(() => _sex = value),
                   ),
@@ -642,14 +644,14 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
               controller: _notes,
               minLines: 2,
               maxLines: 5,
-              decoration: const InputDecoration(
-                labelText: 'Notas profesionales',
+              decoration: InputDecoration(
+                labelText: NutriI18n.t('Notas profesionales'),
               ),
             ),
             const SizedBox(height: 8),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('Paciente activo'),
+              title: Text(NutriI18n.t('Paciente activo')),
               value: _isActive,
               onChanged: (value) => setState(() => _isActive = value),
             ),
@@ -782,8 +784,8 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
             const SizedBox(height: 10),
             TextField(
               controller: _measurementNotes,
-              decoration: const InputDecoration(
-                labelText: 'Notas de esta evaluación (opcional)',
+              decoration: InputDecoration(
+                labelText: NutriI18n.t('Notas de esta evaluación (opcional)'),
               ),
             ),
             const SizedBox(height: 10),
@@ -794,12 +796,12 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
                     ? null
                     : _addMeasurement,
                 icon: const Icon(Icons.add_chart),
-                label: const Text('Guardar evaluación'),
+                label: Text(NutriI18n.t('Guardar evaluación')),
               ),
             ),
             const SizedBox(height: 14),
             if (_measurements.isEmpty)
-              const Text('Todavía no hay mediciones registradas.')
+              Text(NutriI18n.t('Todavía no hay mediciones registradas.'))
             else
               ..._measurements.take(10).map(_measurementTile),
           ],
@@ -831,7 +833,7 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
         ].where((value) => value.isNotEmpty).join('\n'),
       ),
       trailing: IconButton(
-        tooltip: 'Eliminar medición',
+        tooltip: NutriI18n.t('Eliminar medición'),
         onPressed: _busy || measurement.id == null
             ? null
             : () => _deleteMeasurement(measurement.id!),
@@ -860,9 +862,9 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
             ),
             const SizedBox(height: 8),
             if (_selectedPatientId == null)
-              const Text('Guarda el paciente para ver su historial.')
+              Text(NutriI18n.t('Guarda el paciente para ver su historial.'))
             else if (_planHistory.isEmpty)
-              const Text('Este paciente todavía no tiene planes.')
+              Text(NutriI18n.t('Este paciente todavía no tiene planes.'))
             else
               ..._planHistory.map((plan) {
                 final start =
