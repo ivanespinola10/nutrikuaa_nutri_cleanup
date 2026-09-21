@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../localization/nutri_i18n.dart';
+
 import 'document_workspace_page.dart';
 import 'nutri_catalog_workspace_page.dart';
 import 'patient_workspace_page.dart';
@@ -79,36 +81,36 @@ class _NutriMainShellState extends State<NutriMainShell> {
                       ],
                     ),
                   ),
-                  destinations: const [
+                  destinations: [
                     NavigationRailDestination(
-                      icon: Icon(Icons.calendar_view_week_outlined),
-                      selectedIcon: Icon(Icons.calendar_view_week),
-                      label: Text('Planificador'),
+                      icon: const Icon(Icons.calendar_view_week_outlined),
+                      selectedIcon: const Icon(Icons.calendar_view_week),
+                      label: Text(NutriI18n.t('Planificador')),
                     ),
                     NavigationRailDestination(
-                      icon: Icon(Icons.people_outline),
-                      selectedIcon: Icon(Icons.people),
-                      label: Text('Pacientes'),
+                      icon: const Icon(Icons.people_outline),
+                      selectedIcon: const Icon(Icons.people),
+                      label: Text(NutriI18n.t('Pacientes')),
                     ),
                     NavigationRailDestination(
-                      icon: Icon(Icons.restaurant_menu_outlined),
-                      selectedIcon: Icon(Icons.restaurant_menu),
-                      label: Text('Recetas'),
+                      icon: const Icon(Icons.restaurant_menu_outlined),
+                      selectedIcon: const Icon(Icons.restaurant_menu),
+                      label: Text(NutriI18n.t('Recetas')),
                     ),
                     NavigationRailDestination(
-                      icon: Icon(Icons.picture_as_pdf_outlined),
-                      selectedIcon: Icon(Icons.picture_as_pdf),
-                      label: Text('Documentos'),
+                      icon: const Icon(Icons.picture_as_pdf_outlined),
+                      selectedIcon: const Icon(Icons.picture_as_pdf),
+                      label: Text(NutriI18n.t('Documentos')),
                     ),
                     NavigationRailDestination(
-                      icon: Icon(Icons.inventory_2_outlined),
-                      selectedIcon: Icon(Icons.inventory_2),
-                      label: Text('Biblioteca'),
+                      icon: const Icon(Icons.inventory_2_outlined),
+                      selectedIcon: const Icon(Icons.inventory_2),
+                      label: Text(NutriI18n.t('Biblioteca')),
                     ),
                     NavigationRailDestination(
-                      icon: Icon(Icons.settings_outlined),
-                      selectedIcon: Icon(Icons.settings),
-                      label: Text('Configuración'),
+                      icon: const Icon(Icons.settings_outlined),
+                      selectedIcon: const Icon(Icons.settings),
+                      label: Text(NutriI18n.t('Configuración')),
                     ),
                   ],
                 ),
@@ -178,36 +180,36 @@ class _NutriMainShellState extends State<NutriMainShell> {
           bottomNavigationBar: NavigationBar(
             selectedIndex: _index,
             onDestinationSelected: _selectPage,
-            destinations: const [
+            destinations: [
               NavigationDestination(
-                icon: Icon(Icons.calendar_view_week_outlined),
-                selectedIcon: Icon(Icons.calendar_view_week),
-                label: 'Planificador',
+                icon: const Icon(Icons.calendar_view_week_outlined),
+                selectedIcon: const Icon(Icons.calendar_view_week),
+                label: NutriI18n.t('Planificador'),
               ),
               NavigationDestination(
-                icon: Icon(Icons.people_outline),
-                selectedIcon: Icon(Icons.people),
-                label: 'Pacientes',
+                icon: const Icon(Icons.people_outline),
+                selectedIcon: const Icon(Icons.people),
+                label: NutriI18n.t('Pacientes'),
               ),
               NavigationDestination(
-                icon: Icon(Icons.restaurant_menu_outlined),
-                selectedIcon: Icon(Icons.restaurant_menu),
-                label: 'Recetas',
+                icon: const Icon(Icons.restaurant_menu_outlined),
+                selectedIcon: const Icon(Icons.restaurant_menu),
+                label: NutriI18n.t('Recetas'),
               ),
               NavigationDestination(
-                icon: Icon(Icons.picture_as_pdf_outlined),
-                selectedIcon: Icon(Icons.picture_as_pdf),
-                label: 'Documentos',
+                icon: const Icon(Icons.picture_as_pdf_outlined),
+                selectedIcon: const Icon(Icons.picture_as_pdf),
+                label: NutriI18n.t('Documentos'),
               ),
               NavigationDestination(
-                icon: Icon(Icons.inventory_2_outlined),
-                selectedIcon: Icon(Icons.inventory_2),
-                label: 'Biblioteca',
+                icon: const Icon(Icons.inventory_2_outlined),
+                selectedIcon: const Icon(Icons.inventory_2),
+                label: NutriI18n.t('Biblioteca'),
               ),
               NavigationDestination(
-                icon: Icon(Icons.settings_outlined),
-                selectedIcon: Icon(Icons.settings),
-                label: 'Configuración',
+                icon: const Icon(Icons.settings_outlined),
+                selectedIcon: const Icon(Icons.settings),
+                label: NutriI18n.t('Configuración'),
               ),
             ],
           ),
