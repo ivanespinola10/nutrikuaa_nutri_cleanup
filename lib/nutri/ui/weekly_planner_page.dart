@@ -184,13 +184,13 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
         if (item.itemType == MealItemType.food) {
           final food = await _database.getFood(item.foodId!);
           labels[itemId] = food == null
-              ? 'Alimento'
+              ? NutriI18n.t('Alimentos')
               : food.brand == null
                   ? food.name
                   : '${food.name} · ${food.brand}';
         } else {
           final recipe = await _recipes.getById(item.recipeId!);
-          labels[itemId] = recipe?.recipe.name ?? 'Receta';
+          labels[itemId] = recipe?.recipe.name ?? NutriI18n.t('Receta');
         }
       }
     }
@@ -372,7 +372,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
 
       await _loadPlan(planId);
       await _search();
-      _message('Agregado a $_selectedMealName · ${_days[_selectedDay]}.');
+      _message(_addedMessage());
     });
   }
 
@@ -452,12 +452,12 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
     final targetDay = await showDialog<int>(
       context: context,
       builder: (context) => SimpleDialog(
-        title: Text('Copiar ${meal.meal.name} a...'),
+        title: Text(_copyMealTitle(meal.meal.name)),
         children: List.generate(7, (index) {
           if (index == _selectedDay) return const SizedBox.shrink();
           return SimpleDialogOption(
             onPressed: () => Navigator.pop(context, index),
-            child: Text(_days[index]),
+            child: Text(_dayLabel(index)),
           );
         }),
       ),
@@ -478,7 +478,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
         replaceTarget: true,
       );
       await _loadPlan(planId);
-      _message('${meal.meal.name} copiado a ${_days[targetDay]}.');
+      _message(_copiedMealMessage(meal.meal.name, targetDay));
     });
   }
 
@@ -492,7 +492,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
       builder: (context) => AlertDialog(
         title: Text(NutriI18n.t('Vaciar comida')),
         content: Text(
-          '¿Eliminar todos los elementos de ${meal.meal.name}?',
+          _clearMealQuestion(meal.meal.name),
         ),
         actions: [
           TextButton(
@@ -512,7 +512,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
     await _execute(() async {
       await _plans.clearMeal(meal.meal.id!);
       await _loadPlan(planId);
-      _message('${meal.meal.name} vaciado.');
+      _message(_mealClearedMessage(meal.meal.name));
     });
   }
 
@@ -523,12 +523,12 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
     final targetDay = await showDialog<int>(
       context: context,
       builder: (context) => SimpleDialog(
-        title: Text('Copiar ${_days[_selectedDay]} a...'),
+        title: Text(_copyDayTitle(_selectedDay)),
         children: List.generate(7, (index) {
           if (index == _selectedDay) return const SizedBox.shrink();
           return SimpleDialogOption(
             onPressed: () => Navigator.pop(context, index),
-            child: Text(_days[index]),
+            child: Text(_dayLabel(index)),
           );
         }),
       ),
@@ -545,7 +545,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
       );
       await _loadPlan(planId);
       _message(
-        '${_days[_selectedDay]} copiado a ${_days[targetDay]}.',
+        _copiedDayMessage(_selectedDay, targetDay),
       );
     });
   }
@@ -853,7 +853,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              _days[index],
+                              _dayLabel(index),
                               style: const TextStyle(
                                 fontWeight: FontWeight.w700,
                               ),
@@ -894,7 +894,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
               children: List.generate(
                 7,
                 (index) => ChoiceChip(
-                  label: Text(_days[index]),
+                  label: Text(_dayLabel(index)),
                   selected: index == _selectedDay,
                   onSelected: (_) => setState(() => _selectedDay = index),
                 ),
@@ -906,7 +906,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
               child: OutlinedButton.icon(
                 onPressed: _busy ? null : _copyCurrentDay,
                 icon: const Icon(Icons.copy_outlined),
-                label: Text('Copiar ${_days[_selectedDay]} a otro día'),
+                label: Text(_copyDayButtonLabel(_selectedDay)),
               ),
             ),
             const SizedBox(height: 14),
@@ -944,7 +944,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              'Agregar a $_selectedMealName · ${_days[_selectedDay]}',
+              _composerTitle(),
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w800,
@@ -990,8 +990,8 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
                     onSubmitted: (_) => _search(),
                     decoration: InputDecoration(
                       labelText: _recipeMode
-                          ? 'Buscar receta'
-                          : 'Buscar alimento',
+                          ? NutriI18n.t('Buscar receta')
+                          : NutriI18n.t('Buscar alimento'),
                       prefixIcon: const Icon(Icons.search),
                     ),
                   ),
@@ -1068,7 +1068,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
                                           (portion) => DropdownMenuItem(
                                             value: portion,
                                             child: Text(
-                                              '${portion.measure ?? 'porción'} · ${portion.gramWeight.toStringAsFixed(0)} g',
+                                              '${portion.measure ?? _portionWord()} · ${portion.gramWeight.toStringAsFixed(0)} g',
                                               overflow: TextOverflow.ellipsis,
                                             ),
                                           ),
@@ -1135,11 +1135,13 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
           subtitle: Text(
             food.sourceType == FoodSourceType.officialDatabase
                 ? 'USDA · FDC ${food.sourceFoodId}'
-                : 'Biblioteca profesional',
+                : NutriI18n.t('Biblioteca profesional'),
           ),
           trailing: OutlinedButton(
             onPressed: () => _selectFood(food),
-            child: Text(selected ? 'Elegido' : 'Elegir'),
+            child: Text(
+              selected ? NutriI18n.t('Elegido') : NutriI18n.t('Elegir'),
+            ),
           ),
         );
       }).toList(),
@@ -1159,10 +1161,12 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
           dense: true,
           leading: const Icon(Icons.restaurant_menu),
           title: Text(recipe.name),
-          subtitle: Text('${recipe.servings.toStringAsFixed(1)} porción(es) base'),
+          subtitle: Text(_recipeBaseServings(recipe.servings)),
           trailing: OutlinedButton(
             onPressed: () => setState(() => _selectedRecipe = recipe),
-            child: Text(selected ? 'Elegida' : 'Elegir'),
+            child: Text(
+              selected ? _chosenRecipeLabel() : NutriI18n.t('Elegir'),
+            ),
           ),
         );
       }).toList(),
@@ -1193,7 +1197,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
                     children: [
                       Expanded(
                         child: Text(
-                          mealName,
+                          _mealLabel(mealName),
                           style: const TextStyle(
                             fontSize: 17,
                             fontWeight: FontWeight.w800,
@@ -1224,7 +1228,9 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
                             ),
                             icon: const Icon(Icons.add, size: 18),
                             label: Text(
-                              selected ? 'Seleccionada' : 'Agregar aquí',
+                              selected
+                                  ? NutriI18n.t('Seleccionada')
+                                  : NutriI18n.t('Agregar aquí'),
                             ),
                           ),
                         ],
@@ -1246,14 +1252,14 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
   }
 
   Widget _mealItemTile(MealItem item) {
-    final label = _itemLabels[item.id] ?? 'Elemento';
+    final label = _itemLabels[item.id] ?? NutriI18n.t('Elemento');
     final detail = item.itemType == MealItemType.food
         ? [
             '${(item.quantityGrams ?? 0).toStringAsFixed(0)} g',
             if (item.notes != null && item.notes!.trim().isNotEmpty)
               item.notes!.trim(),
           ].join(' · ')
-        : '${(item.servings ?? 0).toStringAsFixed(1)} porción(es)';
+        : _itemServings(item.servings ?? 0);
 
     return ListTile(
       dense: true,
@@ -1263,7 +1269,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
             ? Icons.lunch_dining_outlined
             : Icons.restaurant_menu,
       ),
-      title: Text(label),
+      title: Text(NutriI18n.t(label)),
       subtitle: Text(detail),
       trailing: Wrap(
         spacing: 2,
@@ -1285,6 +1291,110 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
         ],
       ),
     );
+  }
+
+  String _dayLabel(int index) => NutriI18n.day(_days[index]);
+
+  String _mealLabel(String name) => NutriI18n.meal(name);
+
+  String _portionWord() {
+    if (NutriI18n.languageCode == 'en') return 'portion';
+    if (NutriI18n.languageCode == 'pt') return 'porção';
+    return 'porción';
+  }
+
+  String _addedMessage() {
+    final meal = _mealLabel(_selectedMealName);
+    final day = _dayLabel(_selectedDay);
+    if (NutriI18n.languageCode == 'en') return 'Added to $meal · $day.';
+    if (NutriI18n.languageCode == 'pt') return 'Adicionado a $meal · $day.';
+    return 'Agregado a $meal · $day.';
+  }
+
+  String _copyMealTitle(String mealName) {
+    final meal = _mealLabel(mealName);
+    if (NutriI18n.languageCode == 'en') return 'Copy $meal to...';
+    if (NutriI18n.languageCode == 'pt') return 'Copiar $meal para...';
+    return 'Copiar $meal a...';
+  }
+
+  String _copiedMealMessage(String mealName, int targetDay) {
+    final meal = _mealLabel(mealName);
+    final day = _dayLabel(targetDay);
+    if (NutriI18n.languageCode == 'en') return '$meal copied to $day.';
+    if (NutriI18n.languageCode == 'pt') return '$meal copiado para $day.';
+    return '$meal copiado a $day.';
+  }
+
+  String _clearMealQuestion(String mealName) {
+    final meal = _mealLabel(mealName);
+    if (NutriI18n.languageCode == 'en') return 'Remove all items from $meal?';
+    if (NutriI18n.languageCode == 'pt') return 'Remover todos os itens de $meal?';
+    return '¿Eliminar todos los elementos de $meal?';
+  }
+
+  String _mealClearedMessage(String mealName) {
+    final meal = _mealLabel(mealName);
+    if (NutriI18n.languageCode == 'en') return '$meal cleared.';
+    if (NutriI18n.languageCode == 'pt') return '$meal esvaziado.';
+    return '$meal vaciado.';
+  }
+
+  String _copyDayTitle(int sourceDay) {
+    final day = _dayLabel(sourceDay);
+    if (NutriI18n.languageCode == 'en') return 'Copy $day to...';
+    if (NutriI18n.languageCode == 'pt') return 'Copiar $day para...';
+    return 'Copiar $day a...';
+  }
+
+  String _copiedDayMessage(int sourceDay, int targetDay) {
+    final source = _dayLabel(sourceDay);
+    final target = _dayLabel(targetDay);
+    if (NutriI18n.languageCode == 'en') return '$source copied to $target.';
+    if (NutriI18n.languageCode == 'pt') return '$source copiado para $target.';
+    return '$source copiado a $target.';
+  }
+
+  String _copyDayButtonLabel(int sourceDay) {
+    final day = _dayLabel(sourceDay);
+    if (NutriI18n.languageCode == 'en') return 'Copy $day to another day';
+    if (NutriI18n.languageCode == 'pt') return 'Copiar $day para outro dia';
+    return 'Copiar $day a otro día';
+  }
+
+  String _composerTitle() {
+    final meal = _mealLabel(_selectedMealName);
+    final day = _dayLabel(_selectedDay);
+    if (NutriI18n.languageCode == 'en') return 'Add to $meal · $day';
+    if (NutriI18n.languageCode == 'pt') return 'Adicionar a $meal · $day';
+    return 'Agregar a $meal · $day';
+  }
+
+  String _recipeBaseServings(double servings) {
+    final value = servings.toStringAsFixed(1);
+    if (NutriI18n.languageCode == 'en') return '$value base serving(s)';
+    if (NutriI18n.languageCode == 'pt') return '$value porção(ões) base';
+    return '$value porción(es) base';
+  }
+
+  String _chosenRecipeLabel() {
+    if (NutriI18n.languageCode == 'en') return 'Selected';
+    if (NutriI18n.languageCode == 'pt') return 'Selecionada';
+    return 'Elegida';
+  }
+
+  String _itemServings(double servings) {
+    final value = servings.toStringAsFixed(1);
+    if (NutriI18n.languageCode == 'en') return '$value serving(s)';
+    if (NutriI18n.languageCode == 'pt') return '$value porção(ões)';
+    return '$value porción(es)';
+  }
+
+  String _percentOfTarget(double percent) {
+    final value = percent.toStringAsFixed(1);
+    if (NutriI18n.languageCode == 'en') return '$value% of target';
+    if (NutriI18n.languageCode == 'pt') return '$value% da meta';
+    return '$value% de meta';
   }
 
   Widget _miniMetric(
@@ -1319,7 +1429,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
               value: (percent / 100).clamp(0, 1).toDouble(),
             ),
             const SizedBox(height: 3),
-            Text('${percent.toStringAsFixed(1)}% de meta'),
+            Text(_percentOfTarget(percent)),
           ],
         ],
       ),
