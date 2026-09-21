@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../localization/nutri_i18n.dart';
+
 import '../application/food_placement_service.dart';
 import '../application/meal_plan_service.dart';
 import '../application/plan_nutrition_service.dart';
@@ -207,7 +209,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
   Future<void> _createWeek() async {
     final patientId = _selectedPatientId;
     if (patientId == null) {
-      _message('Primero crea o selecciona un paciente.');
+      _message(NutriI18n.t('Primero crea o selecciona un paciente.'));
       return;
     }
 
@@ -248,7 +250,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
         _selectedMealName = _mealNames.first;
       });
       await _loadPlan(planId);
-      _message('Semana creada con 7 días y 5 comidas por día.');
+      _message(NutriI18n.t('Semana creada con 7 días y 5 comidas por día.'));
     });
   }
 
@@ -317,7 +319,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
   Future<void> _addSelected() async {
     final planId = _selectedPlanId;
     if (planId == null) {
-      _message('Crea una semana primero.');
+      _message(NutriI18n.t('Crea una semana primero.'));
       return;
     }
 
@@ -331,13 +333,13 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
       if (_recipeMode) {
         final recipe = _selectedRecipe;
         if (recipe == null) {
-          _message('Selecciona una receta.');
+          _message(NutriI18n.t('Selecciona una receta.'));
           return;
         }
         final servings =
             double.tryParse(_servings.text.replaceAll(',', '.')) ?? 0;
         if (servings <= 0) {
-          _message('Las porciones deben ser mayores que cero.');
+          _message(NutriI18n.t('Las porciones deben ser mayores que cero.'));
           return;
         }
         await _plans.addRecipe(
@@ -348,12 +350,12 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
       } else {
         final food = _selectedFood;
         if (food == null) {
-          _message('Selecciona un alimento.');
+          _message(NutriI18n.t('Selecciona un alimento.'));
           return;
         }
         final grams = _selectedFoodGrams();
         if (grams <= 0) {
-          _message('Los gramos deben ser mayores que cero.');
+          _message(NutriI18n.t('Los gramos deben ser mayores que cero.'));
           return;
         }
         final portionNote = _usePortion && _selectedPortion != null
@@ -408,7 +410,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar'),
+            child: Text(NutriI18n.t('Cancelar')),
           ),
           FilledButton(
             onPressed: () {
@@ -417,7 +419,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
               );
               Navigator.pop(context, parsed);
             },
-            child: const Text('Guardar'),
+            child: Text(NutriI18n.t('Guardar')),
           ),
         ],
       ),
@@ -439,7 +441,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
         );
       }
       await _loadPlan(planId);
-      _message('Cantidad actualizada.');
+      _message(NutriI18n.t('Cantidad actualizada.'));
     });
   }
 
@@ -488,18 +490,18 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Vaciar comida'),
+        title: Text(NutriI18n.t('Vaciar comida')),
         content: Text(
           '¿Eliminar todos los elementos de ${meal.meal.name}?',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
+            child: Text(NutriI18n.t('Cancelar')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Vaciar'),
+            child: Text(NutriI18n.t('Vaciar')),
           ),
         ],
       ),
@@ -575,7 +577,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
         _selectedPlanId = newPlanId;
       });
       await _loadPlan(newPlanId);
-      _message('Semana duplicada.');
+      _message(NutriI18n.t('Semana duplicada.'));
     });
   }
 
@@ -586,7 +588,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
     await _execute(() async {
       await _plans.removeMealItem(itemId);
       await _loadPlan(planId);
-      _message('Elemento eliminado del plan.');
+      _message(NutriI18n.t('Elemento eliminado del plan.'));
     });
   }
 
@@ -644,7 +646,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
         ),
         actions: [
           IconButton(
-            tooltip: 'Actualizar pacientes y planes',
+            tooltip: NutriI18n.t('Actualizar pacientes y planes'),
             onPressed: _busy ? null : _refreshFromDatabase,
             icon: const Icon(Icons.refresh),
           ),
@@ -673,7 +675,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
             OutlinedButton.icon(
               onPressed: _busy ? null : _refreshFromDatabase,
               icon: const Icon(Icons.refresh),
-              label: const Text('Actualizar pacientes'),
+              label: Text(NutriI18n.t('Actualizar pacientes')),
             ),
           ],
         ),
@@ -731,7 +733,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
               child: DropdownButtonFormField<int>(
                 value: _selectedPatientId,
                 isExpanded: true,
-                decoration: const InputDecoration(labelText: 'Paciente'),
+                decoration: InputDecoration(labelText: NutriI18n.t('Paciente')),
                 items: _patientList
                     .map(
                       (patient) => DropdownMenuItem(
@@ -752,7 +754,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
               child: DropdownButtonFormField<int>(
                 value: _selectedPlanId,
                 isExpanded: true,
-                decoration: const InputDecoration(labelText: 'Semana'),
+                decoration: InputDecoration(labelText: NutriI18n.t('Semana')),
                 items: _patientPlans
                     .map(
                       (plan) => DropdownMenuItem(
@@ -771,14 +773,14 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
             FilledButton.icon(
               onPressed: _busy ? null : _createWeek,
               icon: const Icon(Icons.calendar_month),
-              label: const Text('Nueva semana'),
+              label: Text(NutriI18n.t('Nueva semana')),
             ),
             OutlinedButton.icon(
               onPressed: _busy || _selectedPlanId == null
                   ? null
                   : _duplicateCurrentWeek,
               icon: const Icon(Icons.copy_all_outlined),
-              label: const Text('Duplicar semana'),
+              label: Text(NutriI18n.t('Duplicar semana')),
             ),
           ],
         ),
@@ -801,7 +803,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
             const SizedBox(height: 14),
             FilledButton(
               onPressed: _busy ? null : _createWeek,
-              child: const Text('Crear primera semana'),
+              child: Text(NutriI18n.t('Crear primera semana')),
             ),
           ],
         ),
@@ -957,7 +959,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
               spacing: 8,
               children: [
                 ChoiceChip(
-                  label: const Text('Alimentos'),
+                  label: Text(NutriI18n.t('Alimentos')),
                   selected: !_recipeMode,
                   onSelected: (_) {
                     setState(() {
@@ -968,7 +970,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
                   },
                 ),
                 ChoiceChip(
-                  label: const Text('Recetas'),
+                  label: Text(NutriI18n.t('Recetas')),
                   selected: _recipeMode,
                   onSelected: (_) {
                     setState(() {
@@ -1001,7 +1003,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
                 const SizedBox(width: 10),
                 FilledButton(
                   onPressed: _busy ? null : _search,
-                  child: const Text('Buscar'),
+                  child: Text(NutriI18n.t('Buscar')),
                 ),
               ],
             ),
@@ -1013,12 +1015,12 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
                 spacing: 8,
                 children: [
                   ChoiceChip(
-                    label: const Text('Gramos'),
+                    label: Text(NutriI18n.t('Gramos')),
                     selected: !_usePortion,
                     onSelected: (_) => setState(() => _usePortion = false),
                   ),
                   ChoiceChip(
-                    label: const Text('Porción doméstica'),
+                    label: Text(NutriI18n.t('Porción doméstica')),
                     selected: _usePortion,
                     onSelected: (_) => setState(() {
                       _usePortion = true;
@@ -1039,7 +1041,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
                             decimal: true,
                           ),
                           decoration:
-                              const InputDecoration(labelText: 'Porciones'),
+                              InputDecoration(labelText: NutriI18n.t('Porciones')),
                         )
                       : _usePortion && _availablePortions.isNotEmpty
                           ? Row(
@@ -1051,8 +1053,8 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
                                         const TextInputType.numberWithOptions(
                                       decimal: true,
                                     ),
-                                    decoration: const InputDecoration(
-                                      labelText: 'Cantidad',
+                                    decoration: InputDecoration(
+                                      labelText: NutriI18n.t('Cantidad'),
                                     ),
                                   ),
                                 ),
@@ -1062,8 +1064,8 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
                                   child: DropdownButtonFormField<FoodPortion>(
                                     value: _selectedPortion,
                                     isExpanded: true,
-                                    decoration: const InputDecoration(
-                                      labelText: 'Medida',
+                                    decoration: InputDecoration(
+                                      labelText: NutriI18n.t('Medida'),
                                     ),
                                     items: _availablePortions
                                         .map(
@@ -1089,8 +1091,8 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
                                   const TextInputType.numberWithOptions(
                                 decimal: true,
                               ),
-                              decoration: const InputDecoration(
-                                labelText: 'Cantidad en gramos',
+                              decoration: InputDecoration(
+                                labelText: NutriI18n.t('Cantidad en gramos'),
                               ),
                             ),
                 ),
@@ -1098,7 +1100,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
                 FilledButton.icon(
                   onPressed: _busy ? null : _addSelected,
                   icon: const Icon(Icons.add),
-                  label: const Text('Agregar'),
+                  label: Text(NutriI18n.t('Agregar')),
                 ),
               ],
             ),
@@ -1209,7 +1211,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
                         children: [
                           if (meal != null && meal.items.isNotEmpty)
                             IconButton(
-                              tooltip: 'Copiar comida a otro día',
+                              tooltip: NutriI18n.t('Copiar comida a otro día'),
                               onPressed: _busy
                                   ? null
                                   : () => _copyMealToDay(meal),
@@ -1217,7 +1219,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
                             ),
                           if (meal != null && meal.items.isNotEmpty)
                             IconButton(
-                              tooltip: 'Vaciar comida',
+                              tooltip: NutriI18n.t('Vaciar comida'),
                               onPressed:
                                   _busy ? null : () => _clearMeal(meal),
                               icon: const Icon(Icons.cleaning_services_outlined),
@@ -1237,7 +1239,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
                   ),
                   const SizedBox(height: 8),
                   if (meal == null || meal.items.isEmpty)
-                    const Text('Sin alimentos ni recetas.')
+                    Text(NutriI18n.t('Sin alimentos ni recetas.'))
                   else
                     ...meal.items.map(_mealItemTile),
                 ],
@@ -1273,14 +1275,14 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
         spacing: 2,
         children: [
           IconButton(
-            tooltip: 'Editar cantidad',
+            tooltip: NutriI18n.t('Editar cantidad'),
             onPressed: _busy || item.id == null
                 ? null
                 : () => _editItem(item),
             icon: const Icon(Icons.edit_outlined),
           ),
           IconButton(
-            tooltip: 'Eliminar',
+            tooltip: NutriI18n.t('Eliminar'),
             onPressed: _busy || item.id == null
                 ? null
                 : () => _removeItem(item.id!),
