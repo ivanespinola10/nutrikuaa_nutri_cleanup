@@ -1,6 +1,8 @@
 import 'dart:convert';
+import 'dart:math';
 import 'dart:typed_data';
 
+import 'package:cryptography/cryptography.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../data/nutri_database.dart';
@@ -22,6 +24,9 @@ class BackupResult {
 class NutriBackupService {
   static const format = 'nutrikuaa-nutri-backup';
   static const backupVersion = 1;
+  static const encryptedFormat = 'nutrikuaa-nutri-encrypted-backup';
+  static const encryptedVersion = 1;
+  static const _pbkdf2Iterations = 250000;
 
   static const _tables = <String>[
     'foods',
@@ -96,6 +101,130 @@ class NutriBackupService {
     return Uint8List.fromList(
       utf8.encode(jsonEncode(payload)),
     );
+  }
+
+  bool isEncrypted(Uint8List bytes) {
+    if (bytes.isEmpty) return false;
+    try {
+      final decoded = jsonDecode(utf8.decode(bytes));
+      return decoded is Map && decoded['format'] == encryptedFormat;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<Uint8List> encryptBackup(
+    Uint8List plainBytes,
+    String password,
+  ) async {
+    final normalizedPassword = password.trim();
+    if (normalizedPassword.length < 8) {
+      throw ArgumentError('Password must contain at least 8 characters.');
+    }
+
+    final random = Random.secure();
+    final salt = Uint8List.fromList(
+      List<int>.generate(16, (_) => random.nextInt(256)),
+    );
+
+    final kdf = Pbkdf2(
+      macAlgorithm: Hmac.sha256(),
+      iterations: _pbkdf2Iterations,
+      bits: 256,
+    );
+    final secretKey = await kdf.deriveKey(
+      secretKey: SecretKey(utf8.encode(normalizedPassword)),
+      nonce: salt,
+    );
+
+    final algorithm = AesGcm.with256bits();
+    final nonce = algorithm.newNonce();
+    final box = await algorithm.encrypt(
+      plainBytes,
+      secretKey: secretKey,
+      nonce: nonce,
+    );
+
+    final envelope = <String, Object?>{
+      'format': encryptedFormat,
+      'version': encryptedVersion,
+      'kdf': 'PBKDF2-HMAC-SHA256',
+      'iterations': _pbkdf2Iterations,
+      'salt': base64Encode(salt),
+      'cipher': 'AES-256-GCM',
+      'nonce': base64Encode(nonce),
+      'ciphertext': base64Encode(box.cipherText),
+      'mac': base64Encode(box.mac.bytes),
+    };
+
+    return Uint8List.fromList(
+      utf8.encode(jsonEncode(envelope)),
+    );
+  }
+
+  Future<Uint8List> decryptBackup(
+    Uint8List encryptedBytes,
+    String password,
+  ) async {
+    final normalizedPassword = password.trim();
+    if (normalizedPassword.isEmpty) {
+      throw ArgumentError('Password is required.');
+    }
+
+    final decoded = jsonDecode(utf8.decode(encryptedBytes));
+    if (decoded is! Map || decoded['format'] != encryptedFormat) {
+      throw const FormatException('This is not an encrypted Nutrikuaa backup.');
+    }
+
+    final envelope = Map<String, Object?>.from(decoded);
+    final version = envelope['version'];
+    if (version is! num || version.toInt() != encryptedVersion) {
+      throw const FormatException('Unsupported encrypted backup version.');
+    }
+
+    final iterations = envelope['iterations'];
+    final saltText = envelope['salt'];
+    final nonceText = envelope['nonce'];
+    final cipherText = envelope['ciphertext'];
+    final macText = envelope['mac'];
+
+    if (iterations is! num ||
+        saltText is! String ||
+        nonceText is! String ||
+        cipherText is! String ||
+        macText is! String) {
+      throw const FormatException('Encrypted backup metadata is invalid.');
+    }
+
+    final salt = base64Decode(saltText);
+    final nonce = base64Decode(nonceText);
+    final cipher = base64Decode(cipherText);
+    final mac = base64Decode(macText);
+
+    final kdf = Pbkdf2(
+      macAlgorithm: Hmac.sha256(),
+      iterations: iterations.toInt(),
+      bits: 256,
+    );
+    final secretKey = await kdf.deriveKey(
+      secretKey: SecretKey(utf8.encode(normalizedPassword)),
+      nonce: salt,
+    );
+
+    final algorithm = AesGcm.with256bits();
+    try {
+      final clear = await algorithm.decrypt(
+        SecretBox(
+          cipher,
+          nonce: nonce,
+          mac: Mac(mac),
+        ),
+        secretKey: secretKey,
+      );
+      return Uint8List.fromList(clear);
+    } on SecretBoxAuthenticationError {
+      throw StateError('Incorrect password or corrupted backup.');
+    }
   }
 
   Future<BackupResult> inspect(Uint8List bytes) async {
