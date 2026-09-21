@@ -25,6 +25,7 @@ import 'package:nutrikuaa_app/nutri/domain/nutrition/nutrient.dart';
 import 'package:nutrikuaa_app/nutri/domain/patient.dart';
 import 'package:nutrikuaa_app/nutri/domain/professional_profile.dart';
 import 'package:nutrikuaa_app/nutri/domain/recipe.dart';
+import 'package:nutrikuaa_app/nutri/localization/nutri_i18n.dart';
 
 void main() {
   late Database officialDb;
@@ -1003,6 +1004,71 @@ void main() {
 
     expect(bytes.length, greaterThan(1000));
     expect(String.fromCharCodes(bytes.take(5)), '%PDF-');
+  });
+
+  test('V0.8.1 encrypted backup round-trip rejects wrong password', () async {
+    final patients = PatientRepository();
+    await patients.create(
+      Patient(
+        firstName: 'Encrypted',
+        lastName: 'Patient',
+      ),
+    );
+
+    final backup = NutriBackupService();
+    final plain = await backup.exportBackup();
+    final encrypted = await backup.encryptBackup(
+      plain,
+      'correct-horse-battery',
+    );
+
+    expect(backup.isEncrypted(encrypted), isTrue);
+    expect(backup.isEncrypted(plain), isFalse);
+
+    await expectLater(
+      backup.decryptBackup(encrypted, 'wrong-password'),
+      throwsA(isA<StateError>()),
+    );
+
+    final decrypted = await backup.decryptBackup(
+      encrypted,
+      'correct-horse-battery',
+    );
+    final summary = await backup.inspect(decrypted);
+    expect(summary.patientCount, 1);
+
+    await patients.create(
+      Patient(
+        firstName: 'Temporary',
+        lastName: 'Patient',
+      ),
+    );
+    expect(
+      await patients.search('', activeOnly: false),
+      hasLength(2),
+    );
+
+    await backup.restoreBackup(decrypted);
+    final restored = await patients.search('', activeOnly: false);
+    expect(restored, hasLength(1));
+    expect(restored.single.displayName, 'Encrypted Patient');
+  });
+
+  test('V0.8.1 centralized interface translations support ES EN PT', () {
+    addTearDown(() => NutriI18n.setLanguage('es'));
+
+    NutriI18n.setLanguage('en');
+    expect(NutriI18n.t('Pacientes'), 'Patients');
+    expect(NutriI18n.day('Lunes'), 'Monday');
+    expect(NutriI18n.meal('Desayuno'), 'Breakfast');
+
+    NutriI18n.setLanguage('pt');
+    expect(NutriI18n.t('Recetas'), 'Receitas');
+    expect(NutriI18n.day('Martes'), 'Terça-feira');
+    expect(NutriI18n.meal('Cena'), 'Jantar');
+
+    NutriI18n.setLanguage('es');
+    expect(NutriI18n.t('Configuración'), 'Configuración');
   });
 
   test('Spanish alias finds local snapshot and hides official duplicate', () async {
