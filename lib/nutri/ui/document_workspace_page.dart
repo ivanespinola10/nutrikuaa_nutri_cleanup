@@ -2,6 +2,8 @@ import 'dart:typed_data';
 
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
+
+import '../localization/nutri_i18n.dart';
 import 'package:flutter/services.dart';
 import 'package:pdf/pdf.dart';
 import 'package:printing/printing.dart';
@@ -196,15 +198,15 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
 
     final bytes = await file.readAsBytes();
     if (bytes.isEmpty) {
-      _message('El archivo está vacío.');
+      _message(NutriI18n.t('El archivo está vacío.'));
       return;
     }
     if (bytes.length > 2 * 1024 * 1024) {
-      _message('El logo debe pesar menos de 2 MB.');
+      _message(NutriI18n.t('El logo debe pesar menos de 2 MB.'));
       return;
     }
     if (!_isPngOrJpeg(bytes)) {
-      _message('Usa un archivo PNG o JPG válido.');
+      _message(NutriI18n.t('Usa un archivo PNG o JPG válido.'));
       return;
     }
 
@@ -216,7 +218,7 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
     });
 
     await _profileRepository.save(_profileFromForm());
-    _message('Logo profesional guardado.');
+    _message(NutriI18n.t('Logo profesional guardado.'));
   }
 
   Future<void> _useNutrikuaaLogo() async {
@@ -227,7 +229,7 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
     });
 
     await _profileRepository.save(_profileFromForm());
-    _message('Se usará el logo de Nutrikuaa.');
+    _message(NutriI18n.t('Se usará el logo de Nutrikuaa.'));
   }
 
   bool _isPngOrJpeg(Uint8List bytes) {
@@ -256,14 +258,14 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
     await _execute(() async {
       final profile = _profileFromForm();
       await _profileRepository.save(profile);
-      _message('Identidad profesional guardada.');
+      _message(NutriI18n.t('Identidad profesional guardada.'));
     });
   }
 
   Future<void> _generatePdf() async {
     final planId = _selectedPlanId;
     if (planId == null) {
-      _message('Selecciona un paciente con un plan.');
+      _message(NutriI18n.t('Selecciona un paciente con un plan.'));
       return;
     }
 
@@ -282,7 +284,7 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
 
       if (!mounted) return;
       setState(() => _pdfBytes = bytes);
-      _message('PDF generado.');
+      _message(NutriI18n.t('PDF generado.'));
     });
   }
 
@@ -424,9 +426,9 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
             const SizedBox(height: 8),
             TextField(
               controller: _footer,
-              decoration: const InputDecoration(
-                labelText: 'Pie del documento (opcional)',
-                hintText: 'Ej.: Consultas con cita previa',
+              decoration: InputDecoration(
+                labelText: NutriI18n.t('Pie del documento (opcional)'),
+                hintText: NutriI18n.t('Ej.: Consultas con cita previa'),
               ),
             ),
             const SizedBox(height: 14),
@@ -437,7 +439,7 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
               child: OutlinedButton.icon(
                 onPressed: _busy ? null : _saveProfile,
                 icon: const Icon(Icons.save_outlined),
-                label: const Text('Guardar identidad'),
+                label: Text(NutriI18n.t('Guardar identidad')),
               ),
             ),
           ],
@@ -513,7 +515,7 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
                       TextButton.icon(
                         onPressed: _busy ? null : _useNutrikuaaLogo,
                         icon: const Icon(Icons.restart_alt),
-                        label: const Text('Usar logo Nutrikuaa'),
+                        label: Text(NutriI18n.t('Usar logo Nutrikuaa')),
                       ),
                   ],
                 ),
@@ -543,7 +545,7 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
                   child: DropdownButtonFormField<int>(
                     value: _selectedPatientId,
                     isExpanded: true,
-                    decoration: const InputDecoration(labelText: 'Paciente'),
+                    decoration: InputDecoration(labelText: NutriI18n.t('Paciente')),
                     items: _patientList
                         .map(
                           (patient) => DropdownMenuItem(
@@ -564,7 +566,7 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
                   child: DropdownButtonFormField<int>(
                     value: _selectedPlanId,
                     isExpanded: true,
-                    decoration: const InputDecoration(labelText: 'Plan / semana'),
+                    decoration: InputDecoration(labelText: NutriI18n.t('Plan / semana')),
                     items: _planList
                         .map(
                           (plan) => DropdownMenuItem(
@@ -589,7 +591,7 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
               runSpacing: 4,
               children: [
                 FilterChip(
-                  label: const Text('Mostrar resumen nutricional diario'),
+                  label: Text(NutriI18n.t('Mostrar resumen nutricional diario')),
                   selected: _includeNutrition,
                   onSelected: (value) => setState(() {
                     _includeNutrition = value;
@@ -597,7 +599,7 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
                   }),
                 ),
                 FilterChip(
-                  label: const Text('Incluir preparación de recetas'),
+                  label: Text(NutriI18n.t('Incluir preparación de recetas')),
                   selected: _includeRecipeInstructions,
                   onSelected: (value) => setState(() {
                     _includeRecipeInstructions = value;
@@ -612,7 +614,7 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
                   ? null
                   : _generatePdf,
               icon: const Icon(Icons.picture_as_pdf_outlined),
-              label: const Text('Generar vista previa PDF'),
+              label: Text(NutriI18n.t('Generar vista previa PDF')),
             ),
             if (_planList.isEmpty && _selectedPatientId != null) ...[
               const SizedBox(height: 8),
