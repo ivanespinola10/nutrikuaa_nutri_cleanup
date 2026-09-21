@@ -444,8 +444,7 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Pacientes',
+        title: const Text(NutriI18n.t('Pacientes'),
           style: TextStyle(fontWeight: FontWeight.w700),
         ),
         actions: const [
@@ -490,7 +489,7 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
         ),
         Expanded(
           child: _patientList.isEmpty
-              ? const Center(child: Text(NutriI18n.t('Todavía no hay pacientes.')))
+              ? Center(child: Text(NutriI18n.t('Todavía no hay pacientes.')))
               : ListView.builder(
                   itemCount: _patientList.length,
                   itemBuilder: (context, index) {
@@ -592,8 +591,7 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
-              'Ficha del paciente',
+            const Text(NutriI18n.t('Ficha del paciente'),
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 12),
@@ -681,13 +679,11 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
-              'Objetivos nutricionales diarios',
+            const Text(NutriI18n.t('Objetivos nutricionales diarios'),
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 4),
-            const Text(
-              'Los objetivos los define el profesional. Nutrikuaa los usa para comparar el plan.',
+            const Text(NutriI18n.t('Los objetivos los define el profesional. Nutrikuaa los usa para comparar el plan.'),
             ),
             const SizedBox(height: 12),
             Wrap(
@@ -723,13 +719,11 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
-              'Evaluación antropométrica',
+            const Text(NutriI18n.t('Evaluación antropométrica'),
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 4),
-            const Text(
-              'Registro longitudinal. El IMC se muestra solo como cálculo kg/m².',
+            const Text(NutriI18n.t('Registro longitudinal. El IMC se muestra solo como cálculo kg/m².'),
             ),
             const SizedBox(height: 12),
             Wrap(
@@ -852,8 +846,7 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
             Row(
               children: [
                 const Expanded(
-                  child: Text(
-                    'Historial de planes',
+                  child: Text(NutriI18n.t('Historial de planes'),
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
                   ),
                 ),
