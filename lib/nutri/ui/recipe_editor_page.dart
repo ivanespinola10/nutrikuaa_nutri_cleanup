@@ -340,8 +340,7 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(NutriI18n.t('Eliminar receta')),
-        content: const Text(
-          'La receta se eliminará si todavía no está utilizada en un plan.',
+        content: const Text(NutriI18n.t('La receta se eliminará si todavía no está utilizada en un plan.'),
         ),
         actions: [
           TextButton(
@@ -393,8 +392,7 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Recetas',
+        title: const Text(NutriI18n.t('Recetas'),
           style: TextStyle(fontWeight: FontWeight.w700),
         ),
         actions: const [
@@ -439,7 +437,7 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
         ),
         Expanded(
           child: _recipeList.isEmpty
-              ? const Center(child: Text(NutriI18n.t('Todavía no hay recetas.')))
+              ? Center(child: Text(NutriI18n.t('Todavía no hay recetas.')))
               : ListView.builder(
                   itemCount: _recipeList.length,
                   itemBuilder: (context, index) {
@@ -632,8 +630,7 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
-              'Agregar ingredientes',
+            const Text(NutriI18n.t('Agregar ingredientes'),
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 10),
@@ -775,8 +772,7 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
-              'Nutrición calculada',
+            const Text(NutriI18n.t('Nutrición calculada'),
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 4),
