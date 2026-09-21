@@ -208,9 +208,10 @@ class PlanPdfService {
           final food = await database.getFood(item.foodId!);
           if (food == null) continue;
 
-          final label = food.brand == null || food.brand!.trim().isEmpty
-              ? food.name
-              : '${food.name} - ${food.brand}';
+          final label = _foodDisplayName(
+            food.name,
+            food.brand,
+          );
           final grams = item.quantityGrams ?? 0;
           final portionText = item.notes?.trim();
 
@@ -283,20 +284,21 @@ class PlanPdfService {
     required PdfColor primary,
     required _PdfLabels labels,
   }) {
-    final professionalLines = <String>[
-      if (profile.practiceName != null &&
-          profile.practiceName!.trim().isNotEmpty)
-        profile.practiceName!.trim(),
-      if (profile.fullName.trim().isNotEmpty) profile.fullName.trim(),
-      [
-        if (profile.credentials != null &&
-            profile.credentials!.trim().isNotEmpty)
-          profile.credentials!.trim(),
-        if (profile.registrationNumber != null &&
-            profile.registrationNumber!.trim().isNotEmpty)
-          'Reg. ${profile.registrationNumber!.trim()}',
-      ].where((value) => value.isNotEmpty).join(' - '),
-    ].where((value) => value.isNotEmpty).toList();
+    final fullName = profile.fullName.trim();
+    final practice = profile.practiceName?.trim() ?? '';
+    final credentials = profile.credentials?.trim() ?? '';
+    final registration = profile.registrationNumber?.trim() ?? '';
+
+    final headline = fullName.isNotEmpty
+        ? fullName
+        : practice.isNotEmpty
+            ? practice
+            : labels.planTitle;
+
+    final credentialLine = [
+      if (credentials.isNotEmpty) credentials,
+      if (registration.isNotEmpty) '${labels.registrationAbbreviation} $registration',
+    ].join(' - ');
 
     return pw.Row(
       crossAxisAlignment: pw.CrossAxisAlignment.center,
@@ -317,21 +319,30 @@ class PlanPdfService {
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
               pw.Text(
-                professionalLines.isEmpty
-                    ? labels.planTitle
-                    : professionalLines.first,
+                headline,
                 style: pw.TextStyle(
                   fontSize: 15,
                   fontWeight: pw.FontWeight.bold,
                   color: primary,
                 ),
               ),
-              ...professionalLines.skip(1).map(
-                    (line) => pw.Text(
-                      line,
-                      style: const pw.TextStyle(fontSize: 9),
-                    ),
+              if (credentialLine.isNotEmpty) ...[
+                pw.SizedBox(height: 2),
+                pw.Text(
+                  credentialLine,
+                  style: const pw.TextStyle(fontSize: 9),
+                ),
+              ],
+              if (practice.isNotEmpty && practice != headline) ...[
+                pw.SizedBox(height: 1),
+                pw.Text(
+                  practice,
+                  style: const pw.TextStyle(
+                    fontSize: 8.5,
+                    color: PdfColors.grey700,
                   ),
+                ),
+              ],
             ],
           ),
         ),
@@ -438,7 +449,7 @@ class PlanPdfService {
                 ),
                 pw.SizedBox(height: 3),
                 pw.Text(
-                  plan.name,
+                  _patientFacingPlanName(plan.name, labels),
                   style: const pw.TextStyle(fontSize: 10),
                 ),
               ],
@@ -613,12 +624,7 @@ class PlanPdfService {
                                       crossAxisAlignment:
                                           pw.CrossAxisAlignment.start,
                                       children: [
-                                        pw.Text(
-                                          '• ',
-                                          style: const pw.TextStyle(
-                                            fontSize: 9,
-                                          ),
-                                        ),
+                                        pw.SizedBox(width: 4),
                                         pw.Expanded(
                                           child: pw.Text(
                                             item.label,
@@ -682,6 +688,38 @@ class PlanPdfService {
         ],
       ),
     );
+  }
+
+  String _foodDisplayName(String name, String? brand) {
+    final cleanName = name.trim().replaceAll(RegExp(r'\\s+'), ' ');
+    final cleanBrand = brand?.trim().replaceAll(RegExp(r'\\s+'), ' ') ?? '';
+
+    if (cleanBrand.isEmpty ||
+        cleanBrand.toLowerCase() == cleanName.toLowerCase()) {
+      return cleanName;
+    }
+
+    return '$cleanName  |  $cleanBrand';
+  }
+
+  String _patientFacingPlanName(
+    String rawName,
+    _PdfLabels labels,
+  ) {
+    final name = rawName.trim();
+    if (name.isEmpty) return labels.weeklyPlan;
+
+    final normalized = name.toLowerCase();
+    final looksInternal =
+        normalized.contains('prueba') ||
+        normalized.contains('test') ||
+        normalized.contains('demo') ||
+        normalized.contains('catálogo') ||
+        normalized.contains('catalogo') ||
+        normalized.contains('catalog') ||
+        RegExp(r'\\bv\\d+(?:\\.\\d+)+').hasMatch(normalized);
+
+    return looksInternal ? labels.weeklyPlan : name;
   }
 
   String _planDates(MealPlan plan) {
@@ -806,6 +844,12 @@ class _PdfLabels {
         ];
     }
   }
+
+  String get registrationAbbreviation => _t(
+        es: 'Reg.',
+        en: 'Reg.',
+        pt: 'Reg.',
+      );
 
   String get planTitle => _t(
         es: 'Plan nutricional',
