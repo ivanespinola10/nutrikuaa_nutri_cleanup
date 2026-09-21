@@ -100,6 +100,7 @@ class PlanPdfService {
             primary: primary,
             soft: soft,
             border: border,
+            labels: labels,
           ),
           if (targets.isNotEmpty) ...[
             pw.SizedBox(height: 12),
@@ -423,6 +424,7 @@ class PlanPdfService {
     required PdfColor primary,
     required PdfColor soft,
     required PdfColor border,
+    required _PdfLabels labels,
   }) {
     final dates = _planDates(plan);
     return pw.Container(
