@@ -307,7 +307,7 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
       } else {
         final current = await _patients.getById(currentId);
         if (current == null) {
-          throw StateError('El paciente ya no existe.');
+          throw StateError(NutriI18n.t('El paciente ya no existe.'));
         }
 
         await _patients.update(
@@ -329,7 +329,9 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
 
       await _saveTargets(patientId);
       await _refreshPatients(selectId: patientId);
-      _message(currentId == null ? 'Paciente creado.' : 'Paciente actualizado.');
+      _message(currentId == null
+          ? NutriI18n.t('Paciente creado.')
+          : NutriI18n.t('Paciente actualizado.'));
     });
   }
 
@@ -502,7 +504,11 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
                             : Icons.person_off_outlined,
                       ),
                       title: Text(patient.displayName),
-                      subtitle: Text(patient.isActive ? 'Activo' : 'Archivado'),
+                      subtitle: Text(
+                        patient.isActive
+                            ? NutriI18n.t('Activo')
+                            : NutriI18n.t('Archivado'),
+                      ),
                       onTap: () => _loadPatient(patient.id!),
                     );
                   },
@@ -661,8 +667,8 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
                 icon: const Icon(Icons.save_outlined),
                 label: Text(
                   _selectedPatientId == null
-                      ? 'Crear paciente'
-                      : 'Guardar ficha y objetivos',
+                      ? NutriI18n.t('Crear paciente')
+                      : NutriI18n.t('Guardar ficha y objetivos'),
                 ),
               ),
             ),
@@ -735,7 +741,7 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
                   width: 190,
                   child: _field(
                     _weight,
-                    _imperial ? 'Peso (lb)' : 'Peso (kg)',
+                    _measurementLabel('weight'),
                     numeric: true,
                     onChanged: (_) => setState(() {}),
                   ),
@@ -744,7 +750,7 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
                   width: 190,
                   child: _field(
                     _height,
-                    _imperial ? 'Altura (in)' : 'Altura (cm)',
+                    _measurementLabel('height'),
                     numeric: true,
                     onChanged: (_) => setState(() {}),
                   ),
@@ -753,7 +759,7 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
                   width: 190,
                   child: _field(
                     _waist,
-                    _imperial ? 'Cintura (in)' : 'Cintura (cm)',
+                    _measurementLabel('waist'),
                     numeric: true,
                     onChanged: (_) => setState(() {}),
                   ),
@@ -768,8 +774,8 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
                   ),
                   child: Text(
                     draft.bmi == null
-                        ? 'IMC: —'
-                        : 'IMC: ${draft.bmi!.toStringAsFixed(1)} kg/m²',
+                        ? '${_bmiLabel()}: —'
+                        : '${_bmiLabel()}: ${draft.bmi!.toStringAsFixed(1)} kg/m²',
                     style: const TextStyle(fontWeight: FontWeight.w700),
                   ),
                 ),
@@ -811,9 +817,9 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
       if (measurement.heightCm != null)
         _displayLength(measurement.heightCm!),
       if (measurement.waistCm != null)
-        'cintura ${_displayLength(measurement.waistCm!)}',
+        '${_waistLabel()} ${_displayLength(measurement.waistCm!)}',
       if (measurement.bmi != null)
-        'IMC ${measurement.bmi!.toStringAsFixed(1)}',
+        '${_bmiLabel()} ${measurement.bmi!.toStringAsFixed(1)}',
     ];
 
     return ListTile(
@@ -845,12 +851,12 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
           children: [
             Row(
               children: [
-                const Expanded(
+                Expanded(
                   child: Text(NutriI18n.t('Historial de planes'),
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
                   ),
                 ),
-                Chip(label: Text('${_planHistory.length} plan(es)')),
+                Chip(label: Text(_planCountLabel(_planHistory.length))),
               ],
             ),
             const SizedBox(height: 8),
@@ -861,7 +867,7 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
             else
               ..._planHistory.map((plan) {
                 final start =
-                    plan.startDate == null ? 'Sin fecha' : _date(plan.startDate!);
+                    plan.startDate == null ? NutriI18n.t('Sin fecha') : _date(plan.startDate!);
                 final end = plan.endDate == null ? null : _date(plan.endDate!);
 
                 return ListTile(
@@ -879,6 +885,37 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
     );
   }
 
+  String _measurementLabel(String type) {
+    final lang = NutriI18n.languageCode;
+    if (type == 'weight') {
+      if (lang == 'en') return _imperial ? 'Weight (lb)' : 'Weight (kg)';
+      if (lang == 'pt') return _imperial ? 'Peso (lb)' : 'Peso (kg)';
+      return _imperial ? 'Peso (lb)' : 'Peso (kg)';
+    }
+    if (type == 'height') {
+      if (lang == 'en') return _imperial ? 'Height (in)' : 'Height (cm)';
+      if (lang == 'pt') return _imperial ? 'Altura (in)' : 'Altura (cm)';
+      return _imperial ? 'Altura (in)' : 'Altura (cm)';
+    }
+    if (lang == 'en') return _imperial ? 'Waist (in)' : 'Waist (cm)';
+    if (lang == 'pt') return _imperial ? 'Cintura (in)' : 'Cintura (cm)';
+    return _imperial ? 'Cintura (in)' : 'Cintura (cm)';
+  }
+
+  String _bmiLabel() =>
+      NutriI18n.languageCode == 'en' ? 'BMI' : 'IMC';
+
+  String _waistLabel() {
+    if (NutriI18n.languageCode == 'en') return 'waist';
+    return 'cintura';
+  }
+
+  String _planCountLabel(int count) {
+    if (NutriI18n.languageCode == 'en') return '$count plan(s)';
+    if (NutriI18n.languageCode == 'pt') return '$count plano(s)';
+    return '$count plan(es)';
+  }
+
   Widget _targetField(
     TextEditingController controller,
     String label,
@@ -890,7 +927,7 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
         controller: controller,
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
         decoration: InputDecoration(
-          labelText: label,
+          labelText: NutriI18n.t(label),
           suffixText: unit,
         ),
       ),
@@ -911,8 +948,8 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
           : TextInputType.text,
       onChanged: onChanged,
       decoration: InputDecoration(
-        labelText: label,
-        hintText: hint,
+        labelText: NutriI18n.t(label),
+        hintText: hint == null ? null : NutriI18n.t(hint),
       ),
     );
   }
