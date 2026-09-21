@@ -497,7 +497,7 @@ class _NutriCatalogWorkspacePageState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(NutriI18n.t('Catálogo + biblioteca profesional'),
+            Text(NutriI18n.t('Catálogo + biblioteca profesional'),
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 8),
