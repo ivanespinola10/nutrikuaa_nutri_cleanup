@@ -691,8 +691,8 @@ class PlanPdfService {
   }
 
   String _foodDisplayName(String name, String? brand) {
-    final cleanName = name.trim().replaceAll(RegExp(r'\\s+'), ' ');
-    final cleanBrand = brand?.trim().replaceAll(RegExp(r'\\s+'), ' ') ?? '';
+    final cleanName = name.trim().replaceAll(RegExp(r'\s+'), ' ');
+    final cleanBrand = brand?.trim().replaceAll(RegExp(r'\s+'), ' ') ?? '';
 
     if (cleanBrand.isEmpty ||
         cleanBrand.toLowerCase() == cleanName.toLowerCase()) {
@@ -717,7 +717,7 @@ class PlanPdfService {
         normalized.contains('catálogo') ||
         normalized.contains('catalogo') ||
         normalized.contains('catalog') ||
-        RegExp(r'\\bv\\d+(?:\\.\\d+)+').hasMatch(normalized);
+        RegExp(r'\bv\d+(?:\.\d+)+').hasMatch(normalized);
 
     return looksInternal ? labels.weeklyPlan : name;
   }
