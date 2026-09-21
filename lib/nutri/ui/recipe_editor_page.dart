@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../localization/nutri_i18n.dart';
+
 import '../application/food_placement_service.dart';
 import '../application/nutrition_calculator.dart';
 import '../application/recipe_service.dart';
@@ -155,7 +157,7 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
   Future<void> _addIngredient(Food selectedFood) async {
     final grams = _number(_ingredientGrams);
     if (grams <= 0) {
-      _message('La cantidad debe ser mayor que cero.');
+      _message(NutriI18n.t('La cantidad debe ser mayor que cero.'));
       return;
     }
 
@@ -180,7 +182,7 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
       });
 
       await _searchFoods();
-      _message('Ingrediente agregado.');
+      _message(NutriI18n.t('Ingrediente agregado.'));
     });
   }
 
@@ -197,19 +199,19 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
           controller: controller,
           autofocus: true,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          decoration: const InputDecoration(labelText: 'Cantidad en gramos'),
+          decoration: InputDecoration(labelText: NutriI18n.t('Cantidad en gramos')),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar'),
+            child: Text(NutriI18n.t('Cancelar')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(
               context,
               double.tryParse(controller.text.replaceAll(',', '.')),
             ),
-            child: const Text('Guardar'),
+            child: Text(NutriI18n.t('Guardar')),
           ),
         ],
       ),
@@ -249,15 +251,15 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
     final name = _name.text.trim();
     final servings = _number(_servings);
     if (name.isEmpty) {
-      _message('Escribe un nombre para la receta.');
+      _message(NutriI18n.t('Escribe un nombre para la receta.'));
       return;
     }
     if (servings <= 0) {
-      _message('Las porciones deben ser mayores que cero.');
+      _message(NutriI18n.t('Las porciones deben ser mayores que cero.'));
       return;
     }
     if (_ingredients.isEmpty) {
-      _message('Agrega al menos un ingrediente.');
+      _message(NutriI18n.t('Agrega al menos un ingrediente.'));
       return;
     }
 
@@ -326,7 +328,7 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
         newName: '${_name.text.trim()} (copia)',
       );
       await _refreshRecipes(selectId: newId);
-      _message('Receta duplicada.');
+      _message(NutriI18n.t('Receta duplicada.'));
     });
   }
 
@@ -337,18 +339,18 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Eliminar receta'),
+        title: Text(NutriI18n.t('Eliminar receta')),
         content: const Text(
           'La receta se eliminará si todavía no está utilizada en un plan.',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
+            child: Text(NutriI18n.t('Cancelar')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Eliminar'),
+            child: Text(NutriI18n.t('Eliminar')),
           ),
         ],
       ),
@@ -360,7 +362,7 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
       await _recipes.delete(id);
       _newRecipe();
       await _refreshRecipes();
-      _message('Receta eliminada.');
+      _message(NutriI18n.t('Receta eliminada.'));
     });
   }
 
@@ -431,13 +433,13 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
             child: FilledButton.icon(
               onPressed: _busy ? null : _newRecipe,
               icon: const Icon(Icons.add),
-              label: const Text('Nueva receta'),
+              label: Text(NutriI18n.t('Nueva receta')),
             ),
           ),
         ),
         Expanded(
           child: _recipeList.isEmpty
-              ? const Center(child: Text('Todavía no hay recetas.'))
+              ? const Center(child: Text(NutriI18n.t('Todavía no hay recetas.')))
               : ListView.builder(
                   itemCount: _recipeList.length,
                   itemBuilder: (context, index) {
@@ -504,7 +506,7 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
               child: DropdownButtonFormField<int>(
                 value: _editingRecipeId,
                 isExpanded: true,
-                decoration: const InputDecoration(labelText: 'Receta'),
+                decoration: InputDecoration(labelText: NutriI18n.t('Receta')),
                 items: _recipeList
                     .map(
                       (recipe) => DropdownMenuItem(
@@ -520,7 +522,7 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
             ),
             const SizedBox(width: 8),
             IconButton(
-              tooltip: 'Nueva receta',
+              tooltip: NutriI18n.t('Nueva receta'),
               onPressed: _newRecipe,
               icon: const Icon(Icons.add),
             ),
@@ -538,16 +540,16 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
           children: [
             TextField(
               controller: _name,
-              decoration: const InputDecoration(
-                labelText: 'Nombre de la receta',
-                hintText: 'Ej.: Omelette proteico',
+              decoration: InputDecoration(
+                labelText: NutriI18n.t('Nombre de la receta'),
+                hintText: NutriI18n.t('Ej.: Omelette proteico'),
               ),
             ),
             const SizedBox(height: 10),
             TextField(
               controller: _description,
-              decoration: const InputDecoration(
-                labelText: 'Descripción (opcional)',
+              decoration: InputDecoration(
+                labelText: NutriI18n.t('Descripción (opcional)'),
               ),
             ),
             const SizedBox(height: 10),
@@ -558,8 +560,8 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
                     controller: _servings,
                     keyboardType:
                         const TextInputType.numberWithOptions(decimal: true),
-                    decoration: const InputDecoration(
-                      labelText: 'Porciones que rinde',
+                    decoration: InputDecoration(
+                      labelText: NutriI18n.t('Porciones que rinde'),
                     ),
                     onChanged: (_) => setState(() {}),
                   ),
@@ -571,7 +573,7 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
                     keyboardType:
                         const TextInputType.numberWithOptions(decimal: true),
                     decoration: InputDecoration(
-                      labelText: 'Rendimiento final g (opcional)',
+                      labelText: NutriI18n.t('Rendimiento final g (opcional)'),
                       helperText: _ingredientWeight > 0
                           ? 'Ingredientes: ${_ingredientWeight.toStringAsFixed(0)} g'
                           : null,
@@ -585,8 +587,8 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
               controller: _notes,
               minLines: 2,
               maxLines: 4,
-              decoration: const InputDecoration(
-                labelText: 'Preparación / indicaciones (opcional)',
+              decoration: InputDecoration(
+                labelText: NutriI18n.t('Preparación / indicaciones (opcional)'),
               ),
             ),
             const SizedBox(height: 12),
@@ -607,13 +609,13 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
                   OutlinedButton.icon(
                     onPressed: _busy ? null : _duplicateRecipe,
                     icon: const Icon(Icons.copy_outlined),
-                    label: const Text('Duplicar'),
+                    label: Text(NutriI18n.t('Duplicar')),
                   ),
                 if (_editingRecipeId != null)
                   OutlinedButton.icon(
                     onPressed: _busy ? null : _deleteRecipe,
                     icon: const Icon(Icons.delete_outline),
-                    label: const Text('Eliminar'),
+                    label: Text(NutriI18n.t('Eliminar')),
                   ),
               ],
             ),
@@ -641,9 +643,9 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
                   child: TextField(
                     controller: _foodQuery,
                     onSubmitted: (_) => _searchFoods(),
-                    decoration: const InputDecoration(
-                      labelText: 'Buscar alimento',
-                      hintText: 'Ej.: huevo, leche, avena',
+                    decoration: InputDecoration(
+                      labelText: NutriI18n.t('Buscar alimento'),
+                      hintText: NutriI18n.t('Ej.: huevo, leche, avena'),
                       prefixIcon: Icon(Icons.search),
                     ),
                   ),
@@ -655,19 +657,19 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
                     controller: _ingredientGrams,
                     keyboardType:
                         const TextInputType.numberWithOptions(decimal: true),
-                    decoration: const InputDecoration(labelText: 'Gramos'),
+                    decoration: InputDecoration(labelText: NutriI18n.t('Gramos')),
                   ),
                 ),
                 const SizedBox(width: 8),
                 FilledButton(
                   onPressed: _busy ? null : _searchFoods,
-                  child: const Text('Buscar'),
+                  child: Text(NutriI18n.t('Buscar')),
                 ),
               ],
             ),
             const SizedBox(height: 10),
             if (_foodResults.isEmpty)
-              const Text('Busca en tu biblioteca y en el catálogo USDA.')
+              Text(NutriI18n.t('Busca en tu biblioteca y en el catálogo USDA.'))
             else
               ..._foodResults.combined.take(8).map(_foodResultTile),
           ],
@@ -696,7 +698,7 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
       ),
       trailing: FilledButton.tonal(
         onPressed: _busy ? null : () => _addIngredient(food),
-        child: const Text('Agregar'),
+        child: Text(NutriI18n.t('Agregar')),
       ),
     );
   }
@@ -717,7 +719,7 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
             ),
             const SizedBox(height: 8),
             if (_ingredients.isEmpty)
-              const Text('Todavía no agregaste ingredientes.')
+              Text(NutriI18n.t('Todavía no agregaste ingredientes.'))
             else
               ..._ingredients.map((ingredient) {
                 final food = ingredient.food;
@@ -737,14 +739,14 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
                     spacing: 2,
                     children: [
                       IconButton(
-                        tooltip: 'Editar cantidad',
+                        tooltip: NutriI18n.t('Editar cantidad'),
                         onPressed: _busy
                             ? null
                             : () => _editIngredient(ingredient),
                         icon: const Icon(Icons.edit_outlined),
                       ),
                       IconButton(
-                        tooltip: 'Eliminar ingrediente',
+                        tooltip: NutriI18n.t('Eliminar ingrediente'),
                         onPressed: _busy
                             ? null
                             : () => setState(
