@@ -381,3 +381,59 @@ restaurar backup
    ↓
 datos portables
 ```
+
+
+# V0.8.1 — interfaz internacional + backup cifrado
+
+La V0.8.1 completa la presentación profesional en tres idiomas y añade
+protección opcional para backups que contengan datos reales de pacientes.
+
+## Interfaz
+
+Idiomas disponibles: Español, English y Português.
+
+El cambio de idioma actualiza navegación principal, Planificador, Pacientes,
+Recetas, Documentos, Biblioteca, Configuración, mensajes principales, días,
+comidas y el PDF profesional.
+
+Los nombres canónicos internos de comidas no se migran ni se duplican. La
+traducción se aplica en presentación para mantener compatibilidad con planes y
+backups anteriores.
+
+## Backup cifrado opcional
+
+En Configuración → Backup y restauración se puede activar:
+
+**Cifrar backup con contraseña**
+
+Si está desactivado, se mantiene el backup portable V0.8.
+
+Si está activado, Nutrikuaa solicita contraseña y confirmación, exige al menos
+8 caracteres, deriva una clave con PBKDF2-HMAC-SHA256 y cifra el backup con
+AES-256-GCM autenticado. El salt y el nonce son aleatorios y se almacenan en
+el sobre cifrado. La contraseña no se guarda.
+
+La restauración detecta automáticamente si un archivo .nutrikuaa está cifrado
+y solicita la contraseña antes de poder inspeccionar o modificar datos locales.
+
+## Prueba de aceptación V0.8.1
+
+1. Abrir Configuración.
+2. Cambiar idioma a English y guardar.
+3. Recorrer Planner, Patients, Recipes, Documents, Library y Settings.
+4. Confirmar que textos de interfaz, días y comidas aparecen en inglés.
+5. Cambiar a Português y repetir una revisión rápida.
+6. Volver al idioma deseado.
+7. Activar Cifrar backup con contraseña.
+8. Crear un backup con una contraseña de al menos 8 caracteres.
+9. Confirmar que se descarga un archivo con sufijo _secure.nutrikuaa.
+10. Intentar restaurarlo con contraseña incorrecta: no debe tocar los datos.
+11. Restaurarlo con la contraseña correcta.
+12. Confirmar pacientes, planes, recetas, logo y configuración.
+13. Crear también un backup sin contraseña para comprobar compatibilidad V0.8.
+
+## Seguridad
+
+El cifrado protege el archivo exportado. No reemplaza las medidas de seguridad
+del dispositivo donde se ejecuta Nutrikuaa. Las claves no se almacenan ni se
+pueden recuperar desde la aplicación.
