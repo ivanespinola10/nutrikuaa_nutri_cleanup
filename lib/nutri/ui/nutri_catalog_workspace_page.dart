@@ -120,7 +120,7 @@ class _NutriCatalogWorkspacePageState
       _privateReady = true;
     } catch (error) {
       _privateReady = false;
-      _error = 'Base profesional: $error';
+      _error = '${_baseLabel()}: $error';
     }
 
     if (_privateReady) {
@@ -138,7 +138,7 @@ class _NutriCatalogWorkspacePageState
       }
     } catch (error) {
       _catalogReady = false;
-      _catalogError = 'Catálogo oficial: $error';
+      _catalogError = '${_officialCatalogLabel()}: $error';
     }
 
     if (_privateReady) {
@@ -323,8 +323,8 @@ class _NutriCatalogWorkspacePageState
     });
     _message(
       food.sourceType == FoodSourceType.officialDatabase
-          ? 'Alimento USDA seleccionado. Se congelará al agregarlo al plan.'
-          : 'Alimento de tu biblioteca seleccionado.',
+          ? NutriI18n.t('Alimento USDA seleccionado. Se congelará al agregarlo al plan.')
+          : NutriI18n.t('Alimento de tu biblioteca seleccionado.'),
     );
   }
 
@@ -380,8 +380,8 @@ class _NutriCatalogWorkspacePageState
 
       _message(
         food.sourceType == FoodSourceType.officialDatabase
-            ? 'Plan guardado. El alimento USDA quedó snapshotteado.'
-            : 'Plan guardado desde tu biblioteca.',
+            ? NutriI18n.t('Plan guardado. El alimento USDA quedó snapshotteado.')
+            : NutriI18n.t('Plan guardado desde tu biblioteca.'),
       );
     });
   }
@@ -512,8 +512,8 @@ class _NutriCatalogWorkspacePageState
                   ),
                   label: Text(
                     _privateReady
-                        ? 'Base profesional activa'
-                        : 'Base profesional no disponible',
+                        ? NutriI18n.t('Base profesional activa')
+                        : NutriI18n.t('Base profesional no disponible'),
                   ),
                 ),
                 Chip(
@@ -523,12 +523,12 @@ class _NutriCatalogWorkspacePageState
                   ),
                   label: Text(
                     _catalogReady
-                        ? 'USDA activo · $_catalogCount alimentos'
-                        : 'Catálogo USDA no disponible',
+                        ? _usdaStatus(_catalogCount)
+                        : NutriI18n.t('Catálogo USDA no disponible'),
                   ),
                 ),
                 Chip(
-                  label: Text('Mi biblioteca · $_professionalFoodCount'),
+                  label: Text(_libraryCount(_professionalFoodCount)),
                 ),
               ],
             ),
@@ -562,7 +562,7 @@ class _NutriCatalogWorkspacePageState
     return _section(
       number: '1',
       title: NutriI18n.t('Paciente'),
-      subtitle: '${_patientList.length} guardado(s)',
+      subtitle: _savedCount(_patientList.length),
       child: Column(
         children: [
           _field(_firstName, 'Nombre'),
@@ -702,8 +702,8 @@ class _NutriCatalogWorkspacePageState
             ),
           ],
           if (_searchResults.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 18),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 18),
               child: Text(NutriI18n.t('No se encontraron alimentos para esta búsqueda.')),
             ),
         ],
@@ -739,13 +739,17 @@ class _NutriCatalogWorkspacePageState
         subtitle: Text(
           [
             if (isOfficial) 'USDA · FDC ${food.sourceFoodId}',
-            if (!isOfficial) 'Biblioteca profesional',
+            if (!isOfficial) NutriI18n.t('Biblioteca profesional'),
             ...nutrients,
           ].join(' · '),
         ),
         trailing: FilledButton.tonal(
           onPressed: _busy ? null : () => _selectFood(food),
-          child: Text(selected ? 'Seleccionado' : 'Usar'),
+          child: Text(
+            selected
+                ? NutriI18n.t('Seleccionado')
+                : NutriI18n.t('Usar'),
+          ),
         ),
       ),
     );
@@ -780,7 +784,7 @@ class _NutriCatalogWorkspacePageState
             decoration: InputDecoration(labelText: NutriI18n.t('Alimento seleccionado')),
             child: Text(
               food == null
-                  ? 'Busca un alimento arriba y pulsa “Usar”'
+                  ? NutriI18n.t('Busca un alimento arriba y pulsa “Usar”')
                   : food.brand == null
                       ? food.name
                       : '${food.name} · ${food.brand}',
@@ -892,7 +896,7 @@ class _NutriCatalogWorkspacePageState
               value: (percent / 100).clamp(0, 1).toDouble(),
             ),
             const SizedBox(height: 4),
-            Text('${percent.toStringAsFixed(1)}% de la meta'),
+            Text(_percentOfTarget(percent)),
           ],
         ],
       ),
@@ -946,6 +950,43 @@ class _NutriCatalogWorkspacePageState
     );
   }
 
+  String _baseLabel() {
+    if (NutriI18n.languageCode == 'en') return 'Professional database';
+    if (NutriI18n.languageCode == 'pt') return 'Base profissional';
+    return 'Base profesional';
+  }
+
+  String _officialCatalogLabel() {
+    if (NutriI18n.languageCode == 'en') return 'Official catalog';
+    if (NutriI18n.languageCode == 'pt') return 'Catálogo oficial';
+    return 'Catálogo oficial';
+  }
+
+  String _usdaStatus(int count) {
+    if (NutriI18n.languageCode == 'en') return 'USDA active · $count foods';
+    if (NutriI18n.languageCode == 'pt') return 'USDA ativo · $count alimentos';
+    return 'USDA activo · $count alimentos';
+  }
+
+  String _libraryCount(int count) {
+    if (NutriI18n.languageCode == 'en') return 'My library · $count';
+    if (NutriI18n.languageCode == 'pt') return 'Minha biblioteca · $count';
+    return 'Mi biblioteca · $count';
+  }
+
+  String _savedCount(int count) {
+    if (NutriI18n.languageCode == 'en') return '$count saved';
+    if (NutriI18n.languageCode == 'pt') return '$count salvo(s)';
+    return '$count guardado(s)';
+  }
+
+  String _percentOfTarget(double percent) {
+    final value = percent.toStringAsFixed(1);
+    if (NutriI18n.languageCode == 'en') return '$value% of target';
+    if (NutriI18n.languageCode == 'pt') return '$value% da meta';
+    return '$value% de la meta';
+  }
+
   Widget _field(
     TextEditingController controller,
     String label, {
@@ -956,7 +997,7 @@ class _NutriCatalogWorkspacePageState
       keyboardType: numeric
           ? const TextInputType.numberWithOptions(decimal: true)
           : TextInputType.text,
-      decoration: InputDecoration(labelText: label),
+      decoration: InputDecoration(labelText: NutriI18n.t(label)),
     );
   }
 }
