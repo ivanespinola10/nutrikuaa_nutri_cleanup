@@ -329,8 +329,7 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Documentos',
+        title: const Text(NutriI18n.t('Documentos'),
           style: TextStyle(fontWeight: FontWeight.w700),
         ),
         actions: const [
@@ -381,13 +380,11 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
-              'Identidad profesional',
+            const Text(NutriI18n.t('Identidad profesional'),
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 4),
-            const Text(
-              'Estos datos quedan guardados localmente y aparecerán en tus documentos.',
+            const Text(NutriI18n.t('Estos datos quedan guardados localmente y aparecerán en tus documentos.'),
             ),
             const SizedBox(height: 12),
             Row(
@@ -534,8 +531,7 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
-              'Generar plan para el paciente',
+            const Text(NutriI18n.t('Generar plan para el paciente'),
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 12),
@@ -618,8 +614,7 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
             ),
             if (_planList.isEmpty && _selectedPatientId != null) ...[
               const SizedBox(height: 8),
-              const Text(
-                'Este paciente todavía no tiene planes para exportar.',
+              const Text(NutriI18n.t('Este paciente todavía no tiene planes para exportar.'),
               ),
             ],
           ],
