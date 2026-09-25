@@ -827,7 +827,7 @@ void main() {
     final planId = await plans.createPlan(
       MealPlan(
         patientId: patientId,
-        name: 'Semana PDF',
+        name: 'Prueba catálogo V0.2',
         startDate: DateTime(2026, 9, 21),
         endDate: DateTime(2026, 9, 27),
         notes: 'Mantener buena hidratación.',
@@ -843,7 +843,6 @@ void main() {
       mealId: breakfastId,
       foodId: foodId,
       quantityGrams: 300,
-      notes: '2 × pote',
     );
 
     final bytes = await PlanPdfService().build(
