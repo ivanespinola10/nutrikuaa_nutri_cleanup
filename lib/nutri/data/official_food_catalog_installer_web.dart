@@ -5,6 +5,7 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'package:sqflite/sqflite.dart';
 
 import 'official_food_catalog_manifest.dart';
+import 'official_food_catalog_verifier.dart';
 
 class OfficialFoodCatalogInstaller {
   OfficialFoodCatalogInstaller._();
@@ -25,22 +26,35 @@ class OfficialFoodCatalogInstaller {
       return OfficialCatalogInstallResult.noCatalogBundled;
     }
 
-    final path = bundled.databaseFile;
-    final existed = await databaseFactory.databaseExists(path);
+    final path = bundled.installedFile;
+    final existed = await databaseFactory.databaseExists(path) ||
+        await databaseFactory.databaseExists(bundled.databaseFile);
 
-    if (existed && await _matchesBundledVersion(path, bundled)) {
+    if (await databaseFactory.databaseExists(path) &&
+        await _matchesBundledVersion(path, bundled)) {
       return OfficialCatalogInstallResult.alreadyCurrent;
     }
 
-    if (existed) {
+    if (await databaseFactory.databaseExists(path)) {
       await databaseFactory.deleteDatabase(path);
     }
 
     final assetPath = '$_assetDirectory/${bundled.databaseFile}';
     final data = await rootBundle.load(assetPath);
     final bytes = Uint8List.sublistView(data);
+    await OfficialFoodCatalogVerifier.verifyBytes(bytes, bundled);
 
-    await databaseFactory.writeDatabaseBytes(path, bytes);
+    try {
+      await databaseFactory.writeDatabaseBytes(path, bytes);
+      if (!await _matchesBundledVersion(path, bundled)) {
+        throw StateError('Installed catalog failed SQLite validation.');
+      }
+    } catch (_) {
+      if (await databaseFactory.databaseExists(path)) {
+        await databaseFactory.deleteDatabase(path);
+      }
+      rethrow;
+    }
 
     return existed
         ? OfficialCatalogInstallResult.updated
@@ -54,7 +68,7 @@ class OfficialFoodCatalogInstaller {
     await installIfNeeded();
 
     return openDatabase(
-      bundled.databaseFile,
+      bundled.installedFile,
       singleInstance: true,
     );
   }
@@ -65,20 +79,9 @@ class OfficialFoodCatalogInstaller {
   ) async {
     Database? db;
     try {
-      db = await openDatabase(path, singleInstance: true);
-      final rows = await db.query(
-        'catalog_metadata',
-        where: 'key IN (?, ?)',
-        whereArgs: ['schema_version', 'source_release'],
-      );
-
-      final metadata = <String, String>{
-        for (final row in rows)
-          row['key'] as String: row['value'] as String,
-      };
-
-      return metadata['schema_version'] == bundled.schemaVersion.toString() &&
-          metadata['source_release'] == bundled.sourceRelease;
+      db = await openDatabase(path, singleInstance: false);
+      await OfficialFoodCatalogVerifier.verifyDatabase(db, bundled);
+      return true;
     } catch (_) {
       return false;
     } finally {

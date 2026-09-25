@@ -19,6 +19,53 @@ def write_csv(path: Path, fieldnames, rows):
 
 
 class FoodImporterTest(unittest.TestCase):
+    def test_energy_methods_choose_specific_and_keep_only_specific(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            source = root / "source"
+            source.mkdir()
+            output = root / "nutrikuaa_foods.db"
+            write_csv(
+                source / "food.csv",
+                ["fdc_id", "data_type", "description"],
+                [
+                    {"fdc_id": "10", "data_type": "foundation_food", "description": "Mixed"},
+                    {"fdc_id": "20", "data_type": "foundation_food", "description": "Specific only"},
+                ],
+            )
+            write_csv(
+                source / "nutrient.csv",
+                ["id", "name", "unit_name"],
+                [
+                    {"id": "1008", "name": "Energy", "unit_name": "kcal"},
+                    {"id": "2047", "name": "Metabolizable Energy (Atwater General Factor)", "unit_name": "kcal"},
+                    {"id": "2048", "name": "Metabolizable Energy (Atwater Specific Factor)", "unit_name": "kcal"},
+                ],
+            )
+            # USDA CSV order must not determine which energy method survives.
+            write_csv(
+                source / "food_nutrient.csv",
+                ["fdc_id", "nutrient_id", "amount"],
+                [
+                    {"fdc_id": "10", "nutrient_id": "2048", "amount": "96"},
+                    {"fdc_id": "10", "nutrient_id": "1008", "amount": "101"},
+                    {"fdc_id": "10", "nutrient_id": "2047", "amount": "99"},
+                    {"fdc_id": "20", "nutrient_id": "2048", "amount": "72"},
+                ],
+            )
+            result = subprocess.run(
+                [sys.executable, str(IMPORTER), "--input", str(source),
+                 "--output", str(output), "--source-release", "test-release"],
+                capture_output=True, text=True,
+            )
+            self.assertEqual(result.returncode, 0, msg=result.stderr)
+            with sqlite3.connect(output) as conn:
+                rows = conn.execute(
+                    "SELECT food_id, value_per_100g, source_nutrient_id "
+                    "FROM food_nutrients ORDER BY food_id"
+                ).fetchall()
+            self.assertEqual(rows, [(10, 96.0, "2048"), (20, 72.0, "2048")])
+
     def test_builds_catalog_without_network(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)

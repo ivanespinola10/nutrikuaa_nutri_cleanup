@@ -386,7 +386,9 @@ class NutriDatabase {
     });
   }
 
-  Future<void> updateFood(Food food) async {
+  /// Returns the active food ID. A used food gets a new ID so existing
+  /// recipes and delivered plans retain their original composition.
+  Future<int> updateFood(Food food) async {
     final foodId = food.id;
     if (foodId == null) {
       throw ArgumentError('A persisted food must have an id before update.');
@@ -397,7 +399,61 @@ class NutriDatabase {
 
     final db = await database;
 
-    await db.transaction((txn) async {
+    return db.transaction((txn) async {
+      final stored = await txn.query(
+        'foods',
+        columns: ['source_type'],
+        where: 'id = ?',
+        whereArgs: [foodId],
+        limit: 1,
+      );
+      if (stored.isEmpty) throw StateError('Food no longer exists.');
+      final sourceType =
+          FoodSourceType.values.byName(stored.single['source_type'] as String);
+      if (sourceType != food.sourceType || !food.isUserEditable) {
+        throw StateError('Official foods cannot be edited.');
+      }
+
+      final usage = Sqflite.firstIntValue(await txn.rawQuery('''
+        SELECT
+          (SELECT COUNT(*) FROM recipe_items WHERE food_id = ?) +
+          (SELECT COUNT(*) FROM meal_items WHERE food_id = ?)
+      ''', [foodId, foodId])) ?? 0;
+      if (usage > 0) {
+        final revision = Food(
+          name: food.name,
+          brand: food.brand,
+          countryCode: food.countryCode,
+          sourceType: food.sourceType,
+          sourceName: food.sourceName,
+          sourceFoodId: food.sourceFoodId,
+          sourceRelease: food.sourceRelease,
+          servingQuantity: food.servingQuantity,
+          servingUnit: food.servingUnit,
+          householdMeasure: food.householdMeasure,
+          notes: food.notes,
+          nutrients: food.nutrients,
+          portions: food.portions,
+        );
+        final revisionId = await txn.insert('foods', _foodToMap(revision));
+        for (final nutrient in revision.nutrients) {
+          await txn.insert(
+            'food_nutrients',
+            _nutrientToMap(revisionId, nutrient),
+          );
+        }
+        for (final portion in revision.portions) {
+          await txn.insert('food_portions', _portionToMap(revisionId, portion));
+        }
+        await txn.update(
+          'foods',
+          {'is_archived': 1},
+          where: 'id = ?',
+          whereArgs: [foodId],
+        );
+        return revisionId;
+      }
+
       await txn.update(
         'foods',
         _foodToMap(food.copyWith(updatedAt: DateTime.now())),
@@ -431,6 +487,7 @@ class NutriDatabase {
           _portionToMap(foodId, portion),
         );
       }
+      return foodId;
     });
   }
 

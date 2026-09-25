@@ -30,7 +30,7 @@ class _SettingsWorkspacePageState extends State<SettingsWorkspacePage> {
 
   String _languageCode = 'es';
   UnitSystem _unitSystem = UnitSystem.metric;
-  bool _encryptBackup = false;
+  bool _encryptBackup = true;
   bool _loading = true;
   bool _busy = false;
   String? _error;

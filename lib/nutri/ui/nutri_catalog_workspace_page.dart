@@ -43,10 +43,10 @@ class _NutriCatalogWorkspacePageState
 
   final _customName = TextEditingController();
   final _customBrand = TextEditingController();
-  final _customEnergy = TextEditingController(text: '100');
-  final _customProtein = TextEditingController(text: '10');
-  final _customCarbs = TextEditingController(text: '8');
-  final _customFat = TextEditingController(text: '3');
+  final _customEnergy = TextEditingController();
+  final _customProtein = TextEditingController();
+  final _customCarbs = TextEditingController();
+  final _customFat = TextEditingController();
   final _customServingGrams = TextEditingController();
   final _customHouseholdMeasure = TextEditingController();
 
@@ -60,6 +60,7 @@ class _NutriCatalogWorkspacePageState
 
   int? _selectedPatientId;
   Food? _selectedFood;
+  Food? _editingFood;
   PlanNutritionSummary? _summary;
   int? _lastPlanId;
 
@@ -244,26 +245,38 @@ class _NutriCatalogWorkspacePageState
       return;
     }
 
+    final energy = double.tryParse(_customEnergy.text.trim().replaceAll(',', '.'));
+    final protein = double.tryParse(_customProtein.text.trim().replaceAll(',', '.'));
+    final carbs = double.tryParse(_customCarbs.text.trim().replaceAll(',', '.'));
+    final fat = double.tryParse(_customFat.text.trim().replaceAll(',', '.'));
+    if (energy == null || !energy.isFinite || energy < 0 || energy > 1000 ||
+        [protein, carbs, fat].any(
+          (value) => value == null || !value.isFinite || value < 0 || value > 100,
+        )) {
+      _message(NutriI18n.t('Introduce kcal y macronutrientes válidos por 100 g.'));
+      return;
+    }
+
     await _execute(() async {
       final nutrients = [
         NutrientValue(
           code: NutrientCodes.energyKcal,
-          valuePer100g: _number(_customEnergy),
+          valuePer100g: energy,
           unit: NutrientUnit.kilocalorie,
         ),
         NutrientValue(
           code: NutrientCodes.protein,
-          valuePer100g: _number(_customProtein),
+          valuePer100g: protein!,
           unit: NutrientUnit.gram,
         ),
         NutrientValue(
           code: NutrientCodes.carbohydrate,
-          valuePer100g: _number(_customCarbs),
+          valuePer100g: carbs!,
           unit: NutrientUnit.gram,
         ),
         NutrientValue(
           code: NutrientCodes.fat,
-          valuePer100g: _number(_customFat),
+          valuePer100g: fat!,
           unit: NutrientUnit.gram,
         ),
       ];
@@ -273,7 +286,35 @@ class _NutriCatalogWorkspacePageState
       final countryCode = settings.countryCode;
       final servingGrams = _number(_customServingGrams);
       final household = _customHouseholdMeasure.text.trim();
-      final id = brand.isEmpty
+      final editing = _editingFood;
+      final id = editing != null
+          ? await _foods.update(Food(
+              id: editing.id,
+              name: name,
+              brand: brand.isEmpty ? null : brand,
+              countryCode: editing.countryCode,
+              sourceType: editing.sourceType,
+              sourceName: editing.sourceName,
+              sourceFoodId: editing.sourceFoodId,
+              sourceRelease: editing.sourceRelease,
+              servingQuantity: servingGrams > 0 ? servingGrams : null,
+              servingUnit: servingGrams > 0 ? 'g' : null,
+              householdMeasure: household.isEmpty ? null : household,
+              notes: editing.notes,
+              isArchived: editing.isArchived,
+              createdAt: editing.createdAt,
+              nutrients: [
+                ...editing.nutrients.where((nutrient) => !{
+                  NutrientCodes.energyKcal,
+                  NutrientCodes.protein,
+                  NutrientCodes.carbohydrate,
+                  NutrientCodes.fat,
+                }.contains(nutrient.code)),
+                ...nutrients,
+              ],
+              portions: editing.portions,
+            ))
+          : brand.isEmpty
           ? await _foods.addProfessionalFood(
               name: name,
               countryCode: countryCode,
@@ -293,14 +334,47 @@ class _NutriCatalogWorkspacePageState
             );
 
       _selectedFood = await NutriDatabase.instance.getFood(id);
+      _editingFood = null;
       _customName.clear();
       _customBrand.clear();
+      _customEnergy.clear();
+      _customProtein.clear();
+      _customCarbs.clear();
+      _customFat.clear();
       _customServingGrams.clear();
       _customHouseholdMeasure.clear();
       await _refreshProfessionalCount();
       await _runSearch();
-      _message(NutriI18n.t('Alimento guardado en tu biblioteca.'));
+      _message(editing != null && editing.id != id
+          ? NutriI18n.t('Nueva versión guardada. Los planes anteriores conservan los valores originales.')
+          : NutriI18n.t('Alimento guardado en tu biblioteca.'));
     });
+  }
+
+  void _startFoodEdit(Food food) {
+    if (!food.isUserEditable) return;
+    setState(() {
+      _editingFood = food;
+      _customName.text = food.name;
+      _customBrand.text = food.brand ?? '';
+      _customEnergy.text = food.nutrient(NutrientCodes.energyKcal)?.valuePer100g.toString() ?? '';
+      _customProtein.text = food.nutrient(NutrientCodes.protein)?.valuePer100g.toString() ?? '';
+      _customCarbs.text = food.nutrient(NutrientCodes.carbohydrate)?.valuePer100g.toString() ?? '';
+      _customFat.text = food.nutrient(NutrientCodes.fat)?.valuePer100g.toString() ?? '';
+      _customServingGrams.text = food.servingQuantity?.toString() ?? '';
+      _customHouseholdMeasure.text = food.householdMeasure ?? '';
+    });
+    _message(NutriI18n.t('Edita la ficha en el bloque 2 de esta página.'));
+  }
+
+  void _cancelFoodEdit() {
+    setState(() => _editingFood = null);
+    for (final controller in [
+      _customName, _customBrand, _customEnergy, _customProtein,
+      _customCarbs, _customFat, _customServingGrams, _customHouseholdMeasure,
+    ]) {
+      controller.clear();
+    }
   }
 
   Future<void> _selectPatient(int? id) async {
@@ -596,7 +670,9 @@ class _NutriCatalogWorkspacePageState
     return _section(
       number: '2',
       title: NutriI18n.t('Alimento propio o de marca'),
-      subtitle: NutriI18n.t('Editable por el profesional'),
+      subtitle: _editingFood == null
+          ? NutriI18n.t('Editable por el profesional')
+          : NutriI18n.t('Editando ficha de tu biblioteca'),
       child: Column(
         children: [
           _field(_customName, 'Nombre del alimento'),
@@ -638,12 +714,18 @@ class _NutriCatalogWorkspacePageState
             ],
           ),
           const SizedBox(height: 12),
+          if (_editingFood != null)
+            TextButton(
+              onPressed: _busy ? null : _cancelFoodEdit,
+              child: Text(NutriI18n.t('Cancelar edición')),
+            ),
           SizedBox(
             width: double.infinity,
             child: FilledButton.icon(
               onPressed: _busy || !_privateReady ? null : _createCustomFood,
               icon: const Icon(Icons.add_shopping_cart),
-              label: Text(NutriI18n.t('Guardar en mi biblioteca')),
+              label: Text(NutriI18n.t(_editingFood == null
+                  ? 'Guardar en mi biblioteca' : 'Guardar cambios')),
             ),
           ),
         ],
@@ -713,6 +795,7 @@ class _NutriCatalogWorkspacePageState
 
   Widget _foodTile(Food food, {required bool isOfficial}) {
     final selected = identical(food, _selectedFood) ||
+        (!isOfficial && _selectedFood?.id == food.id) ||
         (_selectedFood?.sourceName == food.sourceName &&
             _selectedFood?.sourceFoodId == food.sourceFoodId &&
             food.sourceFoodId != null);
@@ -743,13 +826,21 @@ class _NutriCatalogWorkspacePageState
             ...nutrients,
           ].join(' · '),
         ),
-        trailing: FilledButton.tonal(
-          onPressed: _busy ? null : () => _selectFood(food),
-          child: Text(
-            selected
-                ? NutriI18n.t('Seleccionado')
-                : NutriI18n.t('Usar'),
-          ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (!isOfficial && food.isUserEditable)
+              IconButton(
+                tooltip: NutriI18n.t('Editar ficha'),
+                icon: const Icon(Icons.edit_outlined),
+                onPressed: _busy ? null : () => _startFoodEdit(food),
+              ),
+            FilledButton.tonal(
+              onPressed: _busy ? null : () => _selectFood(food),
+              child: Text(selected
+                  ? NutriI18n.t('Seleccionado') : NutriI18n.t('Usar')),
+            ),
+          ],
         ),
       ),
     );

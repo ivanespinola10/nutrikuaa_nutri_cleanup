@@ -283,6 +283,64 @@ void main() {
     expect(duplicated.meals.single.items, hasLength(1));
   });
 
+  test('editing a used custom food keeps previous plan and recipe totals', () async {
+    final foods = FoodLibraryService();
+    final originalId = await foods.addProfessionalFood(
+      name: 'Pan local',
+      nutrients: const [
+        NutrientValue(
+          code: NutrientCodes.energyKcal,
+          valuePer100g: 100,
+          unit: NutrientUnit.kilocalorie,
+        ),
+      ],
+    );
+    final recipeId = await RecipeService().create(
+      Recipe(name: 'Tostada', servings: 1),
+      [RecipeIngredientInput(foodId: originalId, quantityGrams: 100)],
+    );
+    final patientId = await PatientRepository().create(
+      Patient(firstName: 'Historial', lastName: 'Seguro'),
+    );
+    final plans = MealPlanService();
+    final planId = await plans.createPlan(
+      MealPlan(patientId: patientId, name: 'Plan entregado'),
+    );
+    final mealId = await plans.addMeal(
+      planId: planId, dayIndex: 0, name: 'Desayuno',
+    );
+    await plans.addFood(mealId: mealId, foodId: originalId, quantityGrams: 100);
+    await plans.addRecipe(mealId: mealId, recipeId: recipeId);
+    final nutrition = PlanNutritionService();
+    expect(
+      (await nutrition.calculate(planId)).totalsForDay(0).value(NutrientCodes.energyKcal),
+      200,
+    );
+
+    final original = (await NutriDatabase.instance.getFood(originalId))!;
+    final revisionId = await foods.update(original.copyWith(
+      nutrients: const [
+        NutrientValue(
+          code: NutrientCodes.energyKcal,
+          valuePer100g: 250,
+          unit: NutrientUnit.kilocalorie,
+        ),
+      ],
+    ));
+
+    expect(revisionId, isNot(originalId));
+    expect((await NutriDatabase.instance.getFood(originalId))!.isArchived, true);
+    expect((await NutriDatabase.instance.getFood(originalId))!
+        .nutrient(NutrientCodes.energyKcal)!.valuePer100g, 100);
+    expect((await NutriDatabase.instance.getFood(revisionId))!
+        .nutrient(NutrientCodes.energyKcal)!.valuePer100g, 250);
+    expect((await foods.search('Pan local')).map((food) => food.id), [revisionId]);
+    expect(
+      (await nutrition.calculate(planId)).totalsForDay(0).value(NutrientCodes.energyKcal),
+      200,
+    );
+  });
+
   test('weekly plan supports reusable meals and multiple days', () async {
     final patients = PatientRepository();
     final patientId = await patients.create(

@@ -28,6 +28,25 @@ class NutriI18n {
   static String meal(String canonical) => t(canonical);
 
   static const Map<String, Map<String, String>> _translations = {
+    'Introduce kcal y macronutrientes válidos por 100 g.': {
+      'en': 'Enter valid calories and macronutrients per 100 g.',
+      'pt': 'Informe calorias e macronutrientes válidos por 100 g.',
+    },
+    'Nueva versión guardada. Los planes anteriores conservan los valores originales.': {
+      'en': 'New version saved. Earlier plans keep their original values.',
+      'pt': 'Nova versão salva. Planos anteriores mantêm os valores originais.',
+    },
+    'Edita la ficha en el bloque 2 de esta página.': {
+      'en': 'Edit the food in section 2 of this page.',
+      'pt': 'Edite o alimento na seção 2 desta página.',
+    },
+    'Editando ficha de tu biblioteca': {
+      'en': 'Editing a food from your library',
+      'pt': 'Editando um alimento da sua biblioteca',
+    },
+    'Cancelar edición': {'en': 'Cancel edit', 'pt': 'Cancelar edição'},
+    'Guardar cambios': {'en': 'Save changes', 'pt': 'Salvar alterações'},
+    'Editar ficha': {'en': 'Edit food', 'pt': 'Editar alimento'},
     'Planificador': {'en': 'Planner', 'pt': 'Planejador'},
     'Pacientes': {'en': 'Patients', 'pt': 'Pacientes'},
     'Recetas': {'en': 'Recipes', 'pt': 'Receitas'},

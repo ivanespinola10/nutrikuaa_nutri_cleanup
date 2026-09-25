@@ -40,7 +40,9 @@ uso.
 La compilación actual contiene:
 
 - 469 Foundation Foods;
-- 3.841 valores nutricionales normalizados;
+- 3.831 valores nutricionales normalizados;
+- energía disponible para 378 alimentos, con preferencia explícita por USDA
+  2048 (Atwater específico), después 2047 (general), después 1008;
 - 187 porciones/medidas disponibles;
 - fuente: USDA FoodData Central Foundation Foods 2026-04.
 
@@ -400,13 +402,14 @@ Los nombres canónicos internos de comidas no se migran ni se duplican. La
 traducción se aplica en presentación para mantener compatibilidad con planes y
 backups anteriores.
 
-## Backup cifrado opcional
+## Backup cifrado por defecto
 
 En Configuración → Backup y restauración se puede activar:
 
 **Cifrar backup con contraseña**
 
-Si está desactivado, se mantiene el backup portable V0.8.
+El cifrado está activado inicialmente. El profesional puede desactivarlo
+expresamente para generar un backup portable V0.8 sin contraseña.
 
 Si está activado, Nutrikuaa solicita contraseña y confirmación, exige al menos
 8 caracteres, deriva una clave con PBKDF2-HMAC-SHA256 y cifra el backup con
@@ -424,7 +427,7 @@ y solicita la contraseña antes de poder inspeccionar o modificar datos locales.
 4. Confirmar que textos de interfaz, días y comidas aparecen en inglés.
 5. Cambiar a Português y repetir una revisión rápida.
 6. Volver al idioma deseado.
-7. Activar Cifrar backup con contraseña.
+7. Confirmar que Cifrar backup con contraseña aparece activado.
 8. Crear un backup con una contraseña de al menos 8 caracteres.
 9. Confirmar que se descarga un archivo con sufijo _secure.nutrikuaa.
 10. Intentar restaurarlo con contraseña incorrecta: no debe tocar los datos.

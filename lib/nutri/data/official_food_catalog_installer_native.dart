@@ -7,6 +7,7 @@ import 'package:path/path.dart' as p;
 import 'package:sqflite/sqflite.dart';
 
 import 'official_food_catalog_manifest.dart';
+import 'official_food_catalog_verifier.dart';
 
 class OfficialFoodCatalogInstaller {
   OfficialFoodCatalogInstaller._();
@@ -29,35 +30,52 @@ class OfficialFoodCatalogInstaller {
     }
 
     final dbDir = await getDatabasesPath();
-    final targetDb = File(p.join(dbDir, bundled.databaseFile));
+    final targetDb = File(p.join(dbDir, bundled.installedFile));
     final localManifest = File(p.join(dbDir, _installedManifestFile));
-
     final previous = await _readInstalledManifest(localManifest);
-    final isCurrent = previous != null &&
-        previous.schemaVersion == bundled.schemaVersion &&
-        previous.dataVersion == bundled.dataVersion &&
-        await targetDb.exists();
 
-    if (isCurrent) {
-      return OfficialCatalogInstallResult.alreadyCurrent;
+    if (await targetDb.exists()) {
+      try {
+        await OfficialFoodCatalogVerifier.verifyBytes(
+          await targetDb.readAsBytes(), bundled,
+        );
+        final db = await openDatabase(
+          targetDb.path, readOnly: true, singleInstance: false,
+        );
+        try {
+          await OfficialFoodCatalogVerifier.verifyDatabase(db, bundled);
+        } finally {
+          await db.close();
+        }
+        return OfficialCatalogInstallResult.alreadyCurrent;
+      } catch (_) {
+        // Reinstall a damaged copy from the checked bundled asset.
+      }
     }
 
-    final existed = await targetDb.exists();
+    final existed = previous != null ||
+        await File(p.join(dbDir, bundled.databaseFile)).exists() ||
+        await targetDb.exists();
     final assetPath = '$_assetDirectory/${bundled.databaseFile}';
     final bytes = await rootBundle.load(assetPath);
 
-    await _replaceAtomically(
+    final catalogBytes = bytes.buffer.asUint8List(
+      bytes.offsetInBytes, bytes.lengthInBytes,
+    );
+    await OfficialFoodCatalogVerifier.verifyBytes(catalogBytes, bundled);
+    await _installChecked(
       targetDb,
-      bytes.buffer.asUint8List(
-        bytes.offsetInBytes,
-        bytes.lengthInBytes,
-      ),
+      catalogBytes,
+      bundled,
     );
 
-    await localManifest.writeAsString(
+    final temporaryManifest = File('${localManifest.path}.tmp');
+    await temporaryManifest.writeAsString(
       const JsonEncoder.withIndent('  ').convert(bundled.toJson()),
       flush: true,
     );
+    if (await localManifest.exists()) await localManifest.delete();
+    await temporaryManifest.rename(localManifest.path);
 
     return existed
         ? OfficialCatalogInstallResult.updated
@@ -71,7 +89,7 @@ class OfficialFoodCatalogInstaller {
     await installIfNeeded();
 
     final dbDir = await getDatabasesPath();
-    final path = p.join(dbDir, bundled.databaseFile);
+    final path = p.join(dbDir, bundled.installedFile);
     return openDatabase(
       path,
       readOnly: true,
@@ -94,9 +112,10 @@ class OfficialFoodCatalogInstaller {
     }
   }
 
-  static Future<void> _replaceAtomically(
+  static Future<void> _installChecked(
     File destination,
     Uint8List bytes,
+    OfficialFoodCatalogManifest manifest,
   ) async {
     final temporary = File('${destination.path}.tmp');
 
@@ -104,12 +123,23 @@ class OfficialFoodCatalogInstaller {
       await temporary.delete();
     }
 
-    await temporary.writeAsBytes(bytes, flush: true);
-
-    if (await destination.exists()) {
-      await destination.delete();
+    try {
+      await temporary.writeAsBytes(bytes, flush: true);
+      await OfficialFoodCatalogVerifier.verifyBytes(
+        await temporary.readAsBytes(), manifest,
+      );
+      final db = await openDatabase(
+        temporary.path, readOnly: true, singleInstance: false,
+      );
+      try {
+        await OfficialFoodCatalogVerifier.verifyDatabase(db, manifest);
+      } finally {
+        await db.close();
+      }
+      if (await destination.exists()) await destination.delete();
+      await temporary.rename(destination.path);
+    } finally {
+      if (await temporary.exists()) await temporary.delete();
     }
-
-    await temporary.rename(destination.path);
   }
 }

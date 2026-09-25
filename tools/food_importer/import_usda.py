@@ -12,6 +12,7 @@ import argparse
 import csv
 import hashlib
 import json
+import math
 import sqlite3
 import sys
 from datetime import datetime, timezone
@@ -20,6 +21,9 @@ from typing import Dict, Iterable, Optional
 
 
 SCHEMA_VERSION = 1
+# Specific food factors are preferred when several USDA energy methods exist.
+# Keep the selected USDA nutrient ID in the catalog for auditability.
+ENERGY_SOURCE_PRIORITY = {"2048": 0, "2047": 1, "1008": 2}
 
 
 def normalize(text: Optional[str]) -> str:
@@ -286,11 +290,10 @@ def import_food_nutrients(
     food_nutrient_path: Path,
     nutrient_map,
 ):
-    imported = 0
-
     existing_food_ids = {
         row[0] for row in conn.execute("SELECT id FROM foods")
     }
+    selected = {}
 
     with open_csv(food_nutrient_path) as handle:
         reader = csv.DictReader(handle)
@@ -298,7 +301,6 @@ def import_food_nutrients(
         nutrient_col = find_column(reader.fieldnames, "nutrient_id")
         amount_col = find_column(reader.fieldnames, "amount")
 
-        rows = []
         for row in reader:
             try:
                 food_id = int(row[fdc_col])
@@ -317,43 +319,35 @@ def import_food_nutrients(
                 amount = float(row[amount_col])
             except (TypeError, ValueError):
                 continue
+            if not math.isfinite(amount) or amount < 0:
+                continue
 
-            rows.append(
-                (
+            key = (food_id, target["code"])
+            rank = (
+                ENERGY_SOURCE_PRIORITY.get(source_nutrient_id, 999)
+                if target["code"] == "energy_kcal"
+                else 0
+            )
+            previous = selected.get(key)
+            if previous is None or rank < previous[0]:
+                selected[key] = (
+                    rank,
                     food_id,
                     target["code"],
                     amount,
                     target["unit"],
                     source_nutrient_id,
                 )
-            )
 
-            if len(rows) >= 10000:
-                conn.executemany(
-                    """
-                    INSERT OR REPLACE INTO food_nutrients (
-                      food_id, nutrient_code, value_per_100g, unit,
-                      source_nutrient_id
-                    ) VALUES (?, ?, ?, ?, ?)
-                    """,
-                    rows,
-                )
-                imported += len(rows)
-                rows.clear()
-
-        if rows:
-            conn.executemany(
-                """
-                INSERT OR REPLACE INTO food_nutrients (
-                  food_id, nutrient_code, value_per_100g, unit,
-                  source_nutrient_id
-                ) VALUES (?, ?, ?, ?, ?)
-                """,
-                rows,
-            )
-            imported += len(rows)
-
-    return imported
+    conn.executemany(
+        """
+        INSERT INTO food_nutrients (
+          food_id, nutrient_code, value_per_100g, unit, source_nutrient_id
+        ) VALUES (?, ?, ?, ?, ?)
+        """,
+        (values[1:] for values in selected.values()),
+    )
+    return len(selected)
 
 
 def load_measure_units(measure_unit_path: Optional[Path]):

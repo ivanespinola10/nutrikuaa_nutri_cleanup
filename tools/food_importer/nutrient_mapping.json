@@ -4,8 +4,8 @@
       "code": "energy_kcal",
       "unit": "kilocalorie",
       "source_units": ["kcal"],
-      "usda_ids": ["1008"],
-      "aliases": ["energy", "energy (atwater general factors)"]
+      "usda_ids": ["1008", "2047", "2048"],
+      "aliases": ["energy", "energy (atwater general factors)", "energy (atwater specific factors)", "metabolizable energy (atwater general factor)", "metabolizable energy (atwater specific factor)"]
     },
     {
       "code": "protein_g",

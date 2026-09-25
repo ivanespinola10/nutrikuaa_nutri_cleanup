@@ -91,7 +91,7 @@ class FoodLibraryService {
     );
   }
 
-  Future<void> update(Food food) => database.updateFood(food);
+  Future<int> update(Food food) => database.updateFood(food);
 
   Future<List<Food>> search(
     String query, {
