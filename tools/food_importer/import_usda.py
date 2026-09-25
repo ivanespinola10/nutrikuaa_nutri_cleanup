@@ -571,14 +571,12 @@ def main():
             measure_unit_path,
         )
 
-        built_at = datetime.now(timezone.utc).isoformat()
         write_metadata(
             conn,
             {
                 "schema_version": str(SCHEMA_VERSION),
                 "source_name": args.source_name,
                 "source_release": args.source_release,
-                "built_at_utc": built_at,
                 "food_count": str(food_count),
                 "nutrient_value_count": str(nutrient_count),
                 "portion_count": str(portion_count),

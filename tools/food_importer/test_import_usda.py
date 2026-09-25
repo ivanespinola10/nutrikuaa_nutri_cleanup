@@ -1,4 +1,5 @@
 import csv
+import hashlib
 import sqlite3
 import subprocess
 import sys
@@ -163,6 +164,20 @@ class FoodImporterTest(unittest.TestCase):
             )
             self.assertTrue(output.exists())
             self.assertTrue(Path(str(output) + ".manifest.json").exists())
+
+            # A rebuild of the same release should not create a new version
+            # merely because it ran at a different time.
+            rebuilt = root / "rebuilt.db"
+            second = subprocess.run(
+                [sys.executable, str(IMPORTER), "--input", str(source),
+                 "--output", str(rebuilt), "--source-release", "test-release"],
+                capture_output=True, text=True,
+            )
+            self.assertEqual(second.returncode, 0, msg=second.stderr)
+            self.assertEqual(
+                hashlib.sha256(output.read_bytes()).hexdigest(),
+                hashlib.sha256(rebuilt.read_bytes()).hexdigest(),
+            )
 
             conn = sqlite3.connect(output)
             try:
