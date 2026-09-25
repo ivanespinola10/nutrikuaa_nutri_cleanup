@@ -45,7 +45,6 @@ class NutriI18n {
       'pt': 'Editando um alimento da sua biblioteca',
     },
     'Cancelar edición': {'en': 'Cancel edit', 'pt': 'Cancelar edição'},
-    'Guardar cambios': {'en': 'Save changes', 'pt': 'Salvar alterações'},
     'Editar ficha': {'en': 'Edit food', 'pt': 'Editar alimento'},
     'Planificador': {'en': 'Planner', 'pt': 'Planejador'},
     'Pacientes': {'en': 'Patients', 'pt': 'Pacientes'},

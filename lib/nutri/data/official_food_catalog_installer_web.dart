@@ -9,6 +9,7 @@ import 'official_food_catalog_verifier.dart';
 
 class OfficialFoodCatalogInstaller {
   OfficialFoodCatalogInstaller._();
+  static Future<OfficialCatalogInstallResult>? _installation;
 
   static const _assetDirectory = 'assets/data';
   static const _manifestAsset = '$_assetDirectory/food_db_manifest.json';
@@ -21,6 +22,19 @@ class OfficialFoodCatalogInstaller {
   }
 
   static Future<OfficialCatalogInstallResult> installIfNeeded() async {
+    final existing = _installation;
+    if (existing != null) return await existing;
+    final pending = _installOnce();
+    _installation = pending;
+    try {
+      return await pending;
+    } catch (_) {
+      if (identical(_installation, pending)) _installation = null;
+      rethrow;
+    }
+  }
+
+  static Future<OfficialCatalogInstallResult> _installOnce() async {
     final bundled = await readBundledManifest();
     if (!bundled.bundled) {
       return OfficialCatalogInstallResult.noCatalogBundled;

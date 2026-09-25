@@ -21,7 +21,9 @@ prueba, considerando impuestos, comisiones y soporte.
 ## Flujo de compra propuesto
 
 1. Demostración con datos ficticios y prueba privada en Chrome.
-2. Checkout de pago único en Lemon Squeezy desde una página propia aprobada.
+2. Checkout de pago único en la cuenta Lemon Squeezy utilizada para Nutrikuaa
+   Pro, con **Nutri como producto y licencia separados**, desde una página
+   propia aprobada.
 3. Webhook firmado de orden pagada en un servicio mínimo de licencias, sin
    almacenar fichas, recetas ni pacientes. Confirmar también reembolsos.
 4. Activación inicial por clave. El servicio verifica la clave con Lemon,
