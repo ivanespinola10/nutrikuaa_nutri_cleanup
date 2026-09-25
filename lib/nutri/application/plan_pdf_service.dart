@@ -6,6 +6,7 @@ import 'package:pdf/widgets.dart' as pw;
 import '../data/nutri_database.dart';
 import '../data/patient_repository.dart';
 import '../domain/app_settings.dart';
+import '../domain/food.dart';
 import '../domain/meal_plan.dart';
 import '../domain/nutrition/nutrient.dart';
 import '../domain/patient.dart';
@@ -219,9 +220,12 @@ class PlanPdfService {
           items.add(
             _ResolvedItem(
               label: label,
-              quantity: portionText == null || portionText.isEmpty
-                  ? _formatFoodWeight(grams, unitSystem)
-                  : '$portionText (${_formatFoodWeight(grams, unitSystem)})',
+              quantity: _foodQuantityText(
+                food: food,
+                grams: grams,
+                explicitPortionText: portionText,
+                unitSystem: unitSystem,
+              ),
             ),
           );
         } else {
@@ -701,9 +705,44 @@ class PlanPdfService {
       return cleanName;
     }
 
-    return '$cleanName  |  $cleanBrand';
+    return '$cleanName - $cleanBrand';
   }
 
+  String _foodQuantityText({
+    required Food food,
+    required double grams,
+    required String? explicitPortionText,
+    required UnitSystem unitSystem,
+  }) {
+    final weight = _formatFoodWeight(grams, unitSystem);
+
+    if (explicitPortionText != null && explicitPortionText.isNotEmpty) {
+      return '$explicitPortionText ($weight)';
+    }
+
+    final household = food.householdMeasure?.trim() ?? '';
+    final servingQuantity = food.servingQuantity;
+
+    if (household.isEmpty ||
+        servingQuantity == null ||
+        servingQuantity <= 0 ||
+        grams <= 0) {
+      return weight;
+    }
+
+    final portions = grams / servingQuantity;
+    final rounded = portions.roundToDouble();
+
+    if ((portions - rounded).abs() < 0.01) {
+      if (rounded == 1) {
+        return '$household ($weight)';
+      }
+      return '${_number(rounded)} x $household ($weight)';
+    }
+
+    return '$household = ${_formatFoodWeight(servingQuantity, unitSystem)}; '
+        '$weight';
+  }
   String _patientFacingPlanName(
     String rawName,
     _PdfLabels labels,
