@@ -32,7 +32,6 @@ class NutriI18n {
       'en': 'There are no patients yet. Create one to start planning.',
       'pt': 'Ainda não há pacientes. Crie um para começar a planejar.',
     },
-    'Crear paciente': {'en': 'Create patient', 'pt': 'Criar paciente'},
     'Planificar para este paciente': {
       'en': 'Plan for this patient', 'pt': 'Planejar para este paciente',
     },
@@ -44,6 +43,7 @@ class NutriI18n {
       'en': 'Planned days: {count} of 7.', 'pt': 'Dias planejados: {count} de 7.',
     },
     'Pendiente': {'en': 'Pending', 'pt': 'Pendente'},
+    'Más': {'en': 'More', 'pt': 'Mais'},
     'El plan está vacío': {'en': 'The plan is empty', 'pt': 'O plano está vazio'},
     'Agrega al menos un alimento o receta antes de generar el PDF.': {
       'en': 'Add at least one food or recipe before generating the PDF.',

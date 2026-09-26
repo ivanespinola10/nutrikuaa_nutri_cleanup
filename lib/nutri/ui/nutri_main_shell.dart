@@ -68,6 +68,35 @@ class _NutriMainShellState extends State<NutriMainShell> {
     });
   }
 
+  void _showMore(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.inventory_2_outlined),
+              title: Text(NutriI18n.t('Biblioteca')),
+              onTap: () {
+                Navigator.pop(sheetContext);
+                _selectPage(4);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.settings_outlined),
+              title: Text(NutriI18n.t('Configuración')),
+              onTap: () {
+                Navigator.pop(sheetContext);
+                _selectPage(5);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
@@ -206,8 +235,9 @@ class _NutriMainShellState extends State<NutriMainShell> {
             ],
           ),
           bottomNavigationBar: NavigationBar(
-            selectedIndex: _index,
-            onDestinationSelected: _selectPage,
+            selectedIndex: _index < 4 ? _index : 4,
+            onDestinationSelected: (value) =>
+                value == 4 ? _showMore(context) : _selectPage(value),
             destinations: [
               NavigationDestination(
                 icon: const Icon(Icons.calendar_view_week_outlined),
@@ -230,14 +260,9 @@ class _NutriMainShellState extends State<NutriMainShell> {
                 label: NutriI18n.t('Documentos'),
               ),
               NavigationDestination(
-                icon: const Icon(Icons.inventory_2_outlined),
-                selectedIcon: const Icon(Icons.inventory_2),
-                label: NutriI18n.t('Biblioteca'),
-              ),
-              NavigationDestination(
-                icon: const Icon(Icons.settings_outlined),
-                selectedIcon: const Icon(Icons.settings),
-                label: NutriI18n.t('Configuración'),
+                icon: const Icon(Icons.more_horiz_outlined),
+                selectedIcon: const Icon(Icons.more_horiz),
+                label: NutriI18n.t('Más'),
               ),
             ],
           ),
