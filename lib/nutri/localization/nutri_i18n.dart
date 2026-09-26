@@ -54,9 +54,13 @@ class NutriI18n {
       'en': 'Review the plan before delivering it',
       'pt': 'Revise o plano antes de entregá-lo',
     },
-    '{count} día(s) se alejan más del 15 % del objetivo de energía. Revisa las cantidades.': {
-      'en': '{count} day(s) differ by more than 15% from the energy target. Review the amounts.',
-      'pt': '{count} dia(s) diferem mais de 15% da meta de energia. Revise as quantidades.',
+    'Un día se aleja más del 15 % del objetivo de energía. Revisa las cantidades.': {
+      'en': 'One day differs by more than 15% from the energy target. Review the amounts.',
+      'pt': 'Um dia difere mais de 15% da meta de energia. Revise as quantidades.',
+    },
+    '{count} días se alejan más del 15 % del objetivo de energía. Revisa las cantidades.': {
+      'en': '{count} days differ by more than 15% from the energy target. Review the amounts.',
+      'pt': '{count} dias diferem mais de 15% da meta de energia. Revise as quantidades.',
     },
     'Volver al plan': {'en': 'Back to plan', 'pt': 'Voltar ao plano'},
     'Continuar a vista previa': {

@@ -340,10 +340,14 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
               'count': plannedDays.length,
             }),
           if (outOfRangeDays.isNotEmpty)
-            NutriI18n.format(
-              '{count} día(s) se alejan más del 15 % del objetivo de energía. Revisa las cantidades.',
-              {'count': outOfRangeDays.length},
-            ),
+            outOfRangeDays.length == 1
+                ? NutriI18n.t(
+                    'Un día se aleja más del 15 % del objetivo de energía. Revisa las cantidades.',
+                  )
+                : NutriI18n.format(
+                    '{count} días se alejan más del 15 % del objetivo de energía. Revisa las cantidades.',
+                    {'count': outOfRangeDays.length},
+                  ),
         ];
         final continuePreview = await showDialog<bool>(
           context: context,
@@ -448,8 +452,6 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       _documentCard(),
-                      const SizedBox(height: 14),
-                      _professionalCard(),
                       if (_error != null) ...[
                         const SizedBox(height: 10),
                         SelectableText(
@@ -463,6 +465,8 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
                         const SizedBox(height: 16),
                         _previewCard(),
                       ],
+                      const SizedBox(height: 14),
+                      _professionalCard(),
                     ],
                   ),
                 ),
@@ -521,6 +525,7 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
             const SizedBox(height: 8),
             TextField(
               controller: _footer,
+              onChanged: (_) => setState(() => _pdfBytes = null),
               decoration: InputDecoration(
                 labelText: NutriI18n.t('Pie del documento (opcional)'),
                 hintText: NutriI18n.t('Ej.: Consultas con cita previa'),
@@ -755,6 +760,7 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
   ) {
     return TextField(
       controller: controller,
+      onChanged: (_) => setState(() => _pdfBytes = null),
       decoration: InputDecoration(labelText: NutriI18n.t(label)),
     );
   }
