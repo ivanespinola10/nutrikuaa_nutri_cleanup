@@ -11,20 +11,24 @@ Página comercial (al aprobarla) → Lemon Squeezy (producto Nutri separado)
                                         ↓ orden / clave / reembolso
                                   API mínima de licencia
                                         ↓ permiso firmado
-Chrome → origen HTTPS Nutri → Flutter Web + catálogo SQLite versionado
+Chrome → Cloud Run con IAP (beta) / Firebase Hosting (venta aprobada)
+                             → Flutter Web + catálogo SQLite versionado
                               ↓ SQLite local (pacientes y planes)
                               ↓ PDF / backup cifrado descargables
 ```
 
 - **Código y publicación:** repositorio GitHub privado; CI ejecuta análisis,
-  tests, preparación de SQLite Web y build. El artefacto Flutter Web se sube a
-  alojamiento estático con HTTPS y URL estable. No se usa el prototipo de Sites
-  como sustituto de este build. En beta, usar Cloudflare Pages con Access, y
-  exigir autenticación sobre *todos* los nombres accesibles: URL de preview,
-  `*.pages.dev` principal y dominio propio. No configurar un dominio alternativo
-  abierto. La política permite únicamente correos de testers designados con
-  código de un solo uso. La beta permanece bloqueada incluso si alguien conoce
-  la URL. El dueño administra invitaciones y puede revocarlas.
+  tests, preparación de SQLite Web y build. El artefacto Flutter Web se empaqueta
+  con `deploy/beta/Dockerfile` y se sirve por Cloud Run con Identity-Aware Proxy
+  (IAP) y `--no-allow-unauthenticated`. IAP se activa antes de entregar el
+  build y controla también la URL `run.app`. El dueño autoriza sólo correos de
+  testers concretos; los externos requieren audiencia OAuth externa y política
+  IAP adecuada. No conectar el dominio de beta a un Firebase Hosting ni crear
+  preview channels para este build: sus enlaces son públicamente accesibles.
+  Tras autorización de lanzamiento comercial, se publica *el mismo* Flutter Web
+  en Firebase Hosting con HTTPS y origen estable. Beta y venta usan proyectos
+  separados de Nutrikuaa Pro y datos profesionales siempre locales. No se usa
+  el prototipo de Sites como sustituto de este build.
 - **Datos:** `nutrikuaa_foods.db` es asset oficial de solo lectura, construido
   offline con manifiesto, versión y hash. `nutrikuaa_nutri.db` reside en el
   almacenamiento de este origen y perfil de Chrome; contiene pacientes, planes,
@@ -47,8 +51,9 @@ Chrome → origen HTTPS Nutri → Flutter Web + catálogo SQLite versionado
   nutrientes; preferencias y restricciones clínicas no activan filtros hasta
   que sus taxonomías y cobertura por alimento estén verificadas. Nada de
   inferir alergias a partir del nombre del alimento.
-- **Licencia comercial:** un Cloudflare Worker separado con D1 para estado e
-  idempotencia, y secretos de webhook/firma/API configurados sólo en el entorno.
+- **Licencia comercial:** Cloud Functions separadas con Firestore sólo para
+  estado e idempotencia comercial, y secretos de webhook/firma/API configurados
+  sólo en el entorno. No se habilita Firestore para expedientes de pacientes.
   La cuenta de Lemon Squeezy ya usada para Nutrikuaa
   Pro puede alojar otro producto Nutri, con variante de pago único y claves
   separadas. La web no incluirá el secreto de firma ni la clave API de Lemon.
@@ -67,12 +72,19 @@ Chrome → origen HTTPS Nutri → Flutter Web + catálogo SQLite versionado
    artefacto `nutrikuaa-nutri-web-<commit>` del CI de ese commit (retención siete
    días) y registrar SHA del build y hash del catálogo. Ese archivo privado de
    Actions aún no es un sitio accesible a los testers.
-2. Preparar el alojamiento privado y Access **antes** de copiar artefactos;
-   restringir tanto previews como dominio principal y `pages.dev`. Abrir cada
-   origen conocido en una ventana anónima sin sesión: debe exigir acceso. Abrir
-   con un correo no permitido: acceso denegado. Probar con correo permitido y
-   código recibido: llega a la app. Si alguna ruta sirve el build libremente,
-   retirar el artefacto y cerrar esa ruta antes de invitar a nadie.
+2. Crear el servicio Cloud Run de beta sin invocaciones anónimas, activar IAP y
+   configurar su OAuth para testers externos. Verificar la política de acceso
+   con una página inocua **antes** de subir la app. Probar URL `run.app` y todo
+   dominio adjunto en ventana anónima sin sesión (solicita acceso), con correo
+   no permitido (denegado) y correo permitido (abre la app). Si alguna ruta
+   entrega assets anónimamente, bloquearla antes de subir el build. No usar
+   previews de Firebase Hosting para testers privados.
+   Descargar el artefacto privado, extraerlo en `build/web/` junto a
+   `deploy/beta/`, construir la imagen con
+   `docker build -f deploy/beta/Dockerfile .` y desplegar una revisión del
+   servicio ya protegido en el puerto 8080. El `try_files` del servidor sirve
+   rutas Flutter y sus assets; IAP controla todo el servicio antes de llegar a
+   nginx. Fijar revisión/imagen por digest y registrar quién aprobó el acceso.
 3. Probar Chrome de escritorio con perfil limpio: catálogo y fuente visibles,
    ficha ficticia y objetivos, tres días, corrección, revisión, PDF, backup
    cifrado; cerrar y reabrir, repetir sin red tras cargar recursos; restaurar
@@ -89,8 +101,10 @@ Chrome → origen HTTPS Nutri → Flutter Web + catálogo SQLite versionado
    de Nutri en modo prueba.
 
 No hay URL de esta beta hasta completar alojamiento, política y prueba desde
-Chrome sin sesión. Una URL de Pages o Firebase por sí sola no equivale a
-privacidad; tampoco basta que el repositorio sea privado.
+Chrome sin sesión. Una URL de Firebase Hosting por sí sola no equivale a
+privacidad; tampoco basta que el repositorio sea privado. Al pasar al origen
+público comercial, los datos guardados en el origen beta no se transfieren:
+el profesional exporta backup cifrado y lo restaura en el origen nuevo.
 
 ## Sesión observada de 15 minutos
 
@@ -142,7 +156,7 @@ hipótesis, no ofertas vigentes ni precios configurados.
 
 | Área | Ya existe en la rama de Nutri | Falta para vender |
 | --- | --- | --- |
-| Núcleo Chrome | UI Flutter, pacientes, metas, semanas, PDF, catálogo fijo y backup | QA observado en Chrome y despliegue bajo Access |
+| Núcleo Chrome | UI Flutter, pacientes, metas, semanas, PDF, catálogo fijo y backup | QA observado en Chrome y beta en Cloud Run con IAP |
 | Catálogo | USDA 2026-04 y alimentos profesionales separados | Nombres/medidas regionales con evidencia y release aprobado |
 | Semana larga | Copiar días/comidas, resumen y lista de compras por gramos | Sustituciones guiadas y medición de tiempo real |
 | Licencia | Decisión comercial documentada | Producto Lemon, backend firmado, recuperación, términos |
