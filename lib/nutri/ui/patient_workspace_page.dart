@@ -12,10 +12,12 @@ import '../domain/patient.dart';
 
 class PatientWorkspacePage extends StatefulWidget {
   final int refreshToken;
+  final ValueChanged<int>? onPlanForPatient;
 
   const PatientWorkspacePage({
     super.key,
     this.refreshToken = 0,
+    this.onPlanForPatient,
   });
 
   @override
@@ -859,6 +861,19 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
                 Chip(label: Text(_planCountLabel(_planHistory.length))),
               ],
             ),
+            if (_selectedPatientId != null) ...[
+              const SizedBox(height: 8),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: FilledButton.tonalIcon(
+                  onPressed: _busy
+                      ? null
+                      : () => widget.onPlanForPatient?.call(_selectedPatientId!),
+                  icon: const Icon(Icons.calendar_view_week_outlined),
+                  label: Text(NutriI18n.t('Planificar para este paciente')),
+                ),
+              ),
+            ],
             const SizedBox(height: 8),
             if (_selectedPatientId == null)
               Text(NutriI18n.t('Guarda el paciente para ver su historial.'))

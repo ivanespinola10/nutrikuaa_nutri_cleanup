@@ -28,6 +28,40 @@ class NutriI18n {
   static String meal(String canonical) => t(canonical);
 
   static const Map<String, Map<String, String>> _translations = {
+    'Todavía no hay pacientes. Crea el primero para empezar a planificar.': {
+      'en': 'There are no patients yet. Create one to start planning.',
+      'pt': 'Ainda não há pacientes. Crie um para começar a planejar.',
+    },
+    'Crear paciente': {'en': 'Create patient', 'pt': 'Criar paciente'},
+    'Planificar para este paciente': {
+      'en': 'Plan for this patient', 'pt': 'Planejar para este paciente',
+    },
+    'Revisar y exportar': {'en': 'Review and export', 'pt': 'Revisar e exportar'},
+    'Días planificados: {count} de 7': {
+      'en': 'Planned days: {count} of 7', 'pt': 'Dias planejados: {count} de 7',
+    },
+    'Días planificados: {count} de 7.': {
+      'en': 'Planned days: {count} of 7.', 'pt': 'Dias planejados: {count} de 7.',
+    },
+    'Pendiente': {'en': 'Pending', 'pt': 'Pendente'},
+    'El plan está vacío': {'en': 'The plan is empty', 'pt': 'O plano está vazio'},
+    'Agrega al menos un alimento o receta antes de generar el PDF.': {
+      'en': 'Add at least one food or recipe before generating the PDF.',
+      'pt': 'Adicione pelo menos um alimento ou receita antes de gerar o PDF.',
+    },
+    'Revisar plan': {'en': 'Review plan', 'pt': 'Revisar plano'},
+    'Revisa el plan antes de entregarlo': {
+      'en': 'Review the plan before delivering it',
+      'pt': 'Revise o plano antes de entregá-lo',
+    },
+    '{count} día(s) se alejan más del 15 % del objetivo de energía. Revisa las cantidades.': {
+      'en': '{count} day(s) differ by more than 15% from the energy target. Review the amounts.',
+      'pt': '{count} dia(s) diferem mais de 15% da meta de energia. Revise as quantidades.',
+    },
+    'Volver al plan': {'en': 'Back to plan', 'pt': 'Voltar ao plano'},
+    'Continuar a vista previa': {
+      'en': 'Continue to preview', 'pt': 'Continuar para prévia',
+    },
     'Introduce kcal y macronutrientes válidos por 100 g.': {
       'en': 'Enter valid calories and macronutrients per 100 g.',
       'pt': 'Informe calorias e macronutrientes válidos por 100 g.',

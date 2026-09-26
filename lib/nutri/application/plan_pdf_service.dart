@@ -64,6 +64,14 @@ class PlanPdfService {
     final recipeInstructions = includeRecipeInstructions
         ? await _resolveRecipeInstructions(details)
         : const <_RecipeInstruction>[];
+    final plannedDays = <int>{
+      for (final meal in resolved)
+        if (meal.items.isNotEmpty) meal.dayIndex,
+    };
+    final pendingDays = <int>[
+      for (var day = 0; day < 7; day++)
+        if (!plannedDays.contains(day)) day,
+    ];
 
     final document = pw.Document(
       title: '${labels.planTitle} - ${patient.displayName}',
@@ -122,12 +130,24 @@ class PlanPdfService {
             ),
           ),
           pw.SizedBox(height: 8),
+          if (pendingDays.isNotEmpty) ...[
+            pw.Text(
+              '${labels.pendingDays}: '
+              '${pendingDays.map((day) => labels.days[day]).join(', ')}.',
+              style: const pw.TextStyle(
+                fontSize: 9,
+                color: PdfColors.grey700,
+              ),
+            ),
+            pw.SizedBox(height: 8),
+          ],
           ...List.generate(7, (dayIndex) {
             final dayMeals = resolved
                 .where((meal) => meal.dayIndex == dayIndex)
                 .toList();
+            if (!plannedDays.contains(dayIndex)) return pw.SizedBox();
             final totals = summary.totalsForDay(dayIndex);
-            return _daySection(
+            final daySection = _daySection(
               dayIndex: dayIndex,
               meals: dayMeals,
               totals: totals,
@@ -137,6 +157,12 @@ class PlanPdfService {
               border: border,
               labels: labels,
             );
+            // Ordinary day cards should move as a unit to the next page.
+            // A very long day may still need to split to fit the page.
+            final itemCount = dayMeals.fold<int>(
+              0, (count, meal) => count + meal.items.length,
+            );
+            return itemCount <= 10 ? pw.Inseparable(child: daySection) : daySection;
           }),
           if (details.plan.notes != null &&
               details.plan.notes!.trim().isNotEmpty) ...[
@@ -150,42 +176,25 @@ class PlanPdfService {
           ],
           if (recipeInstructions.isNotEmpty) ...[
             pw.SizedBox(height: 14),
-            pw.Text(
-              labels.preparations,
-              style: pw.TextStyle(
-                fontSize: 15,
-                fontWeight: pw.FontWeight.bold,
-                color: primary,
+            pw.Inseparable(
+              child: pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Text(
+                    labels.preparations,
+                    style: pw.TextStyle(
+                      fontSize: 15,
+                      fontWeight: pw.FontWeight.bold,
+                      color: primary,
+                    ),
+                  ),
+                  pw.SizedBox(height: 6),
+                  _recipeCard(recipeInstructions.first, border: border),
+                ],
               ),
             ),
-            pw.SizedBox(height: 6),
-            ...recipeInstructions.map(
-              (recipe) => pw.Container(
-                margin: const pw.EdgeInsets.only(bottom: 8),
-                padding: const pw.EdgeInsets.all(10),
-                decoration: pw.BoxDecoration(
-                  border: pw.Border.all(color: border),
-                  borderRadius: const pw.BorderRadius.all(
-                    pw.Radius.circular(6),
-                  ),
-                ),
-                child: pw.Column(
-                  crossAxisAlignment: pw.CrossAxisAlignment.start,
-                  children: [
-                    pw.Text(
-                      recipe.name,
-                      style: pw.TextStyle(
-                        fontWeight: pw.FontWeight.bold,
-                      ),
-                    ),
-                    pw.SizedBox(height: 3),
-                    pw.Text(
-                      recipe.instructions,
-                      style: const pw.TextStyle(fontSize: 9.5),
-                    ),
-                  ],
-                ),
-              ),
+            ...recipeInstructions.skip(1).map(
+              (recipe) => _recipeCard(recipe, border: border),
             ),
           ],
         ],
@@ -193,6 +202,31 @@ class PlanPdfService {
     );
 
     return document.save();
+  }
+
+  pw.Widget _recipeCard(_RecipeInstruction recipe, {required PdfColor border}) {
+    return pw.Container(
+      margin: const pw.EdgeInsets.only(bottom: 8),
+      padding: const pw.EdgeInsets.all(10),
+      decoration: pw.BoxDecoration(
+        border: pw.Border.all(color: border),
+        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(6)),
+      ),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Text(
+            recipe.name,
+            style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+          ),
+          pw.SizedBox(height: 3),
+          pw.Text(
+            recipe.instructions,
+            style: const pw.TextStyle(fontSize: 9.5),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<List<_ResolvedMeal>> _resolveMeals(
@@ -926,6 +960,12 @@ class _PdfLabels {
         es: 'Sin alimentos ni recetas.',
         en: 'No foods or recipes.',
         pt: 'Sem alimentos ou receitas.',
+      );
+
+  String get pendingDays => _t(
+        es: 'Días pendientes de planificar',
+        en: 'Days awaiting planning',
+        pt: 'Dias pendentes de planejamento',
       );
 
   String get servings => _t(

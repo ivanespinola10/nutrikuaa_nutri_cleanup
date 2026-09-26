@@ -22,6 +22,20 @@ class _NutriMainShellState extends State<NutriMainShell> {
   int _patientRefreshToken = 0;
   int _documentRefreshToken = 0;
   int _dataEpoch = 0;
+  int? _plannerPatientId;
+  int? _documentPatientId;
+  int? _documentPlanId;
+
+  void _planForPatient(int patientId) {
+    _plannerPatientId = patientId;
+    _selectPage(0);
+  }
+
+  void _reviewDocument(int patientId, int planId) {
+    _documentPatientId = patientId;
+    _documentPlanId = planId;
+    _selectPage(3);
+  }
 
   void _selectPage(int value) {
     setState(() {
@@ -122,10 +136,14 @@ class _NutriMainShellState extends State<NutriMainShell> {
                       WeeklyPlannerPage(
                         key: ValueKey('planner-$_dataEpoch'),
                         refreshToken: _plannerRefreshToken,
+                        preferredPatientId: _plannerPatientId,
+                        onCreatePatient: () => _selectPage(1),
+                        onReviewDocument: _reviewDocument,
                       ),
                       PatientWorkspacePage(
                         key: ValueKey('patients-$_dataEpoch'),
                         refreshToken: _patientRefreshToken,
+                        onPlanForPatient: _planForPatient,
                       ),
                       RecipeEditorPage(
                         key: ValueKey('recipes-$_dataEpoch'),
@@ -133,6 +151,9 @@ class _NutriMainShellState extends State<NutriMainShell> {
                       DocumentWorkspacePage(
                         key: ValueKey('documents-$_dataEpoch'),
                         refreshToken: _documentRefreshToken,
+                        preferredPatientId: _documentPatientId,
+                        preferredPlanId: _documentPlanId,
+                        onEditPlan: _planForPatient,
                       ),
                       NutriCatalogWorkspacePage(
                         key: ValueKey('library-$_dataEpoch'),
@@ -156,10 +177,14 @@ class _NutriMainShellState extends State<NutriMainShell> {
               WeeklyPlannerPage(
                 key: ValueKey('planner-$_dataEpoch'),
                 refreshToken: _plannerRefreshToken,
+                preferredPatientId: _plannerPatientId,
+                onCreatePatient: () => _selectPage(1),
+                onReviewDocument: _reviewDocument,
               ),
               PatientWorkspacePage(
                 key: ValueKey('patients-$_dataEpoch'),
                 refreshToken: _patientRefreshToken,
+                onPlanForPatient: _planForPatient,
               ),
               RecipeEditorPage(
                 key: ValueKey('recipes-$_dataEpoch'),
@@ -167,6 +192,9 @@ class _NutriMainShellState extends State<NutriMainShell> {
               DocumentWorkspacePage(
                 key: ValueKey('documents-$_dataEpoch'),
                 refreshToken: _documentRefreshToken,
+                preferredPatientId: _documentPatientId,
+                preferredPlanId: _documentPlanId,
+                onEditPlan: _planForPatient,
               ),
               NutriCatalogWorkspacePage(
                 key: ValueKey('library-$_dataEpoch'),

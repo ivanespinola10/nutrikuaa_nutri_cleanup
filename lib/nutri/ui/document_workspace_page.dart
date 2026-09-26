@@ -9,21 +9,29 @@ import 'package:pdf/pdf.dart';
 import 'package:printing/printing.dart';
 
 import '../application/meal_plan_service.dart';
+import '../application/plan_nutrition_service.dart';
 import '../application/plan_pdf_service.dart';
 import '../data/app_settings_repository.dart';
 import '../data/patient_repository.dart';
 import '../data/professional_profile_repository.dart';
 import '../domain/app_settings.dart';
 import '../domain/meal_plan.dart';
+import '../domain/nutrition/nutrient.dart';
 import '../domain/patient.dart';
 import '../domain/professional_profile.dart';
 
 class DocumentWorkspacePage extends StatefulWidget {
   final int refreshToken;
+  final int? preferredPatientId;
+  final int? preferredPlanId;
+  final ValueChanged<int>? onEditPlan;
 
   const DocumentWorkspacePage({
     super.key,
     this.refreshToken = 0,
+    this.preferredPatientId,
+    this.preferredPlanId,
+    this.onEditPlan,
   });
 
   @override
@@ -37,6 +45,7 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
       ProfessionalProfileRepository();
   final AppSettingsRepository _settingsRepository = AppSettingsRepository();
   final PlanPdfService _pdfService = PlanPdfService();
+  final PlanNutritionService _nutrition = PlanNutritionService();
 
   final _fullName = TextEditingController();
   final _credentials = TextEditingController();
@@ -73,6 +82,11 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
   void didUpdateWidget(covariant DocumentWorkspacePage oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.refreshToken != widget.refreshToken) {
+      if (oldWidget.preferredPatientId != widget.preferredPatientId ||
+          oldWidget.preferredPlanId != widget.preferredPlanId) {
+        _selectedPatientId = widget.preferredPatientId;
+        _selectedPlanId = widget.preferredPlanId;
+      }
       _refreshPatients();
     }
   }
@@ -144,7 +158,7 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
     final patients = await _patients.search('', activeOnly: false);
     if (!mounted) return;
 
-    var patientId = _selectedPatientId;
+    var patientId = _selectedPatientId ?? widget.preferredPatientId;
     if (!patients.any((patient) => patient.id == patientId)) {
       patientId = patients.isEmpty ? null : patients.first.id;
     }
@@ -169,7 +183,8 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
     final plans = await _plans.listForPatient(patientId);
     if (!mounted) return;
 
-    var planId = _selectedPlanId;
+    var planId = _selectedPlanId ??
+        (patientId == widget.preferredPatientId ? widget.preferredPlanId : null);
     if (!plans.any((plan) => plan.id == planId)) {
       planId = plans.isEmpty ? null : plans.first.id;
     }
@@ -270,6 +285,89 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
     }
 
     await _execute(() async {
+      final details = await _plans.getById(planId);
+      if (details == null) throw StateError('El plan ya no está disponible.');
+      final plannedDays = {
+        for (final meal in details.meals)
+          if (meal.items.isNotEmpty) meal.meal.dayIndex,
+      };
+      if (plannedDays.isEmpty) {
+        if (!mounted) return;
+        await showDialog<void>(
+          context: context,
+          builder: (dialogContext) => AlertDialog(
+            title: Text(NutriI18n.t('El plan está vacío')),
+            content: Text(NutriI18n.t(
+              'Agrega al menos un alimento o receta antes de generar el PDF.',
+            )),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: Text(NutriI18n.t('Cerrar')),
+              ),
+              FilledButton(
+                onPressed: () {
+                  Navigator.pop(dialogContext);
+                  widget.onEditPlan?.call(details.plan.patientId);
+                },
+                child: Text(NutriI18n.t('Revisar plan')),
+              ),
+            ],
+          ),
+        );
+        return;
+      }
+
+      final targetValues = await _patients.targetsFor(details.plan.patientId);
+      final energyTarget = targetValues
+          .where((target) => target.nutrientCode == NutrientCodes.energyKcal)
+          .map((target) => target.targetValue)
+          .firstOrNull;
+      final summary = energyTarget != null && energyTarget > 0
+          ? await _nutrition.calculate(planId)
+          : null;
+      final outOfRangeDays = summary == null || energyTarget == null
+          ? <int>[]
+          : plannedDays.where((day) {
+              final kcal = summary.totalsForDay(day).value(NutrientCodes.energyKcal);
+              return (kcal - energyTarget).abs() / energyTarget > 0.15;
+            }).toList();
+      if (plannedDays.length < 7 || outOfRangeDays.isNotEmpty) {
+        if (!mounted) return;
+        final parts = <String>[
+          if (plannedDays.length < 7)
+            NutriI18n.format('Días planificados: {count} de 7.', {
+              'count': plannedDays.length,
+            }),
+          if (outOfRangeDays.isNotEmpty)
+            NutriI18n.format(
+              '{count} día(s) se alejan más del 15 % del objetivo de energía. Revisa las cantidades.',
+              {'count': outOfRangeDays.length},
+            ),
+        ];
+        final continuePreview = await showDialog<bool>(
+          context: context,
+          builder: (dialogContext) => AlertDialog(
+            title: Text(NutriI18n.t('Revisa el plan antes de entregarlo')),
+            content: Text(parts.join('\n\n')),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext, false),
+                child: Text(NutriI18n.t('Volver al plan')),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(dialogContext, true),
+                child: Text(NutriI18n.t('Continuar a vista previa')),
+              ),
+            ],
+          ),
+        );
+        if (continuePreview != true) {
+          widget.onEditPlan?.call(details.plan.patientId);
+          return;
+        }
+      }
+
       final profile = _profileFromForm();
       await _profileRepository.save(profile);
 
@@ -349,9 +447,9 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      _professionalCard(),
-                      const SizedBox(height: 14),
                       _documentCard(),
+                      const SizedBox(height: 14),
+                      _professionalCard(),
                       if (_error != null) ...[
                         const SizedBox(height: 10),
                         SelectableText(
@@ -539,9 +637,12 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 12),
-            Row(
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
               children: [
-                Expanded(
+                SizedBox(
+                  width: 320,
                   child: DropdownButtonFormField<int>(
                     value: _selectedPatientId,
                     isExpanded: true,
@@ -561,8 +662,8 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
                           },
                   ),
                 ),
-                const SizedBox(width: 8),
-                Expanded(
+                SizedBox(
+                  width: 320,
                   child: DropdownButtonFormField<int>(
                     value: _selectedPlanId,
                     isExpanded: true,

@@ -18,10 +18,16 @@ import '../domain/recipe.dart';
 
 class WeeklyPlannerPage extends StatefulWidget {
   final int refreshToken;
+  final int? preferredPatientId;
+  final VoidCallback? onCreatePatient;
+  final void Function(int patientId, int planId)? onReviewDocument;
 
   const WeeklyPlannerPage({
     super.key,
     this.refreshToken = 0,
+    this.preferredPatientId,
+    this.onCreatePatient,
+    this.onReviewDocument,
   });
 
   @override
@@ -95,7 +101,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
   void didUpdateWidget(covariant WeeklyPlannerPage oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.refreshToken != widget.refreshToken) {
-      _refreshFromDatabase();
+      _refreshFromDatabase(preferredPatientId: widget.preferredPatientId);
     }
   }
 
@@ -111,7 +117,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
   Future<void> _initialize() async {
     try {
       await _database.database;
-      await _refreshFromDatabase();
+      await _refreshFromDatabase(preferredPatientId: widget.preferredPatientId);
     } catch (error) {
       if (mounted) setState(() => _error = error.toString());
     } finally {
@@ -119,7 +125,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
     }
   }
 
-  Future<void> _refreshFromDatabase() async {
+  Future<void> _refreshFromDatabase({int? preferredPatientId}) async {
     final patients = await _patients.search('', activeOnly: false);
     if (!mounted) return;
 
@@ -136,7 +142,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
       return;
     }
 
-    var patientId = _selectedPatientId;
+    var patientId = preferredPatientId ?? _selectedPatientId;
     final stillExists = patients.any((patient) => patient.id == patientId);
     if (!stillExists) {
       patientId = patients.first.id;
@@ -646,7 +652,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
         actions: [
           IconButton(
             tooltip: NutriI18n.t('Actualizar pacientes y planes'),
-            onPressed: _busy ? null : _refreshFromDatabase,
+            onPressed: _busy ? null : () => _refreshFromDatabase(),
             icon: const Icon(Icons.refresh),
           ),
           const Padding(
@@ -667,13 +673,13 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(NutriI18n.t('Todavía no hay pacientes. Créalo primero en Biblioteca.'),
+            Text(NutriI18n.t('Todavía no hay pacientes. Crea el primero para empezar a planificar.'),
             ),
             const SizedBox(height: 12),
-            OutlinedButton.icon(
-              onPressed: _busy ? null : _refreshFromDatabase,
-              icon: const Icon(Icons.refresh),
-              label: Text(NutriI18n.t('Actualizar pacientes')),
+            FilledButton.icon(
+              onPressed: widget.onCreatePatient,
+              icon: const Icon(Icons.person_add_alt_1_outlined),
+              label: Text(NutriI18n.t('Crear paciente')),
             ),
           ],
         ),
@@ -780,6 +786,15 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
               icon: const Icon(Icons.copy_all_outlined),
               label: Text(NutriI18n.t('Duplicar semana')),
             ),
+            if (_selectedPatientId != null && _selectedPlanId != null)
+              OutlinedButton.icon(
+                onPressed: _busy
+                    ? null
+                    : () => widget.onReviewDocument?.call(
+                          _selectedPatientId!, _selectedPlanId!),
+                icon: const Icon(Icons.picture_as_pdf_outlined),
+                label: Text(NutriI18n.t('Revisar y exportar')),
+              ),
           ],
         ),
       ),
@@ -810,6 +825,10 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
 
   Widget _weekOverview() {
     final summary = _summary;
+    final plannedDays = {
+      for (final meal in _details?.meals ?? const <MealWithItems>[])
+        if (meal.items.isNotEmpty) meal.meal.dayIndex,
+    };
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -819,6 +838,10 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
             Text(NutriI18n.t('Resumen semanal'),
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
             ),
+            const SizedBox(height: 4),
+            Text(NutriI18n.format('Días planificados: {count} de 7', {
+              'count': plannedDays.length,
+            })),
             const SizedBox(height: 12),
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
@@ -830,6 +853,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
                   final protein =
                       totals?.value(NutrientCodes.protein) ?? 0;
                   final selected = index == _selectedDay;
+                  final hasContent = plannedDays.contains(index);
 
                   return Padding(
                     padding: const EdgeInsets.only(right: 8),
@@ -859,8 +883,11 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
                               ),
                             ),
                             const SizedBox(height: 6),
-                            Text('${kcal.toStringAsFixed(0)} kcal'),
-                            Text('P ${protein.toStringAsFixed(1)} g'),
+                            if (hasContent) ...[
+                              Text('${kcal.toStringAsFixed(0)} kcal'),
+                              Text('P ${protein.toStringAsFixed(1)} g'),
+                            ] else
+                              Text(NutriI18n.t('Pendiente')),
                           ],
                         ),
                       ),
