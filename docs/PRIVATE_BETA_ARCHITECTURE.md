@@ -25,8 +25,12 @@ Chrome → Cloud Run con IAP (beta) / Firebase Hosting (venta aprobada)
   testers concretos; los externos requieren audiencia OAuth externa y política
   IAP adecuada. No conectar el dominio de beta a un Firebase Hosting ni crear
   preview channels para este build: sus enlaces son públicamente accesibles.
-  Tras autorización de lanzamiento comercial, se publica *el mismo* Flutter Web
-  en Firebase Hosting con HTTPS y origen estable. Beta y venta usan proyectos
+  Tras autorización de lanzamiento comercial, `firebase.json` prepara *el mismo*
+  Flutter Web para Firebase Hosting con HTTPS y origen estable. El repositorio
+  hereda identificadores Flutter de Nutrikuaa Pro en `firebase.json`; no se han
+  alterado ni se debe desplegar Nutri allí accidentalmente. No hay un despliegue
+  automático: al publicar se elegirá explícitamente un proyecto Firebase Nutri
+  separado con `--project`. Beta y venta usan proyectos
   separados de Nutrikuaa Pro y datos profesionales siempre locales. No se usa
   el prototipo de Sites como sustituto de este build.
 - **Datos:** `nutrikuaa_foods.db` es asset oficial de solo lectura, construido
