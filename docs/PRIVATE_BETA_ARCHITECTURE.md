@@ -88,8 +88,14 @@ Chrome → Cloud Run con IAP (beta) / Firebase Hosting (venta aprobada)
   funciones permanentes para cálculos ni dominio de pago sólo para lanzar V1.
 - **Control:** consultar uso actual de Pro antes del piloto y vigilar cuota
   conjunta. Configurar alertas de presupuesto; son avisos, no topes de gasto.
-  Para un aislamiento estricto de facturación o IAM se puede migrar Nutri a un
-  proyecto propio más adelante sin cambiar la estrategia local de datos.
+  Compartir proyecto reduce administración, no garantiza un costo menor: si
+  Pro ya consume gran parte de los 10 GB mensuales gratuitos de transferencia
+  de Hosting, comparar antes de publicar con un proyecto Nutri propio, que
+  tiene cuota de Hosting independiente y tampoco implica una tarifa fija por
+  crear el proyecto. Esa opción exige configurar una app web y un target nuevos
+  y revisar el acceso al backend comercial compartido. Elegir según consumo
+  real, aislamiento de IAM y continuidad del servicio; no cambiar el origen
+  público después del lanzamiento sin plan de backup y restauración.
 
 ### Preparación del sitio comercial, sin publicar aún
 
