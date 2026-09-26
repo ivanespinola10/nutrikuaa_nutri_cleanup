@@ -23,6 +23,7 @@
     }
   },
   "hosting": {
+    "target": "nutri",
     "public": "build/web",
     "ignore": [
       "firebase.json",

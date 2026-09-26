@@ -2,7 +2,8 @@
 
 **Estado (26-09-2026):** plan de ejecución; no hay despliegue protegido de la
 app Flutter ni checkout Nutri conectado. La URL del prototipo anterior pertenece
-a otro proyecto y no es una entrega de la app del repositorio.
+a otro proyecto y no es una entrega de la app del repositorio. Se prioriza
+reutilizar el proyecto Firebase `nutrikuaa` y reducir los gastos recurrentes.
 
 ## Arquitectura elegida
 
@@ -26,13 +27,14 @@ Chrome → Cloud Run con IAP (beta) / Firebase Hosting (venta aprobada)
   IAP adecuada. No conectar el dominio de beta a un Firebase Hosting ni crear
   preview channels para este build: sus enlaces son públicamente accesibles.
   Tras autorización de lanzamiento comercial, `firebase.json` prepara *el mismo*
-  Flutter Web para Firebase Hosting con HTTPS y origen estable. El repositorio
-  hereda identificadores Flutter de Nutrikuaa Pro en `firebase.json`; no se han
-  alterado ni se debe desplegar Nutri allí accidentalmente. No hay un despliegue
-  automático: al publicar se elegirá explícitamente un proyecto Firebase Nutri
-  separado con `--project`. Beta y venta usan proyectos
-  separados de Nutrikuaa Pro y datos profesionales siempre locales. No se usa
-  el prototipo de Sites como sustituto de este build.
+  Flutter Web para un sitio secundario de Firebase Hosting dentro del proyecto
+  `nutrikuaa`. El `target` obligatorio `nutri` evita que esta configuración
+  despliegue sobre el sitio predeterminado de Nutrikuaa Pro; hay que crear el
+  sitio, asignarle el target y ejecutar **sólo** `hosting:nutri` con
+  `--project nutrikuaa`. El repositorio hereda identificadores Flutter del
+  proyecto Pro: revisar reglas, secretos, IAM y endpoints compartidos antes
+  de conectar cualquier recurso. Los datos profesionales permanecen locales.
+  No se usa el prototipo de Sites como sustituto de este build.
 - **Datos:** `nutrikuaa_foods.db` es asset oficial de solo lectura, construido
   offline con manifiesto, versión y hash. `nutrikuaa_nutri.db` reside en el
   almacenamiento de este origen y perfil de Chrome; contiene pacientes, planes,
@@ -55,20 +57,54 @@ Chrome → Cloud Run con IAP (beta) / Firebase Hosting (venta aprobada)
   nutrientes; preferencias y restricciones clínicas no activan filtros hasta
   que sus taxonomías y cobertura por alimento estén verificadas. Nada de
   inferir alergias a partir del nombre del alimento.
-- **Licencia comercial:** Cloud Functions separadas con Firestore sólo para
-  estado e idempotencia comercial, y secretos de webhook/firma/API configurados
-  sólo en el entorno. No se habilita Firestore para expedientes de pacientes.
-  La cuenta de Lemon Squeezy ya usada para Nutrikuaa
-  Pro puede alojar otro producto Nutri, con variante de pago único y claves
-  separadas. La web no incluirá el secreto de firma ni la clave API de Lemon.
-  Una API de licencias sin datos clínicos verificará el pago/estado y emitirá un
-  permiso firmado verificable localmente; almacenará sólo referencias de pedido,
-  licencia y dispositivos, jamás identificadores/nombres de pacientes. La
-  activación inicial requiere red; el núcleo local funciona luego sin consultas
-  por pantalla. Una revocación por reembolso no puede propagarse durante una
-  desconexión: explicitarlo en la política y revalidar cuando vuelva la red.
-  No prometemos protección inviolable de código cliente ni revocación instantánea
-  sin conexión.
+- **Licencia comercial:** crear Nutri como producto y claves distintos en la
+  cuenta Lemon Squeezy ya usada por Pro. Auditar el código y los permisos de la
+  función comercial de Pro antes de extenderla; si admite el nuevo producto,
+  compartir su despliegue y ruta, aislando las licencias por producto/variante.
+  Sólo añadir una función mínima si la existente no permite ese aislamiento.
+  No abrir Firestore ni Auth por defecto: evaluar persistencia comercial mínima
+  después de probar webhooks duplicados, reembolsos y recuperación con Lemon.
+  Mantener secretos de webhook/API/firma fuera del cliente y del repositorio.
+  La app no envía pacientes ni recetas al backend. La primera activación requiere
+  red; el núcleo local continúa sin llamadas por pantalla. La revocación por
+  reembolso se aplicará al reconectar según términos expresos, nunca de modo
+  instantáneo estando desconectado. No prometer protección inviolable del
+  código cliente.
+
+## Costos y aislamiento
+
+- **Beta de corta duración:** Cloud Run en el proyecto `nutrikuaa`, región de
+  bajo costo `us-central1`, facturación por petición, cero instancias mínimas,
+  IAP directo sobre `run.app` y sin balanceador ni dominio nuevo. Registrar uso
+  de Cloud Run, transferencia, build y almacenamiento de imágenes; borrar el
+  servicio y las imágenes al concluir la prueba. La cuota gratuita puede cubrir
+  un piloto pequeño, pero no garantiza factura cero. IAP y una compilación
+  pesada pueden aumentar latencia percibida en Paraguay; medirla aparte de las
+  tareas de usabilidad.
+- **Web comercial:** sitio secundario estático `nutrikuaa-nutri.web.app` si
+  está disponible, dentro de `nutrikuaa`; CDN, almacenamiento y sus cuotas se
+  comparten con Pro. Mantener el bundle pequeño y limitar releases antiguos.
+  No habilitar Firebase App Hosting, base de pacientes, sincronización cloud,
+  funciones permanentes para cálculos ni dominio de pago sólo para lanzar V1.
+- **Control:** consultar uso actual de Pro antes del piloto y vigilar cuota
+  conjunta. Configurar alertas de presupuesto; son avisos, no topes de gasto.
+  Para un aislamiento estricto de facturación o IAM se puede migrar Nutri a un
+  proyecto propio más adelante sin cambiar la estrategia local de datos.
+
+### Preparación del sitio comercial, sin publicar aún
+
+```sh
+firebase hosting:sites:create nutrikuaa-nutri --project nutrikuaa
+firebase target:apply hosting nutri nutrikuaa-nutri --project nutrikuaa
+firebase deploy --only hosting:nutri --project nutrikuaa
+```
+
+El ID del sitio es global: reemplazar `nutrikuaa-nutri` si ya existe; mantener
+`target` como `nutri`. El último comando sólo procede tras autorizar la salida
+pública, revisar el origen del bundle y comprobar el checkout. No ejecutar
+`firebase deploy --only hosting` sin el target explícito: afecta todos los
+sitios configurados. Firebase Hosting y sus canales preview sirven archivos
+públicamente; no son un control de acceso para los testers privados.
 
 ## Puesta a disposición de testers
 
@@ -76,7 +112,7 @@ Chrome → Cloud Run con IAP (beta) / Firebase Hosting (venta aprobada)
    artefacto `nutrikuaa-nutri-web-<commit>` del CI de ese commit (retención siete
    días) y registrar SHA del build y hash del catálogo. Ese archivo privado de
    Actions aún no es un sitio accesible a los testers.
-2. Crear el servicio Cloud Run de beta sin invocaciones anónimas, activar IAP y
+2. Crear el servicio Cloud Run de beta en `nutrikuaa` sin invocaciones anónimas, activar IAP y
    configurar su OAuth para testers externos. Verificar la política de acceso
    con una página inocua **antes** de subir la app. Probar URL `run.app` y todo
    dominio adjunto en ventana anónima sin sesión (solicita acceso), con correo
@@ -125,8 +161,10 @@ marcar la tarea como terminada. No atribuir a la interfaz validez clínica.
    variante de pago único, límite de dos activaciones y clave por orden;
    documentar ID de tienda, producto y variante sólo como configuración. No
    suponer que la clave de Nutrikuaa Pro concede acceso a Nutri.
-2. API mínima recibe webhook firmado, verifica firma sobre cuerpo original,
-   producto/variante, idempotencia por ID de evento y estados pagado/reembolso;
+2. Adaptar la función comercial ya desplegada en Pro si la auditoría confirma
+   aislamiento por producto; en otro caso usar una función mínima en el mismo
+   proyecto. Recibir webhook firmado, verificar firma sobre cuerpo original,
+   producto/variante, idempotencia de eventos y estados pagado/reembolso;
    nunca confía en redirecciones del navegador como prueba de compra. El cliente
    envía clave para activación; el servidor usa el License API, limita
    dispositivos, devuelve permiso firmado con producto, versión, licencia y

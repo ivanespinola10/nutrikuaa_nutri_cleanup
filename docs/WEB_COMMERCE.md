@@ -24,8 +24,10 @@ prueba, considerando impuestos, comisiones y soporte.
 2. Checkout de pago único en la cuenta Lemon Squeezy utilizada para Nutrikuaa
    Pro, con **Nutri como producto y licencia separados**, desde una página
    propia aprobada.
-3. Webhook firmado de orden pagada en un servicio mínimo de licencias, sin
-   almacenar fichas, recetas ni pacientes. Confirmar también reembolsos.
+3. Extender la función comercial de Pro en el mismo proyecto Firebase si su
+   código y permisos permiten separar productos; si no, añadir una función
+   mínima. Validar el webhook firmado de orden pagada y reembolsos, sin
+   almacenar fichas, recetas ni pacientes.
 4. Activación inicial por clave. El servicio verifica la clave con Lemon,
    registra el número de dispositivos y entrega un permiso firmado que la app
    puede verificar localmente. La clave privada de firma nunca entra en la app.
@@ -37,6 +39,14 @@ la licencia gestiona el acceso comercial sin impedir el uso sin conexión. No
 añadir llamadas a Lemon en cada apertura ni login obligatorio. Usar modo de
 prueba de Lemon para compra, activación, reembolso y pérdida de conexión antes
 de habilitar pagos reales.
+
+Se reutiliza `nutrikuaa` y la cuenta Lemon de Pro para ahorrar operación; el
+producto, la licencia y el sitio Hosting de Nutri son distintos. La beta de
+testers usa Cloud Run con IAP temporal, sin instancias mínimas, y se elimina al
+terminar. Firebase Hosting comercial sólo se publica tras autorización, en un
+sitio secundario identificado por `hosting:nutri`; las cuotas de Hosting se
+comparten con Pro. El detalle de costos y despliegue está en
+`docs/PRIVATE_BETA_ARCHITECTURE.md`.
 
 ## Distribución y privacidad
 
