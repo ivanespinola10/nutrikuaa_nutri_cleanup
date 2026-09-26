@@ -19,6 +19,7 @@ import '../domain/recipe.dart';
 class WeeklyPlannerPage extends StatefulWidget {
   final int refreshToken;
   final int? preferredPatientId;
+  final int? preferredPlanId;
   final VoidCallback? onCreatePatient;
   final void Function(int patientId, int planId)? onReviewDocument;
 
@@ -26,6 +27,7 @@ class WeeklyPlannerPage extends StatefulWidget {
     super.key,
     this.refreshToken = 0,
     this.preferredPatientId,
+    this.preferredPlanId,
     this.onCreatePatient,
     this.onReviewDocument,
   });
@@ -101,7 +103,10 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
   void didUpdateWidget(covariant WeeklyPlannerPage oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.refreshToken != widget.refreshToken) {
-      _refreshFromDatabase(preferredPatientId: widget.preferredPatientId);
+      _refreshFromDatabase(
+        preferredPatientId: widget.preferredPatientId,
+        preferredPlanId: widget.preferredPlanId,
+      );
     }
   }
 
@@ -117,7 +122,10 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
   Future<void> _initialize() async {
     try {
       await _database.database;
-      await _refreshFromDatabase(preferredPatientId: widget.preferredPatientId);
+      await _refreshFromDatabase(
+        preferredPatientId: widget.preferredPatientId,
+        preferredPlanId: widget.preferredPlanId,
+      );
     } catch (error) {
       if (mounted) setState(() => _error = error.toString());
     } finally {
@@ -125,7 +133,10 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
     }
   }
 
-  Future<void> _refreshFromDatabase({int? preferredPatientId}) async {
+  Future<void> _refreshFromDatabase({
+    int? preferredPatientId,
+    int? preferredPlanId,
+  }) async {
     final patients = await _patients.search('', activeOnly: false);
     if (!mounted) return;
 
@@ -153,19 +164,23 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
       _selectedPatientId = patientId;
     });
 
-    await _loadPatient(patientId!);
+    await _loadPatient(patientId!, preferredPlanId: preferredPlanId);
   }
 
-  Future<void> _loadPatient(int patientId) async {
+  Future<void> _loadPatient(int patientId, {int? preferredPlanId}) async {
     final plans = await _plans.listForPatient(patientId);
     final targets = await _patients.targetsFor(patientId);
+    final candidatePlanId = preferredPlanId ?? _selectedPlanId;
+    final selectedPlanId = plans.any((plan) => plan.id == candidatePlanId)
+        ? candidatePlanId
+        : plans.isEmpty ? null : plans.first.id;
 
     if (!mounted) return;
     setState(() {
       _selectedPatientId = patientId;
       _patientPlans = plans;
       _targets = targets;
-      _selectedPlanId = plans.isEmpty ? null : plans.first.id;
+      _selectedPlanId = selectedPlanId;
       _details = null;
       _summary = null;
     });
@@ -735,6 +750,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
             SizedBox(
               width: 260,
               child: DropdownButtonFormField<int>(
+                key: ValueKey('planner-patient-$_selectedPatientId'),
                 value: _selectedPatientId,
                 isExpanded: true,
                 decoration: InputDecoration(labelText: NutriI18n.t('Paciente')),
@@ -756,6 +772,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
             SizedBox(
               width: 290,
               child: DropdownButtonFormField<int>(
+                key: ValueKey('planner-plan-$_selectedPlanId'),
                 value: _selectedPlanId,
                 isExpanded: true,
                 decoration: InputDecoration(labelText: NutriI18n.t('Semana')),

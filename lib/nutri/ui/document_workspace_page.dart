@@ -24,7 +24,7 @@ class DocumentWorkspacePage extends StatefulWidget {
   final int refreshToken;
   final int? preferredPatientId;
   final int? preferredPlanId;
-  final ValueChanged<int>? onEditPlan;
+  final void Function(int patientId, int planId)? onEditPlan;
 
   const DocumentWorkspacePage({
     super.key,
@@ -308,7 +308,7 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
               FilledButton(
                 onPressed: () {
                   Navigator.pop(dialogContext);
-                  widget.onEditPlan?.call(details.plan.patientId);
+                  widget.onEditPlan?.call(details.plan.patientId, planId);
                 },
                 child: Text(NutriI18n.t('Revisar plan')),
               ),
@@ -363,7 +363,7 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
           ),
         );
         if (continuePreview != true) {
-          widget.onEditPlan?.call(details.plan.patientId);
+          widget.onEditPlan?.call(details.plan.patientId, planId);
           return;
         }
       }
@@ -644,6 +644,7 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
                 SizedBox(
                   width: 320,
                   child: DropdownButtonFormField<int>(
+                    key: ValueKey('document-patient-$_selectedPatientId'),
                     value: _selectedPatientId,
                     isExpanded: true,
                     decoration: InputDecoration(labelText: NutriI18n.t('Paciente')),
@@ -665,6 +666,7 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
                 SizedBox(
                   width: 320,
                   child: DropdownButtonFormField<int>(
+                    key: ValueKey('document-plan-$_selectedPlanId'),
                     value: _selectedPlanId,
                     isExpanded: true,
                     decoration: InputDecoration(labelText: NutriI18n.t('Plan / semana')),

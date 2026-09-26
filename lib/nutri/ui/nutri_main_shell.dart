@@ -23,11 +23,19 @@ class _NutriMainShellState extends State<NutriMainShell> {
   int _documentRefreshToken = 0;
   int _dataEpoch = 0;
   int? _plannerPatientId;
+  int? _plannerPlanId;
   int? _documentPatientId;
   int? _documentPlanId;
 
   void _planForPatient(int patientId) {
     _plannerPatientId = patientId;
+    _plannerPlanId = null;
+    _selectPage(0);
+  }
+
+  void _editDocumentPlan(int patientId, int planId) {
+    _plannerPatientId = patientId;
+    _plannerPlanId = planId;
     _selectPage(0);
   }
 
@@ -166,6 +174,7 @@ class _NutriMainShellState extends State<NutriMainShell> {
                         key: ValueKey('planner-$_dataEpoch'),
                         refreshToken: _plannerRefreshToken,
                         preferredPatientId: _plannerPatientId,
+                        preferredPlanId: _plannerPlanId,
                         onCreatePatient: () => _selectPage(1),
                         onReviewDocument: _reviewDocument,
                       ),
@@ -182,7 +191,7 @@ class _NutriMainShellState extends State<NutriMainShell> {
                         refreshToken: _documentRefreshToken,
                         preferredPatientId: _documentPatientId,
                         preferredPlanId: _documentPlanId,
-                        onEditPlan: _planForPatient,
+                        onEditPlan: _editDocumentPlan,
                       ),
                       NutriCatalogWorkspacePage(
                         key: ValueKey('library-$_dataEpoch'),
@@ -207,6 +216,7 @@ class _NutriMainShellState extends State<NutriMainShell> {
                 key: ValueKey('planner-$_dataEpoch'),
                 refreshToken: _plannerRefreshToken,
                 preferredPatientId: _plannerPatientId,
+                preferredPlanId: _plannerPlanId,
                 onCreatePatient: () => _selectPage(1),
                 onReviewDocument: _reviewDocument,
               ),
@@ -223,7 +233,7 @@ class _NutriMainShellState extends State<NutriMainShell> {
                 refreshToken: _documentRefreshToken,
                 preferredPatientId: _documentPatientId,
                 preferredPlanId: _documentPlanId,
-                onEditPlan: _planForPatient,
+                onEditPlan: _editDocumentPlan,
               ),
               NutriCatalogWorkspacePage(
                 key: ValueKey('library-$_dataEpoch'),
