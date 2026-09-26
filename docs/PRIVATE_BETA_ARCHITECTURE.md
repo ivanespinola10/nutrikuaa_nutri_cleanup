@@ -47,7 +47,9 @@ Chrome → origen HTTPS Nutri → Flutter Web + catálogo SQLite versionado
   nutrientes; preferencias y restricciones clínicas no activan filtros hasta
   que sus taxonomías y cobertura por alimento estén verificadas. Nada de
   inferir alergias a partir del nombre del alimento.
-- **Licencia comercial:** la cuenta de Lemon Squeezy ya usada para Nutrikuaa
+- **Licencia comercial:** un Cloudflare Worker separado con D1 para estado e
+  idempotencia, y secretos de webhook/firma/API configurados sólo en el entorno.
+  La cuenta de Lemon Squeezy ya usada para Nutrikuaa
   Pro puede alojar otro producto Nutri, con variante de pago único y claves
   separadas. La web no incluirá el secreto de firma ni la clave API de Lemon.
   Una API de licencias sin datos clínicos verificará el pago/estado y emitirá un
@@ -61,8 +63,10 @@ Chrome → origen HTTPS Nutri → Flutter Web + catálogo SQLite versionado
 
 ## Puesta a disposición de testers
 
-1. Alinear PRs encadenadas con la rama principal y obtener CI verde; construir
-   exactamente el commit aprobado, registrar SHA del build y hash del catálogo.
+1. Alinear PRs encadenadas con la rama principal y obtener CI verde; tomar el
+   artefacto `nutrikuaa-nutri-web-<commit>` del CI de ese commit (retención siete
+   días) y registrar SHA del build y hash del catálogo. Ese archivo privado de
+   Actions aún no es un sitio accesible a los testers.
 2. Preparar el alojamiento privado y Access **antes** de copiar artefactos;
    restringir tanto previews como dominio principal y `pages.dev`. Abrir cada
    origen conocido en una ventana anónima sin sesión: debe exigir acceso. Abrir

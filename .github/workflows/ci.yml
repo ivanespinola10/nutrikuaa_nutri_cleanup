@@ -43,6 +43,13 @@ jobs:
       - name: Build web app
         run: flutter build web --release
 
+      - name: Keep private web build for protected beta deployment
+        uses: actions/upload-artifact@v4
+        with:
+          name: nutrikuaa-nutri-web-${{ github.sha }}
+          path: build/web/
+          retention-days: 7
+
       - name: Test offline USDA catalog builder
         run: python3 tools/food_importer/test_import_usda.py
 
