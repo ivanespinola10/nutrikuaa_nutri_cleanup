@@ -903,6 +903,22 @@ void main() {
       quantityGrams: 300,
     );
 
+    // Exercise page breaks with several filled days and incomplete weekends.
+    for (var dayIndex = 1; dayIndex < 5; dayIndex++) {
+      final lunchId = await plans.addMeal(
+        planId: planId,
+        dayIndex: dayIndex,
+        name: 'Almuerzo',
+      );
+      for (var itemIndex = 0; itemIndex < 4; itemIndex++) {
+        await plans.addFood(
+          mealId: lunchId,
+          foodId: foodId,
+          quantityGrams: 150,
+        );
+      }
+    }
+
     final bytes = await PlanPdfService().build(
       planId: planId,
       profile: savedProfile,
