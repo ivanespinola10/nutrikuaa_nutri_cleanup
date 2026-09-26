@@ -26,6 +26,12 @@ El aviso de diferencia energética usa un umbral de revisión de interfaz del 15
 
 ## Próximas iteraciones antes de venta
 
+La beta privada, el guion de observación y los requisitos de alojamiento,
+checkout y recuperación se detallan en [arquitectura de beta](PRIVATE_BETA_ARCHITECTURE.md)
+y [protocolo de 15 minutos](TESTER_PROTOCOL.md). La lista de compras del
+planificador ya agrega gramos de alimentos y recetas; las sustituciones y los
+nombres regionales quedan sujetos a verificación profesional.
+
 1. Probar con nutricionistas reales una tarea completa de 15 minutos: crear paciente y objetivos, componer tres días, corregir una cantidad y compartir el PDF. Registrar tiempo, errores y abandonos.
 2. Incorporar nombres localizados verificados para los alimentos más usados en el mercado inicial y medidas domésticas regionales, conservando la fuente original.
 3. Mejorar la composición de semanas largas: lista de compras y sustituciones manuales verificadas por el profesional; filtros por preferencias y restricciones sólo cuando sus datos sean confiables.

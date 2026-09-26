@@ -98,6 +98,18 @@ class NutriI18n {
     'Semana': {'en': 'Week', 'pt': 'Semana'},
     'Nueva semana': {'en': 'New week', 'pt': 'Nova semana'},
     'Duplicar semana': {'en': 'Duplicate week', 'pt': 'Duplicar semana'},
+    'Lista de compras': {'en': 'Shopping list', 'pt': 'Lista de compras'},
+    'Suma de los alimentos y recetas del plan. Revisa cantidades, preparaciones y desperdicio antes de comprar.': {
+      'en': 'Totals from the foods and recipes in this plan. Check amounts, preparation and waste before buying.',
+      'pt': 'Soma dos alimentos e receitas do plano. Confira quantidades, preparo e desperdício antes da compra.',
+    },
+    'Aún no hay alimentos en esta semana.': {
+      'en': 'No foods have been added to this week yet.',
+      'pt': 'Ainda não há alimentos nesta semana.',
+    },
+    'Copiar lista': {'en': 'Copy list', 'pt': 'Copiar lista'},
+    'Lista copiada.': {'en': 'List copied.', 'pt': 'Lista copiada.'},
+    'Cerrar': {'en': 'Close', 'pt': 'Fechar'},
     'Este paciente todavía no tiene una semana de alimentación.': {'en': 'This patient does not have a meal week yet.', 'pt': 'Este paciente ainda não tem uma semana alimentar.'},
     'Crear primera semana': {'en': 'Create first week', 'pt': 'Criar primeira semana'},
     'Resumen semanal': {'en': 'Weekly summary', 'pt': 'Resumo semanal'},

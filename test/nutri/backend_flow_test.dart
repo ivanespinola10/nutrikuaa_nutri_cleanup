@@ -12,6 +12,7 @@ import 'package:nutrikuaa_app/nutri/application/plan_nutrition_service.dart';
 import 'package:nutrikuaa_app/nutri/application/plan_pdf_service.dart';
 import 'package:nutrikuaa_app/nutri/application/recipe_nutrition_service.dart';
 import 'package:nutrikuaa_app/nutri/application/recipe_service.dart';
+import 'package:nutrikuaa_app/nutri/application/shopping_list_service.dart';
 import 'package:nutrikuaa_app/nutri/application/unified_food_search_service.dart';
 import 'package:nutrikuaa_app/nutri/data/app_settings_repository.dart';
 import 'package:nutrikuaa_app/nutri/data/nutri_database.dart';
@@ -266,6 +267,13 @@ void main() {
       servings: 1,
     );
 
+    final shopping = await ShoppingListService().forPlan(planId);
+    expect(shopping, hasLength(2));
+    expect(shopping.firstWhere((entry) => entry.food.id == snapshot.id).grams,
+        closeTo(150, 0.001));
+    expect(shopping.firstWhere((entry) => entry.food.id == localYogurtId).grams,
+        closeTo(100, 0.001));
+
     final summary = await PlanNutritionService().calculate(planId);
     final day = summary.totalsForDay(0);
 
@@ -281,6 +289,48 @@ void main() {
     expect(duplicated, isNotNull);
     expect(duplicated!.meals, hasLength(1));
     expect(duplicated.meals.single.items, hasLength(1));
+  });
+
+  test('shopping list adds direct foods and scaled recipes across days', () async {
+    final foods = FoodLibraryService();
+    final rice = await foods.addProfessionalFood(
+      name: 'Arroz', nutrients: const [],
+    );
+    final beans = await foods.addProfessionalFood(
+      name: 'Porotos', nutrients: const [],
+    );
+    final recipeId = await RecipeService().create(
+      Recipe(name: 'Guiso', servings: 4),
+      [
+        RecipeIngredientInput(foodId: rice, quantityGrams: 400),
+        RecipeIngredientInput(foodId: beans, quantityGrams: 200),
+      ],
+    );
+    final patientId = await PatientRepository().create(
+      Patient(firstName: 'Prueba', lastName: 'Ficticia'),
+    );
+    final plans = MealPlanService();
+    final planId = await plans.createPlan(
+      MealPlan(patientId: patientId, name: 'Tres días'),
+    );
+    final monday = await plans.addMeal(
+      planId: planId, dayIndex: 0, name: 'Almuerzo',
+    );
+    final wednesday = await plans.addMeal(
+      planId: planId, dayIndex: 2, name: 'Cena',
+    );
+    await plans.addFood(mealId: monday, foodId: rice, quantityGrams: 50);
+    await plans.addRecipe(
+      mealId: monday, recipeId: recipeId, servings: 2,
+    );
+    await plans.addRecipe(
+      mealId: wednesday, recipeId: recipeId, servings: 1,
+    );
+
+    final entries = await ShoppingListService().forPlan(planId);
+    expect(entries, hasLength(2));
+    expect(entries.firstWhere((entry) => entry.food.id == rice).grams, 350);
+    expect(entries.firstWhere((entry) => entry.food.id == beans).grams, 150);
   });
 
   test('editing a used custom food keeps previous plan and recipe totals', () async {

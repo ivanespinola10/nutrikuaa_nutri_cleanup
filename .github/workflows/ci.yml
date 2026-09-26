@@ -45,3 +45,6 @@ jobs:
 
       - name: Test offline USDA catalog builder
         run: python3 tools/food_importer/test_import_usda.py
+
+      - name: Test editorial localization review gate
+        run: python3 tools/food_importer/test_review_localizations.py

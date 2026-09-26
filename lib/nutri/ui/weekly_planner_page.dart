@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../localization/nutri_i18n.dart';
 
@@ -7,6 +8,7 @@ import '../application/meal_plan_service.dart';
 import '../application/plan_nutrition_service.dart';
 import '../application/portion_converter.dart';
 import '../application/recipe_service.dart';
+import '../application/shopping_list_service.dart';
 import '../application/unified_food_search_service.dart';
 import '../data/nutri_database.dart';
 import '../data/patient_repository.dart';
@@ -650,6 +652,61 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
     }
   }
 
+  Future<void> _showShoppingList() async {
+    final planId = _selectedPlanId;
+    if (planId == null) return;
+
+    List<ShoppingListEntry>? entries;
+    await _execute(() async {
+      entries = await ShoppingListService().forPlan(planId);
+    });
+    if (!mounted || entries == null) return;
+
+    final lines = entries!.map((entry) {
+      final brand = entry.food.isBranded ? ' (${entry.food.brand})' : '';
+      return '${entry.food.name}$brand: ${entry.grams.toStringAsFixed(1)} g';
+    }).join('\n');
+    await showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(NutriI18n.t('Lista de compras')),
+        content: SizedBox(
+          width: 500,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(NutriI18n.t(
+                    'Suma de los alimentos y recetas del plan. Revisa cantidades, preparaciones y desperdicio antes de comprar.')),
+                const SizedBox(height: 16),
+                SelectableText(lines.isEmpty
+                    ? NutriI18n.t('Aún no hay alimentos en esta semana.')
+                    : lines),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(NutriI18n.t('Cerrar')),
+          ),
+          if (lines.isNotEmpty)
+            FilledButton.icon(
+              onPressed: () async {
+                await Clipboard.setData(ClipboardData(text: lines));
+                if (context.mounted) Navigator.of(context).pop();
+                _message(NutriI18n.t('Lista copiada.'));
+              },
+              icon: const Icon(Icons.copy_outlined),
+              label: Text(NutriI18n.t('Copiar lista')),
+            ),
+        ],
+      ),
+    );
+  }
+
   void _message(String text) {
     if (!mounted) return;
     ScaffoldMessenger.of(context)
@@ -802,6 +859,13 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
                   : _duplicateCurrentWeek,
               icon: const Icon(Icons.copy_all_outlined),
               label: Text(NutriI18n.t('Duplicar semana')),
+            ),
+            OutlinedButton.icon(
+              onPressed: _busy || _selectedPlanId == null
+                  ? null
+                  : _showShoppingList,
+              icon: const Icon(Icons.shopping_basket_outlined),
+              label: Text(NutriI18n.t('Lista de compras')),
             ),
             if (_selectedPatientId != null && _selectedPlanId != null)
               OutlinedButton.icon(
