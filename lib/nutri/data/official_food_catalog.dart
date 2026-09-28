@@ -28,13 +28,33 @@ class OfficialFoodCatalog {
     if (db == null) return const [];
 
     final trimmed = query.trim();
-    final rows = await db.query(
-      'foods',
-      where: trimmed.isEmpty ? null : 'name LIKE ?',
-      whereArgs: trimmed.isEmpty ? null : ['%$trimmed%'],
-      orderBy: 'name COLLATE NOCASE',
-      limit: limit,
-    );
+    // Match all words regardless of order or punctuation. INSTR treats user
+    // input literally, so '%' and '_' cannot broaden a search as SQL wildcards.
+    final tokens = trimmed
+        .split(RegExp(r'[\s,;]+'))
+        .where((token) => token.isNotEmpty)
+        .toList();
+    final List<Map<String, Object?>> rows;
+    if (tokens.isEmpty) {
+      rows = await db.query(
+        'foods',
+        orderBy: 'name COLLATE NOCASE',
+        limit: limit,
+      );
+    } else {
+      final predicates = List.filled(
+        tokens.length,
+        'INSTR(LOWER(name), LOWER(?)) > 0',
+      ).join(' AND ');
+      rows = await db.rawQuery(
+        'SELECT * FROM foods WHERE $predicates '
+        'ORDER BY CASE '
+        'WHEN LOWER(name) = LOWER(?) THEN 0 '
+        "WHEN INSTR(LOWER(name), LOWER(?)) = 1 THEN 1 "
+        'ELSE 2 END, name COLLATE NOCASE LIMIT ?',
+        [...tokens, trimmed, tokens.first, limit],
+      );
+    }
 
     final foods = <Food>[];
     for (final row in rows) {

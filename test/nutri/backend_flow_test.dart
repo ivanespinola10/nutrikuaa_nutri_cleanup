@@ -150,6 +150,23 @@ void main() {
     await databaseFactoryFfi.deleteDatabase(officialDbPath);
   });
 
+  test('Spanish multiword food search finds official names across commas', () async {
+    final search = UnifiedFoodSearchService(
+      officialCatalog: OfficialFoodCatalog(open: () async => officialDb),
+    );
+
+    final milk = await search.search('leche entera');
+    expect(milk.official.map((food) => food.sourceFoodId), contains('202'));
+    expect(milk.official.single.name, 'Milk, whole');
+
+    final yogurt = await search.search('yogur natural');
+    expect(yogurt.official.map((food) => food.sourceFoodId), contains('101'));
+    expect(yogurt.official.single.sourceName, 'USDA FoodData Central');
+
+    final literal = await search.search('%');
+    expect(literal.official, isEmpty);
+  });
+
   test('complete local-first nutrition backend flow', () async {
     final officialCatalog = OfficialFoodCatalog(
       open: () async => officialDb,

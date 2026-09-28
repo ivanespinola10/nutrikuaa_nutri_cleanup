@@ -17,6 +17,25 @@ void main() {
     );
   });
 
+  test('maps multiword Spanish searches without changing source names', () {
+    expect(
+      OfficialFoodSearchAliases.forOfficialCatalog('leche entera'),
+      'milk whole',
+    );
+    expect(
+      OfficialFoodSearchAliases.forOfficialCatalog('yogur natural'),
+      'yogurt plain',
+    );
+    expect(
+      OfficialFoodSearchAliases.forOfficialCatalog('arroz integral'),
+      'rice brown',
+    );
+    expect(
+      OfficialFoodSearchAliases.forOfficialCatalog('porotos'),
+      'beans',
+    );
+  });
+
   test('maps common Portuguese foods to official English catalog terms', () {
     expect(
       OfficialFoodSearchAliases.forOfficialCatalog('leite'),

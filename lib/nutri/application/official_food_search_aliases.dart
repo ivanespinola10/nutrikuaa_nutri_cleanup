@@ -23,6 +23,19 @@ class OfficialFoodSearchAliases {
     'cerdo': 'pork',
     'pescado': 'fish',
     'frutilla': 'strawberry',
+    'poroto': 'beans',
+    'porotos': 'beans',
+    'frijol': 'beans',
+    'frijoles': 'beans',
+    'maíz': 'corn',
+    'maiz': 'corn',
+    'tomate': 'tomato',
+    'cebolla': 'onion',
+    'zanahoria': 'carrot',
+    'entera': 'whole',
+    'natural': 'plain',
+    'pechuga': 'breast',
+    'arroz integral': 'rice brown',
     'fresa': 'strawberry',
 
     // Portuguese
@@ -47,6 +60,12 @@ class OfficialFoodSearchAliases {
   static String forOfficialCatalog(String query) {
     final normalized = query.trim().toLowerCase();
     if (normalized.isEmpty) return query.trim();
-    return _aliases[normalized] ?? query.trim();
+    final exact = _aliases[normalized];
+    if (exact != null) return exact;
+
+    // Search terms may appear in any order in the official English name.
+    // Keep the original name and source when presenting a match.
+    final tokens = normalized.split(RegExp(r'[\s,;]+'));
+    return tokens.map((token) => _aliases[token] ?? token).join(' ');
   }
 }
