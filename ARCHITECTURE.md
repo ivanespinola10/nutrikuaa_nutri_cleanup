@@ -1,7 +1,7 @@
 # NutriKuaa Nutri — Architecture
 
 **Versión:** 0.2  
-**Estado:** Backend local-first en construcción
+**Estado:** Beta web local-first
 
 ---
 
@@ -70,27 +70,21 @@ opcionales de sincronización.
 
 ---
 
-## 4. Separación del legado industrial
+## 4. Código de producto
 
-El código heredado de NutriKuaa Pro permanece temporalmente en las carpetas
-existentes (`lib/core`, `lib/data`, `lib/models`, `lib/logic`,
-`lib/services`, `lib/ui`).
+`lib/main.dart` inicia exclusivamente Nutri. Sus capas están en
+`lib/nutri/application`, `lib/nutri/data`, `lib/nutri/domain`,
+`lib/nutri/localization` y `lib/nutri/ui`.
 
-El nuevo producto Nutri se desarrolla bajo:
+El cálculo nutricional utiliza los valores por 100 g de cada alimento y
+acumula por comida y por `dayIndex` en `PlanNutritionService`. Las recetas
+se prorratean por porciones seleccionadas. La energía del catálogo oficial
+procede de la base importada; no se recalcula con el rendimiento ni la merma
+del antiguo motor industrial.
 
-```text
-lib/nutri/
-├── application/
-├── data/
-└── domain/
-```
-
-No se debe convertir `ProyectoModel` en paciente ni reutilizar
-`proyecto_items` para comidas. Los conceptos industriales y clínicos son
-dominios distintos.
-
-La migración de la interfaz ocurrirá de forma incremental cuando el backend
-Nutri esté estable.
+No se reutilizan `ProyectoModel`, `proyecto_items`, rendimiento industrial
+ni costos para pacientes o planes. El legado fuente de Pro se retiró de este
+producto; Git conserva su historial previo para auditoría.
 
 ---
 
@@ -110,9 +104,6 @@ La aplicación no debe descargar ni reconstruir el catálogo oficial durante la
 instalación. Una actualización de la app puede incluir una nueva versión de
 `nutrikuaa_foods.db`; el instalador interno compara el manifiesto y reemplaza
 únicamente esa base.
-
-La base industrial `nutrikuaa_industrial.db` no se modifica durante esta
-etapa.
 
 Las migraciones futuras deben preservar datos profesionales. No se permiten
 migraciones destructivas que eliminen pacientes, recetas, planes o alimentos

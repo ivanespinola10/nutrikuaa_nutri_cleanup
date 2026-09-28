@@ -5,9 +5,10 @@ pacientes, alimentos propios, recetas y planes semanales, calcular nutrientes y
 exportar documentos. El catálogo USDA se empaqueta como archivo SQLite fijo;
 no se consulta USDA durante el uso.
 
-La implementación Nutri en desarrollo está en `feature/nutri-backend-foundation`
-(PR #1). `main` conserva temporalmente código industrial heredado. Consulte
-`PRODUCT_SPEC.md` y `ARCHITECTURE.md` antes de modificar el producto.
+La aplicación activa vive en `lib/nutri/` y arranca desde `lib/main.dart`.
+El legado industrial de Pro se retiró de la rama de limpieza; el historial de
+Git lo conserva. Consulte `PRODUCT_SPEC.md` y `ARCHITECTURE.md` antes de
+modificar el producto.
 
 ## Primer recorrido en Chrome
 

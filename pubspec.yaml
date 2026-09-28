@@ -1,5 +1,5 @@
 name: nutrikuaa_app
-description: "A new Flutter project."
+description: "NutriKuaa Nutri, planificador nutricional local-first."
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -30,7 +30,7 @@ dependencies:
   # Monetization/licensing will be added through store-specific adapters.
   # --- UI ---
   cupertino_icons: ^1.0.8
-  url_launcher: ^6.2.5 # <--- AGREGA ESTA LÍNEA
+  url_launcher: ^6.2.5
 
 dev_dependencies:
   flutter_test:
@@ -42,9 +42,7 @@ dev_dependencies:
 flutter:
   uses-material-design: true
 
-  # --- TUS ARCHIVOS (Assets) ---
   assets:
-    - assets/ingredients.csv
     - assets/logo.png
     - assets/data/
 

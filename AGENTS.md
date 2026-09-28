@@ -73,26 +73,22 @@ Application
 Domain
     ↓
 Data
+```
 
 ---
 
-## 5. Nutri backend migration rule
+## 5. Nutri source boundary
 
-The repository still contains the inherited NutriKuaa Pro industrial code.
+The active application entry point is `lib/main.dart`. Product code belongs in
+`lib/nutri/` (application, data, domain, localization and ui). Do not reintroduce
+industrial Pro models, screens, costing or yield calculations. Keep Nutri
+nutrition calculations in `lib/nutri/application/nutrition_calculator.dart`
+and `plan_nutrition_service.dart`; daily totals use per-100-g nutrient values
+and the saved meal day index.
 
-New Nutri domain/backend work must be created under `lib/nutri/`.
-
-Do not repurpose industrial concepts such as `ProyectoModel`,
-`proyecto_items`, industrial yield or industrial costing into patient,
-meal-plan or clinical nutrition concepts.
-
-The industrial database must remain isolated until a dedicated migration task
-explicitly replaces the old UI.
-
-The Nutri database is `nutrikuaa_nutri.db` and migrations must preserve user
+The Nutri database is `nutrikuaa_nutri.db`; migrations must preserve user
 data. Do not use destructive drop-and-recreate upgrades for professional
-records.
-
+records. Historical plans must keep food composition snapshots.
 
 ---
 
