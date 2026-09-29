@@ -1,0 +1,14 @@
+{
+  "projects": {
+    "default": "nutrikuaa"
+  },
+  "targets": {
+    "nutrikuaa": {
+      "hosting": {
+        "nutri": [
+          "nutrikuaa-nutri"
+        ]
+      }
+    }
+  }
+}

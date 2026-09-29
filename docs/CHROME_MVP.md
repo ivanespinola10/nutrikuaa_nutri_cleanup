@@ -1,5 +1,26 @@
 # NutriKuaa Nutri — Chrome MVP
 
+## Biblioteca para testers (rama de PR #7)
+
+El flujo actual separa **Pacientes**, **Planificador** y **Biblioteca**. La
+Biblioteca permite buscar, consultar fichas y agregar o editar alimentos
+propios. La ficha admite micronutrientes opcionales, referencia y alérgenos
+declarados; los valores omitidos siguen siendo desconocidos.
+
+Para compilar y desplegar el sitio Firebase nutrikuaa-nutri desde esta rama
+después de verificar CI y la cuenta activa:
+
+~~~powershell
+flutter pub get
+dart run tools/setup_sqlite_web.dart
+flutter build web --release
+firebase deploy --only hosting:nutri --project nutrikuaa
+~~~
+
+El target nutri está vinculado únicamente a nutrikuaa-nutri en .firebaserc.
+Hosting sirve una URL pública; el repositorio y el artefacto de CI pueden
+seguir privados. No cargar datos reales de pacientes en pruebas.
+
 ## V0.1 — aprobado
 
 La primera prueba confirmó:
