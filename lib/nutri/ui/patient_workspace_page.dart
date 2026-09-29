@@ -35,6 +35,26 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
   final _email = TextEditingController();
   final _phone = TextEditingController();
   final _notes = TextEditingController();
+  final _reason = TextEditingController();
+  final _dietaryHistory = TextEditingController();
+  final _foodContext = TextEditingController();
+  final _reportedAllergies = TextEditingController();
+  final _clinicalContext = TextEditingController();
+  final _historySource = TextEditingController();
+
+  final _encounterDate = TextEditingController();
+  final _encounterAssessment = TextEditingController();
+  final _encounterProblem = TextEditingController();
+  final _encounterIntervention = TextEditingController();
+  final _encounterMonitoring = TextEditingController();
+  final _encounterReview = TextEditingController();
+  final _encounterSource = TextEditingController();
+  final _observationDate = TextEditingController();
+  final _observationIndicator = TextEditingController();
+  final _observationValue = TextEditingController();
+  final _observationUnit = TextEditingController();
+  final _observationSource = TextEditingController();
+  final _observationRange = TextEditingController();
 
   final _weight = TextEditingController();
   final _height = TextEditingController();
@@ -51,6 +71,9 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
   List<Patient> _patientList = const [];
   List<PatientMeasurement> _measurements = const [];
   List<MealPlan> _planHistory = const [];
+  List<PatientEncounter> _encounters = const [];
+  List<PatientObservation> _observations = const [];
+  int? _encounterPlanId;
 
   int? _selectedPatientId;
   String? _sex;
@@ -99,6 +122,25 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
       _email,
       _phone,
       _notes,
+      _reason,
+      _dietaryHistory,
+      _foodContext,
+      _reportedAllergies,
+      _clinicalContext,
+      _historySource,
+      _encounterDate,
+      _encounterAssessment,
+      _encounterProblem,
+      _encounterIntervention,
+      _encounterMonitoring,
+      _encounterReview,
+      _encounterSource,
+      _observationDate,
+      _observationIndicator,
+      _observationValue,
+      _observationUnit,
+      _observationSource,
+      _observationRange,
       _weight,
       _height,
       _waist,
@@ -192,10 +234,20 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
       _email.clear();
       _phone.clear();
       _notes.clear();
+      _reason.clear();
+      _dietaryHistory.clear();
+      _foodContext.clear();
+      _reportedAllergies.clear();
+      _clinicalContext.clear();
+      _historySource.clear();
+      _clearEncounterDraft();
+      _clearObservationDraft();
       _clearTargets();
       _clearMeasurementDraft();
       _measurements = const [];
       _planHistory = const [];
+      _encounters = const [];
+      _observations = const [];
       _error = null;
     });
   }
@@ -207,6 +259,8 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
     final targets = await _patients.targetsFor(patientId);
     final measurements = await _patients.measurementsFor(patientId);
     final plans = await _plans.listForPatient(patientId);
+    final encounters = await _patients.encountersFor(patientId);
+    final observations = await _patients.observationsFor(patientId);
 
     if (!mounted) return;
     setState(() {
@@ -219,11 +273,21 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
       _email.text = patient.email ?? '';
       _phone.text = patient.phone ?? '';
       _notes.text = patient.notes ?? '';
+      _reason.text = patient.consultationReason ?? '';
+      _dietaryHistory.text = patient.dietaryHistory ?? '';
+      _foodContext.text = patient.foodContext ?? '';
+      _reportedAllergies.text = patient.reportedAllergies ?? '';
+      _clinicalContext.text = patient.clinicalContext ?? '';
+      _historySource.text = patient.historySource ?? '';
       _isActive = patient.isActive;
       _measurements = measurements;
       _planHistory = plans;
+      _encounters = encounters;
+      _observations = observations;
       _applyTargets(targets);
       _clearMeasurementDraft();
+      _clearEncounterDraft();
+      _clearObservationDraft();
       _error = null;
     });
   }
@@ -269,10 +333,37 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
     _measurementNotes.clear();
   }
 
+  void _clearEncounterDraft() {
+    _encounterDate.text = _date(DateTime.now());
+    _encounterAssessment.clear();
+    _encounterProblem.clear();
+    _encounterIntervention.clear();
+    _encounterMonitoring.clear();
+    _encounterReview.clear();
+    _encounterSource.clear();
+    _encounterPlanId = null;
+  }
+
+  void _clearObservationDraft() {
+    _observationDate.text = _date(DateTime.now());
+    _observationIndicator.clear();
+    _observationValue.clear();
+    _observationUnit.clear();
+    _observationSource.clear();
+    _observationRange.clear();
+  }
+
   DateTime? _parseBirthDate() {
     final value = _birthDate.text.trim();
     if (value.isEmpty) return null;
     return DateTime.tryParse(value);
+  }
+
+  DateTime? _parseCalendarDate(String text) {
+    final value = text.trim();
+    if (!RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(value)) return null;
+    final parsed = DateTime.tryParse(value);
+    return parsed != null && _date(parsed) == value ? parsed : null;
   }
 
   Future<void> _savePatient() async {
@@ -286,6 +377,17 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
     final birthDate = _parseBirthDate();
     if (birthText.isNotEmpty && birthDate == null) {
       _message(NutriI18n.t('Usa fecha AAAA-MM-DD.'));
+      return;
+    }
+    if ([
+      _reason,
+      _dietaryHistory,
+      _foodContext,
+      _reportedAllergies,
+      _clinicalContext,
+    ].any((field) => field.text.trim().isNotEmpty) &&
+        _historySource.text.trim().isEmpty) {
+      _message('Indica la fuente de la evaluación inicial.');
       return;
     }
 
@@ -303,6 +405,12 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
             email: _nullIfBlank(_email.text),
             phone: _nullIfBlank(_phone.text),
             notes: _nullIfBlank(_notes.text),
+            consultationReason: _nullIfBlank(_reason.text),
+            dietaryHistory: _nullIfBlank(_dietaryHistory.text),
+            foodContext: _nullIfBlank(_foodContext.text),
+            reportedAllergies: _nullIfBlank(_reportedAllergies.text),
+            clinicalContext: _nullIfBlank(_clinicalContext.text),
+            historySource: _nullIfBlank(_historySource.text),
             isActive: _isActive,
           ),
         );
@@ -322,6 +430,12 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
             email: _nullIfBlank(_email.text),
             phone: _nullIfBlank(_phone.text),
             notes: _nullIfBlank(_notes.text),
+            consultationReason: _nullIfBlank(_reason.text),
+            dietaryHistory: _nullIfBlank(_dietaryHistory.text),
+            foodContext: _nullIfBlank(_foodContext.text),
+            reportedAllergies: _nullIfBlank(_reportedAllergies.text),
+            clinicalContext: _nullIfBlank(_clinicalContext.text),
+            historySource: _nullIfBlank(_historySource.text),
             isActive: _isActive,
             createdAt: current.createdAt,
           ),
@@ -413,6 +527,95 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
       await _patients.deleteMeasurement(measurementId);
       final measurements = await _patients.measurementsFor(patientId);
       if (mounted) setState(() => _measurements = measurements);
+    });
+  }
+
+  Future<void> _addEncounter() async {
+    final patientId = _selectedPatientId;
+    if (patientId == null) {
+      _message('Guarda primero la ficha del paciente.');
+      return;
+    }
+    final date = _parseCalendarDate(_encounterDate.text);
+    final reviewText = _encounterReview.text.trim();
+    final review = reviewText.isEmpty ? null : _parseCalendarDate(reviewText);
+    if (date == null) {
+      _message('Revisa la fecha AAAA-MM-DD de la consulta.');
+      return;
+    }
+    if (reviewText.isNotEmpty &&
+        (review == null || review.isBefore(date))) {
+      _message('Revisa las fechas AAAA-MM-DD de la consulta y seguimiento.');
+      return;
+    }
+    if (_encounterSource.text.trim().isEmpty) {
+      _message('Indica la fuente de la información de esta consulta.');
+      return;
+    }
+    if ([
+      _encounterAssessment,
+      _encounterProblem,
+      _encounterIntervention,
+      _encounterMonitoring,
+    ].every((field) => field.text.trim().isEmpty)) {
+      _message('Registra al menos una observación o intervención.');
+      return;
+    }
+
+    await _execute(() async {
+      await _patients.addEncounter(PatientEncounter(
+        patientId: patientId,
+        occurredAt: date,
+        assessment: _nullIfBlank(_encounterAssessment.text),
+        nutritionProblem: _nullIfBlank(_encounterProblem.text),
+        intervention: _nullIfBlank(_encounterIntervention.text),
+        monitoring: _nullIfBlank(_encounterMonitoring.text),
+        nextReviewAt: review,
+        informationSource: _encounterSource.text.trim(),
+        planId: _encounterPlanId,
+      ));
+      final encounters = await _patients.encountersFor(patientId);
+      if (!mounted) return;
+      setState(() {
+        _encounters = encounters;
+        _clearEncounterDraft();
+      });
+      _message('Consulta agregada al historial.');
+    });
+  }
+
+  Future<void> _addObservation() async {
+    final patientId = _selectedPatientId;
+    final date = _parseCalendarDate(_observationDate.text);
+    final value = _optionalNumber(_observationValue);
+    if (patientId == null) {
+      _message('Guarda primero la ficha del paciente.');
+      return;
+    }
+    if (date == null || value == null || !value.isFinite ||
+        _observationIndicator.text.trim().isEmpty ||
+        _observationUnit.text.trim().isEmpty ||
+        _observationSource.text.trim().isEmpty) {
+      _message('Completa fecha, indicador, valor, unidad y fuente.');
+      return;
+    }
+    await _execute(() async {
+      await _patients.addObservation(PatientObservation(
+        patientId: patientId,
+        observedAt: date,
+        indicator: _observationIndicator.text.trim(),
+        value: value,
+        unit: _observationUnit.text.trim(),
+        source: _observationSource.text.trim(),
+        referenceRange: _nullIfBlank(_observationRange.text),
+      ));
+      final observations = await _patients.observationsFor(patientId);
+      if (!mounted) return;
+      setState(() {
+        _observations = observations;
+        _clearObservationDraft();
+      });
+      _message('Indicador guardado sin interpretación automática.');
     });
   }
 
@@ -533,11 +736,29 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
                 _mobilePatientSelector(),
                 const SizedBox(height: 14),
               ],
+              Card(
+                child: ListTile(
+                  leading: const Icon(Icons.privacy_tip_outlined),
+                  title: const Text('Beta: utiliza pacientes ficticios'),
+                  subtitle: const Text(
+                    'Los expedientes se guardan en este navegador. '
+                    'Aún no hay bloqueo local ni cifrado de la base activa. '
+                    'Exporta backups cifrados si necesitas conservar pruebas.',
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
               _identityCard(),
+              const SizedBox(height: 14),
+              _assessmentCard(),
               const SizedBox(height: 14),
               _targetsCard(),
               const SizedBox(height: 14),
               _measurementCard(),
+              const SizedBox(height: 14),
+              _observationCard(),
+              const SizedBox(height: 14),
+              _encounterCard(),
               const SizedBox(height: 14),
               _historyCard(),
               if (_error != null) ...[
@@ -676,6 +897,250 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _assessmentCard() {
+    return Card(
+      child: ExpansionTile(
+        leading: const Icon(Icons.assignment_outlined),
+        title: const Text('Evaluación inicial y contexto'),
+        subtitle: const Text('Campos opcionales que el profesional revisa'),
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text('Registra sólo información pertinente. Alergia '
+                    'reportada, intolerancia y preferencia son conceptos distintos.'),
+                const SizedBox(height: 12),
+                _longField(_reason, 'Motivo y objetivo acordado'),
+                _longField(_dietaryHistory,
+                    'Historia alimentaria: patrón, horarios y hábitos'),
+                _longField(_foodContext,
+                    'Preferencias, restricciones, cultura, presupuesto y acceso'),
+                _longField(_reportedAllergies,
+                    'Alergias o intolerancias reportadas y reacción'),
+                _longField(_clinicalContext,
+                    'Condiciones y medicación relevantes para la atención'),
+                _field(_historySource,
+                    'Fuente: paciente, cuidador, derivación o documento'),
+                const SizedBox(height: 10),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: FilledButton.tonalIcon(
+                    onPressed: _busy ? null : _savePatient,
+                    icon: const Icon(Icons.save_outlined),
+                    label: const Text('Guardar evaluación y ficha'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _observationCard() {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text('Indicadores y analíticas relevantes',
+                style: Theme.of(context).textTheme.titleLarge),
+            const Text('Carga manual con fecha, unidad y fuente. '
+                'La app no interpreta resultados ni indica diagnósticos.'),
+            if (_selectedPatientId != null) ...[
+              ExpansionTile(
+                title: const Text('Agregar indicador'),
+                children: [
+                  _field(_observationDate, 'Fecha del resultado',
+                      hint: 'AAAA-MM-DD'),
+                  const SizedBox(height: 10),
+                  _field(_observationIndicator,
+                      'Indicador (ej.: un análisis relevante)'),
+                  const SizedBox(height: 10),
+                  Row(children: [
+                    Expanded(child: _field(_observationValue, 'Valor',
+                        numeric: true)),
+                    const SizedBox(width: 8),
+                    Expanded(child: _field(_observationUnit, 'Unidad')),
+                  ]),
+                  const SizedBox(height: 10),
+                  _field(_observationRange, 'Rango informado (opcional)'),
+                  const SizedBox(height: 10),
+                  _field(_observationSource, 'Fuente (obligatoria)'),
+                  const SizedBox(height: 12),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: FilledButton.icon(
+                      onPressed: _busy ? null : _addObservation,
+                      icon: const Icon(Icons.add),
+                      label: const Text('Guardar indicador'),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                ],
+              ),
+              if (_observations.isEmpty)
+                const Text('No hay indicadores adicionales.')
+              else
+                for (final observation in _observations)
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.science_outlined),
+                    title: Text(observation.indicator + ' · ' +
+                        observation.value.toString() + ' ' + observation.unit),
+                    subtitle: Text(_date(observation.observedAt) +
+                        ' · ' + observation.source +
+                        (observation.referenceRange == null
+                            ? ''
+                            : ' · Rango informado: ' +
+                                observation.referenceRange!)),
+                  ),
+            ] else
+              const Padding(
+                padding: EdgeInsets.only(top: 10),
+                child: Text('Guarda primero el paciente para agregar indicadores.'),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _encounterCard() {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text('Consultas y seguimiento',
+                style: Theme.of(context).textTheme.titleLarge),
+            const Text('Cada consulta queda fechada. La interpretación y '
+                'las decisiones corresponden al profesional.'),
+            const SizedBox(height: 8),
+            if (_selectedPatientId == null)
+              const Text('Guarda primero el paciente para registrar consultas.')
+            else ...[
+              ExpansionTile(
+                title: const Text('Registrar consulta'),
+                children: [
+                  _field(_encounterDate, 'Fecha de consulta',
+                      hint: 'AAAA-MM-DD'),
+                  const SizedBox(height: 10),
+                  _longField(_encounterAssessment,
+                      'Evaluación: cambios y datos relevantes'),
+                  _longField(_encounterProblem,
+                      'Problema nutricional identificado por el profesional'),
+                  _longField(_encounterIntervention,
+                      'Intervención y objetivos acordados'),
+                  _longField(_encounterMonitoring,
+                      'Indicadores, barreras y seguimiento previsto'),
+                  _field(_encounterReview, 'Próxima revisión (opcional)',
+                      hint: 'AAAA-MM-DD'),
+                  const SizedBox(height: 10),
+                  _field(_encounterSource,
+                      'Fuente de los datos (obligatoria)'),
+                  if (_planHistory.isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    DropdownButtonFormField<int>(
+                      value: _encounterPlanId,
+                      isExpanded: true,
+                      decoration: const InputDecoration(
+                          labelText: 'Plan vinculado (opcional)'),
+                      items: _planHistory.map((plan) => DropdownMenuItem(
+                        value: plan.id,
+                        child: Text(plan.name),
+                      )).toList(),
+                      onChanged: (value) =>
+                          setState(() => _encounterPlanId = value),
+                    ),
+                    if (_encounterPlanId != null)
+                      TextButton(
+                        onPressed: () =>
+                            setState(() => _encounterPlanId = null),
+                        child: const Text('Desvincular plan'),
+                      ),
+                  ],
+                  const SizedBox(height: 12),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: FilledButton.icon(
+                      onPressed: _busy ? null : _addEncounter,
+                      icon: const Icon(Icons.add),
+                      label: const Text('Guardar consulta'),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                ],
+              ),
+              if (_encounters.isEmpty)
+                const Text('Aún no hay consultas registradas.')
+              else
+                for (final encounter in _encounters)
+                  ExpansionTile(
+                    key: ValueKey('encounter-' + encounter.id.toString()),
+                    leading: const Icon(Icons.event_note_outlined),
+                    title: Text(_date(encounter.occurredAt)),
+                    subtitle: Text(
+                      encounter.intervention ??
+                      encounter.assessment ??
+                      encounter.nutritionProblem ??
+                      'Consulta profesional',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    children: [
+                      _encounterDetail('Evaluación', encounter.assessment),
+                      _encounterDetail(
+                          'Problema nutricional', encounter.nutritionProblem),
+                      _encounterDetail(
+                          'Intervención', encounter.intervention),
+                      _encounterDetail(
+                          'Seguimiento', encounter.monitoring),
+                      _encounterDetail('Fuente', encounter.informationSource),
+                      if (encounter.nextReviewAt != null)
+                        _encounterDetail('Próxima revisión',
+                            _date(encounter.nextReviewAt!)),
+                      if (encounter.planId != null)
+                        _encounterDetail('Plan vinculado',
+                            _planHistory
+                                .where((plan) => plan.id == encounter.planId)
+                                .map((plan) => plan.name)
+                                .firstOrNull ?? 'Plan anterior'),
+                    ],
+                  ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _encounterDetail(String title, String? value) {
+    if (value == null || value.isEmpty) return const SizedBox.shrink();
+    return ListTile(
+      title: Text(title),
+      subtitle: Text(value),
+      dense: true,
+    );
+  }
+
+  Widget _longField(TextEditingController controller, String label) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: TextField(
+        controller: controller,
+        minLines: 2,
+        maxLines: 4,
+        decoration: InputDecoration(labelText: label),
       ),
     );
   }

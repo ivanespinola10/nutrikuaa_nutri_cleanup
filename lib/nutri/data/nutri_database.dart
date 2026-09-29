@@ -16,7 +16,7 @@ class NutriDatabase {
   static final NutriDatabase instance = NutriDatabase._();
 
   static const databaseName = 'nutrikuaa_nutri.db';
-  static const databaseVersion = 9;
+  static const databaseVersion = 10;
 
   Database? _database;
 
@@ -115,6 +115,12 @@ class NutriDatabase {
         email TEXT,
         phone TEXT,
         notes TEXT,
+        consultation_reason TEXT,
+        dietary_history TEXT,
+        food_context TEXT,
+        reported_allergies TEXT,
+        clinical_context TEXT,
+        history_source TEXT,
         is_active INTEGER NOT NULL DEFAULT 1,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL
@@ -136,6 +142,45 @@ class NutriDatabase {
     await db.execute(
       'CREATE INDEX idx_patient_measurements_patient_date '
       'ON patient_measurements(patient_id, measured_at DESC)',
+    );
+
+    await db.execute('''
+      CREATE TABLE patient_encounters (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        patient_id INTEGER NOT NULL,
+        occurred_at TEXT NOT NULL,
+        assessment TEXT,
+        nutrition_problem TEXT,
+        intervention TEXT,
+        monitoring TEXT,
+        next_review_at TEXT,
+        information_source TEXT,
+        plan_id INTEGER,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE,
+        FOREIGN KEY (plan_id) REFERENCES meal_plans(id) ON DELETE SET NULL
+      )
+    ''');
+    await db.execute(
+      'CREATE INDEX idx_patient_encounters_patient_date '
+      'ON patient_encounters(patient_id, occurred_at DESC)',
+    );
+    await db.execute('''
+      CREATE TABLE patient_observations (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        patient_id INTEGER NOT NULL,
+        observed_at TEXT NOT NULL,
+        indicator TEXT NOT NULL,
+        value REAL NOT NULL,
+        unit TEXT NOT NULL,
+        source TEXT NOT NULL,
+        reference_range TEXT,
+        FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE
+      )
+    ''');
+    await db.execute(
+      'CREATE INDEX idx_patient_observations_patient_date '
+      'ON patient_observations(patient_id, observed_at DESC)',
     );
 
     await db.execute('''
@@ -365,6 +410,57 @@ class NutriDatabase {
       await db.execute('ALTER TABLE foods ADD COLUMN allergens_json TEXT');
     }
 
+    if (oldVersion < 10) {
+      for (final column in [
+        'consultation_reason',
+        'dietary_history',
+        'food_context',
+        'reported_allergies',
+        'clinical_context',
+        'history_source',
+      ]) {
+        await db.execute('ALTER TABLE patients ADD COLUMN $column TEXT');
+      }
+      await db.execute('''
+        CREATE TABLE patient_encounters (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          patient_id INTEGER NOT NULL,
+          occurred_at TEXT NOT NULL,
+          assessment TEXT,
+          nutrition_problem TEXT,
+          intervention TEXT,
+          monitoring TEXT,
+          next_review_at TEXT,
+          information_source TEXT,
+          plan_id INTEGER,
+          created_at TEXT NOT NULL,
+          FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE,
+          FOREIGN KEY (plan_id) REFERENCES meal_plans(id) ON DELETE SET NULL
+        )
+      ''');
+      await db.execute(
+        'CREATE INDEX idx_patient_encounters_patient_date '
+        'ON patient_encounters(patient_id, occurred_at DESC)',
+      );
+      await db.execute('''
+        CREATE TABLE patient_observations (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          patient_id INTEGER NOT NULL,
+          observed_at TEXT NOT NULL,
+          indicator TEXT NOT NULL,
+          value REAL NOT NULL,
+          unit TEXT NOT NULL,
+          source TEXT NOT NULL,
+          reference_range TEXT,
+          FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE
+        )
+      ''');
+      await db.execute(
+        'CREATE INDEX idx_patient_observations_patient_date '
+        'ON patient_observations(patient_id, observed_at DESC)',
+      );
+    }
+
     // Future migrations must be additive and preserve professional data.
   }
 
@@ -580,6 +676,12 @@ class NutriDatabase {
       'email': patient.email,
       'phone': patient.phone,
       'notes': patient.notes,
+      'consultation_reason': patient.consultationReason,
+      'dietary_history': patient.dietaryHistory,
+      'food_context': patient.foodContext,
+      'reported_allergies': patient.reportedAllergies,
+      'clinical_context': patient.clinicalContext,
+      'history_source': patient.historySource,
       'is_active': patient.isActive ? 1 : 0,
       'created_at': patient.createdAt.toIso8601String(),
       'updated_at': patient.updatedAt.toIso8601String(),

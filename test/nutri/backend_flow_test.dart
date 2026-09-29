@@ -308,6 +308,114 @@ void main() {
     expect(duplicated.meals.single.items, hasLength(1));
   });
 
+  test('v9 migration preserves a patient and adds longitudinal tables', () async {
+    await NutriDatabase.instance.close();
+    await databaseFactoryFfi.deleteDatabase(privateDbPath);
+    final old = await databaseFactoryFfi.openDatabase(
+      privateDbPath,
+      options: OpenDatabaseOptions(
+        version: 9,
+        onCreate: (db, version) async {
+          await db.execute('''
+            CREATE TABLE patients (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              first_name TEXT NOT NULL,
+              last_name TEXT NOT NULL DEFAULT '',
+              date_of_birth TEXT,
+              sex TEXT,
+              email TEXT,
+              phone TEXT,
+              notes TEXT,
+              is_active INTEGER NOT NULL DEFAULT 1,
+              created_at TEXT NOT NULL,
+              updated_at TEXT NOT NULL
+            )
+          ''');
+        },
+      ),
+    );
+    final now = DateTime(2026, 9, 29).toIso8601String();
+    await old.insert('patients', {
+      'first_name': 'Antes',
+      'last_name': 'Migración',
+      'created_at': now,
+      'updated_at': now,
+    });
+    await old.close();
+
+    final upgraded = await NutriDatabase.instance.database;
+    final patient = (await PatientRepository().search('Antes')).single;
+    expect(patient.displayName, 'Antes Migración');
+    expect(patient.consultationReason, isNull);
+    expect(await upgraded.query('patient_encounters'), isEmpty);
+    expect(await upgraded.query('patient_observations'), isEmpty);
+  });
+
+  test('patient assessment and dated visits survive backup without mixing patients', () async {
+    final patients = PatientRepository();
+    final firstId = await patients.create(Patient(
+      firstName: 'Ana',
+      lastName: 'Prueba',
+      consultationReason: 'Objetivo acordado de prueba',
+      dietaryHistory: 'Horarios declarados',
+      foodContext: 'Preferencias declaradas',
+      reportedAllergies: 'Sin verificar',
+      historySource: 'Declarado por paciente ficticio',
+    ));
+    final secondId = await patients.create(Patient(firstName: 'Otro'));
+    final planId = await MealPlanService().createPlan(
+      MealPlan(patientId: firstId, name: 'Plan de prueba'),
+    );
+    final at = DateTime(2026, 9, 29);
+    await patients.addEncounter(PatientEncounter(
+      patientId: firstId,
+      occurredAt: at,
+      assessment: 'Cambio reportado',
+      intervention: 'Ajustar plan con el profesional',
+      monitoring: 'Revisar en 14 días',
+      nextReviewAt: DateTime(2026, 10, 13),
+      informationSource: 'Entrevista',
+      planId: planId,
+    ));
+    await patients.addObservation(PatientObservation(
+      patientId: firstId,
+      observedAt: at,
+      indicator: 'Indicador de prueba',
+      value: 5.2,
+      unit: 'unidad',
+      source: 'Informe ficticio',
+      referenceRange: '4 a 6',
+    ));
+    expect((await patients.getById(firstId))!.dietaryHistory,
+        'Horarios declarados');
+    expect((await patients.encountersFor(firstId)).single.planId, planId);
+    expect(await patients.encountersFor(secondId), isEmpty);
+    expect(await patients.observationsFor(secondId), isEmpty);
+    expect(
+      patients.addEncounter(PatientEncounter(
+        patientId: secondId,
+        occurredAt: at,
+        assessment: 'Plan equivocado',
+        planId: planId,
+      )),
+      throwsArgumentError,
+    );
+
+    final backup = NutriBackupService();
+    final bytes = await backup.exportBackup();
+    await backup.restoreBackup(bytes);
+    expect((await patients.getById(firstId))!.historySource,
+        'Declarado por paciente ficticio');
+    final history = await patients.encountersFor(firstId);
+    expect(history, hasLength(1));
+    expect(history.single.nextReviewAt, DateTime(2026, 10, 13));
+    expect(history.single.informationSource, 'Entrevista');
+    final indicators = await patients.observationsFor(firstId);
+    expect(indicators, hasLength(1));
+    expect(indicators.single.value, 5.2);
+    expect(indicators.single.source, 'Informe ficticio');
+  });
+
   test('custom micronutrients and declared allergens survive edit and backup', () async {
     final library = FoodLibraryService();
     final id = await library.addProfessionalFood(

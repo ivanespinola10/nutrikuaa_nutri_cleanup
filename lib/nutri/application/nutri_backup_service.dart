@@ -23,7 +23,7 @@ class BackupResult {
 
 class NutriBackupService {
   static const format = 'nutrikuaa-nutri-backup';
-  static const backupVersion = 2;
+  static const backupVersion = 3;
   static const encryptedFormat = 'nutrikuaa-nutri-encrypted-backup';
   static const encryptedVersion = 1;
   static const _pbkdf2Iterations = 250000;
@@ -34,10 +34,12 @@ class NutriBackupService {
     'food_portions',
     'patients',
     'patient_measurements',
+    'patient_observations',
     'nutrition_targets',
     'recipes',
     'recipe_items',
     'meal_plans',
+    'patient_encounters',
     'meals',
     'meal_items',
     'professional_profile',
@@ -45,6 +47,8 @@ class NutriBackupService {
   ];
 
   static const _deleteOrder = <String>[
+    'patient_encounters',
+    'patient_observations',
     'meal_items',
     'meals',
     'meal_plans',
@@ -66,10 +70,12 @@ class NutriBackupService {
     'food_portions',
     'patients',
     'patient_measurements',
+    'patient_observations',
     'nutrition_targets',
     'recipes',
     'recipe_items',
     'meal_plans',
+    'patient_encounters',
     'meals',
     'meal_items',
     'professional_profile',

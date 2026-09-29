@@ -9,6 +9,12 @@ class Patient {
   final String? email;
   final String? phone;
   final String? notes;
+  final String? consultationReason;
+  final String? dietaryHistory;
+  final String? foodContext;
+  final String? reportedAllergies;
+  final String? clinicalContext;
+  final String? historySource;
   final bool isActive;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -22,6 +28,12 @@ class Patient {
     this.email,
     this.phone,
     this.notes,
+    this.consultationReason,
+    this.dietaryHistory,
+    this.foodContext,
+    this.reportedAllergies,
+    this.clinicalContext,
+    this.historySource,
     this.isActive = true,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -31,6 +43,56 @@ class Patient {
   String get displayName => [firstName, lastName]
       .where((value) => value.trim().isNotEmpty)
       .join(' ');
+}
+
+/// One dated professional note. This is not an automated diagnosis.
+class PatientEncounter {
+  final int? id;
+  final int patientId;
+  final DateTime occurredAt;
+  final String? assessment;
+  final String? nutritionProblem;
+  final String? intervention;
+  final String? monitoring;
+  final DateTime? nextReviewAt;
+  final String? informationSource;
+  final int? planId;
+
+  const PatientEncounter({
+    this.id,
+    required this.patientId,
+    required this.occurredAt,
+    this.assessment,
+    this.nutritionProblem,
+    this.intervention,
+    this.monitoring,
+    this.nextReviewAt,
+    this.informationSource,
+    this.planId,
+  });
+}
+
+/// Manually recorded indicator, with provenance and units; no interpretation.
+class PatientObservation {
+  final int? id;
+  final int patientId;
+  final DateTime observedAt;
+  final String indicator;
+  final double value;
+  final String unit;
+  final String source;
+  final String? referenceRange;
+
+  const PatientObservation({
+    this.id,
+    required this.patientId,
+    required this.observedAt,
+    required this.indicator,
+    required this.value,
+    required this.unit,
+    required this.source,
+    this.referenceRange,
+  });
 }
 
 class NutritionTarget {

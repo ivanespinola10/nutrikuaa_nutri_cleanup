@@ -1,9 +1,9 @@
 # Ficha de pacientes y privacidad — diseño para beta
 
-Estado: propuesta de producto y revisión técnica inicial; no constituye
+Estado: ficha longitudinal en implementación y revisión técnica inicial; no constituye
 validación clínica, prueba de penetración ni asesoría jurídica.
 
-## Estado comprobado en la rama de Nutri
+## Estado previo a la ficha longitudinal
 
 - La ficha guarda nombre, apellido, nacimiento, sexo opcional, contacto,
   notas libres, estado activo y objetivos de energía/macronutrientes/fibra/sodio.
@@ -43,6 +43,18 @@ deben aparecer sólo cuando la práctica profesional lo justifique. No usar
 escalas clínicas o diagnósticos automáticos sin validación y licencia.
 
 ## Modelo técnico incremental
+
+La primera entrega añade campos de evaluación inicial opcionales a patients
+y patient_encounters con fecha, evaluación, problema nutricional redactado por
+el profesional, intervención, seguimiento, próxima revisión, fuente y plan
+opcional vinculado. Los registros existentes se conservan por migración
+aditiva. Las observaciones antropométricas siguen en patient_measurements.
+Los indicadores manuales fechados con valor, unidad, rango informado y
+fuente se guardan en patient_observations, sin interpretación automática.
+El historial de consultas e indicadores entra al backup versión 3; versiones 1 y 2 se
+pueden restaurar sin consultas previas.
+
+Siguientes ampliaciones propuestas, sujetas a prueba con profesionales:
 
 1. patient_encounters: id, patient_id, date, reason, assessment,
    intervention, follow_up, plan_id opcional, created_at, updated_at.

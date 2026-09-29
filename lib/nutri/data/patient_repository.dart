@@ -77,6 +77,12 @@ class PatientRepository {
         'email': patient.email,
         'phone': patient.phone,
         'notes': patient.notes,
+        'consultation_reason': patient.consultationReason,
+        'dietary_history': patient.dietaryHistory,
+        'food_context': patient.foodContext,
+        'reported_allergies': patient.reportedAllergies,
+        'clinical_context': patient.clinicalContext,
+        'history_source': patient.historySource,
         'is_active': patient.isActive ? 1 : 0,
         'updated_at': DateTime.now().toIso8601String(),
       },
@@ -181,6 +187,105 @@ class PatientRepository {
     );
   }
 
+  Future<int> addEncounter(PatientEncounter encounter) async {
+    final db = await database.database;
+    final existing = await getById(encounter.patientId);
+    if (existing == null) throw StateError('Patient no longer exists.');
+    if (encounter.planId != null) {
+      final plans = await db.query('meal_plans',
+          columns: ['id'],
+          where: 'id = ? AND patient_id = ?',
+          whereArgs: [encounter.planId, encounter.patientId],
+          limit: 1);
+      if (plans.isEmpty) {
+        throw ArgumentError('The linked plan must belong to this patient.');
+      }
+    }
+    return db.insert('patient_encounters', {
+      'patient_id': encounter.patientId,
+      'occurred_at': encounter.occurredAt.toIso8601String(),
+      'assessment': encounter.assessment,
+      'nutrition_problem': encounter.nutritionProblem,
+      'intervention': encounter.intervention,
+      'monitoring': encounter.monitoring,
+      'next_review_at': encounter.nextReviewAt?.toIso8601String(),
+      'information_source': encounter.informationSource,
+      'plan_id': encounter.planId,
+      'created_at': DateTime.now().toUtc().toIso8601String(),
+    });
+  }
+
+  Future<List<PatientEncounter>> encountersFor(
+    int patientId, {
+    int limit = 100,
+  }) async {
+    final db = await database.database;
+    final rows = await db.query(
+      'patient_encounters',
+      where: 'patient_id = ?',
+      whereArgs: [patientId],
+      orderBy: 'occurred_at DESC, id DESC',
+      limit: limit,
+    );
+    return rows.map((row) => PatientEncounter(
+      id: row['id'] as int,
+      patientId: row['patient_id'] as int,
+      occurredAt: DateTime.parse(row['occurred_at'] as String),
+      assessment: row['assessment'] as String?,
+      nutritionProblem: row['nutrition_problem'] as String?,
+      intervention: row['intervention'] as String?,
+      monitoring: row['monitoring'] as String?,
+      nextReviewAt: row['next_review_at'] == null
+          ? null
+          : DateTime.parse(row['next_review_at'] as String),
+      informationSource: row['information_source'] as String?,
+      planId: row['plan_id'] as int?,
+    )).toList();
+  }
+
+  Future<int> addObservation(PatientObservation observation) async {
+    if (observation.indicator.trim().isEmpty ||
+        observation.unit.trim().isEmpty ||
+        observation.source.trim().isEmpty ||
+        !observation.value.isFinite) {
+      throw ArgumentError('Indicator, finite value, unit and source are required.');
+    }
+    final db = await database.database;
+    return db.insert('patient_observations', {
+      'patient_id': observation.patientId,
+      'observed_at': observation.observedAt.toIso8601String(),
+      'indicator': observation.indicator.trim(),
+      'value': observation.value,
+      'unit': observation.unit.trim(),
+      'source': observation.source.trim(),
+      'reference_range': observation.referenceRange?.trim(),
+    });
+  }
+
+  Future<List<PatientObservation>> observationsFor(
+    int patientId, {
+    int limit = 100,
+  }) async {
+    final db = await database.database;
+    final rows = await db.query(
+      'patient_observations',
+      where: 'patient_id = ?',
+      whereArgs: [patientId],
+      orderBy: 'observed_at DESC, id DESC',
+      limit: limit,
+    );
+    return rows.map((row) => PatientObservation(
+      id: row['id'] as int,
+      patientId: row['patient_id'] as int,
+      observedAt: DateTime.parse(row['observed_at'] as String),
+      indicator: row['indicator'] as String,
+      value: (row['value'] as num).toDouble(),
+      unit: row['unit'] as String,
+      source: row['source'] as String,
+      referenceRange: row['reference_range'] as String?,
+    )).toList();
+  }
+
   static PatientMeasurement _measurementFromMap(
     Map<String, Object?> row,
   ) {
@@ -192,6 +297,12 @@ class PatientRepository {
       heightCm: (row['height_cm'] as num?)?.toDouble(),
       waistCm: (row['waist_cm'] as num?)?.toDouble(),
       notes: row['notes'] as String?,
+      consultationReason: row['consultation_reason'] as String?,
+      dietaryHistory: row['dietary_history'] as String?,
+      foodContext: row['food_context'] as String?,
+      reportedAllergies: row['reported_allergies'] as String?,
+      clinicalContext: row['clinical_context'] as String?,
+      historySource: row['history_source'] as String?,
     );
   }
 
