@@ -17,6 +17,8 @@ class FoodLibraryService {
     String? servingUnit,
     String? householdMeasure,
     String? notes,
+    String? sourceName,
+    List<String> allergens = const [],
   }) {
     return database.createFood(
       Food(
@@ -24,12 +26,15 @@ class FoodLibraryService {
         brand: brand,
         countryCode: countryCode,
         sourceType: FoodSourceType.brandLabel,
-        sourceName: 'Nutrition label entered by professional',
+        sourceName: sourceName?.trim().isNotEmpty == true
+            ? sourceName!.trim()
+            : 'Nutrition label entered by professional',
         servingQuantity: servingQuantity,
         servingUnit: servingUnit,
         householdMeasure: householdMeasure,
         notes: notes,
         nutrients: nutrients,
+        allergens: allergens,
       ),
     );
   }
@@ -42,18 +47,23 @@ class FoodLibraryService {
     String? servingUnit,
     String? householdMeasure,
     String? notes,
+    String? sourceName,
+    List<String> allergens = const [],
   }) {
     return database.createFood(
       Food(
         name: name,
         countryCode: countryCode,
         sourceType: FoodSourceType.professionalCustom,
-        sourceName: 'Professional library',
+        sourceName: sourceName?.trim().isNotEmpty == true
+            ? sourceName!.trim()
+            : 'Professional library',
         servingQuantity: servingQuantity,
         servingUnit: servingUnit,
         householdMeasure: householdMeasure,
         notes: notes,
         nutrients: nutrients,
+        allergens: allergens,
       ),
     );
   }
@@ -87,6 +97,7 @@ class FoodLibraryService {
         notes: source.notes,
         nutrients: List.unmodifiable(source.nutrients),
         portions: List.unmodifiable(source.portions),
+        allergens: List.unmodifiable(source.allergens),
       ),
     );
   }

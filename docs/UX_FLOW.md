@@ -38,3 +38,16 @@ nombres regionales quedan sujetos a verificación profesional.
 4. Completar el checkout de Lemon Squeezy, la activación y las condiciones explícitas de la licencia de compra única, con una recuperación de acceso viable y sin exponer datos de pacientes.
 
 Esta mejora de interfaz no constituye una validación clínica ni una prueba de usabilidad con clientes reales.
+# Biblioteca de alimentos (beta)
+
+La sección **Pacientes** concentra el alta y los objetivos. **Planificador**
+concentra la composición y el cálculo de planes. **Biblioteca** muestra el
+catálogo oficial, la búsqueda y las fichas de alimentos propios; ya no crea
+pacientes ni planes de prueba.
+
+En **Nuevo alimento** se guardan energía y macronutrientes por 100 g, una
+referencia obligatoria y, cuando existan datos confiables, fibra, azúcares,
+micronutrientes, porción, medida casera y alérgenos declarados. Los campos
+opcionales vacíos permanecen desconocidos. Una lista de alérgenos vacía no
+significa que el alimento sea seguro para personas alérgicas. Los alimentos
+oficiales conservan sus referencias y son de solo lectura.

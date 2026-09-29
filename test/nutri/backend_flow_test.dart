@@ -308,6 +308,37 @@ void main() {
     expect(duplicated.meals.single.items, hasLength(1));
   });
 
+  test('custom micronutrients and declared allergens survive edit and backup', () async {
+    final library = FoodLibraryService();
+    final id = await library.addProfessionalFood(
+      name: 'Alimento de prueba',
+      sourceName: 'Etiqueta revisada por profesional',
+      allergens: const ['milk', 'soy'],
+      nutrients: const [
+        NutrientValue(
+          code: NutrientCodes.calcium,
+          valuePer100g: 120,
+          unit: NutrientUnit.milligram,
+        ),
+      ],
+    );
+    final saved = (await NutriDatabase.instance.getFood(id))!;
+    expect(saved.allergens, ['milk', 'soy']);
+    expect(saved.sourceName, 'Etiqueta revisada por profesional');
+    expect(saved.nutrient(NutrientCodes.calcium)?.valuePer100g, 120);
+    expect(saved.nutrient(NutrientCodes.iron), isNull);
+
+    await library.update(saved.copyWith(allergens: const ['milk']));
+    expect((await NutriDatabase.instance.getFood(id))!.allergens, ['milk']);
+
+    final backup = NutriBackupService();
+    final bytes = await backup.exportBackup();
+    await backup.restoreBackup(bytes);
+    final restored = (await library.search('Alimento de prueba')).single;
+    expect(restored.allergens, ['milk']);
+    expect(restored.nutrient(NutrientCodes.calcium)?.valuePer100g, 120);
+  });
+
   test('shopping list adds direct foods and scaled recipes across days', () async {
     final foods = FoodLibraryService();
     final rice = await foods.addProfessionalFood(

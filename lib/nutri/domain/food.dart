@@ -42,6 +42,8 @@ class Food {
   final DateTime updatedAt;
   final List<NutrientValue> nutrients;
   final List<FoodPortion> portions;
+  /// Declared by the professional; an empty list means unknown, not allergen free.
+  final List<String> allergens;
 
   Food({
     this.id,
@@ -61,6 +63,7 @@ class Food {
     DateTime? updatedAt,
     this.nutrients = const [],
     this.portions = const [],
+    this.allergens = const [],
   })  : createdAt = createdAt ?? DateTime.now(),
         updatedAt = updatedAt ?? DateTime.now();
 
@@ -106,6 +109,7 @@ class Food {
     DateTime? updatedAt,
     List<NutrientValue>? nutrients,
     List<FoodPortion>? portions,
+    List<String>? allergens,
   }) {
     return Food(
       id: id ?? this.id,
@@ -125,6 +129,7 @@ class Food {
       updatedAt: updatedAt ?? this.updatedAt,
       nutrients: nutrients ?? this.nutrients,
       portions: portions ?? this.portions,
+      allergens: allergens ?? this.allergens,
     );
   }
 }

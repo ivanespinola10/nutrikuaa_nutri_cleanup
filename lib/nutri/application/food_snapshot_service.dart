@@ -62,6 +62,7 @@ class FoodSnapshotService {
       notes: officialFood.notes,
       nutrients: List.unmodifiable(officialFood.nutrients),
       portions: List.unmodifiable(officialFood.portions),
+      allergens: List.unmodifiable(officialFood.allergens),
     );
 
     final id = await database.createFood(snapshot);

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
@@ -14,7 +16,7 @@ class NutriDatabase {
   static final NutriDatabase instance = NutriDatabase._();
 
   static const databaseName = 'nutrikuaa_nutri.db';
-  static const databaseVersion = 8;
+  static const databaseVersion = 9;
 
   Database? _database;
 
@@ -72,6 +74,7 @@ class NutriDatabase {
         serving_unit TEXT,
         household_measure TEXT,
         notes TEXT,
+        allergens_json TEXT,
         is_archived INTEGER NOT NULL DEFAULT 0,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL
@@ -358,6 +361,10 @@ class NutriDatabase {
       ''');
     }
 
+    if (oldVersion < 9) {
+      await db.execute('ALTER TABLE foods ADD COLUMN allergens_json TEXT');
+    }
+
     // Future migrations must be additive and preserve professional data.
   }
 
@@ -434,6 +441,7 @@ class NutriDatabase {
           notes: food.notes,
           nutrients: food.nutrients,
           portions: food.portions,
+          allergens: food.allergens,
         );
         final revisionId = await txn.insert('foods', _foodToMap(revision));
         for (final nutrient in revision.nutrients) {
@@ -632,6 +640,7 @@ class NutriDatabase {
       'serving_unit': _nullIfBlank(food.servingUnit),
       'household_measure': _nullIfBlank(food.householdMeasure),
       'notes': _nullIfBlank(food.notes),
+      'allergens_json': jsonEncode(food.allergens),
       'is_archived': food.isArchived ? 1 : 0,
       'created_at': food.createdAt.toIso8601String(),
       'updated_at': food.updatedAt.toIso8601String(),
@@ -728,6 +737,8 @@ class NutriDatabase {
       servingUnit: row['serving_unit'] as String?,
       householdMeasure: row['household_measure'] as String?,
       notes: row['notes'] as String?,
+      allergens: (jsonDecode((row['allergens_json'] as String?) ?? '[]') as List)
+          .cast<String>(),
       isArchived: (row['is_archived'] as int? ?? 0) == 1,
       createdAt: DateTime.parse(row['created_at'] as String),
       updatedAt: DateTime.parse(row['updated_at'] as String),

@@ -23,7 +23,7 @@ class BackupResult {
 
 class NutriBackupService {
   static const format = 'nutrikuaa-nutri-backup';
-  static const backupVersion = 1;
+  static const backupVersion = 2;
   static const encryptedFormat = 'nutrikuaa-nutri-encrypted-backup';
   static const encryptedVersion = 1;
   static const _pbkdf2Iterations = 250000;
