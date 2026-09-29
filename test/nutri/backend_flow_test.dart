@@ -362,7 +362,7 @@ void main() {
       reportedAllergies: 'Sin verificar',
       historySource: 'Declarado por paciente ficticio',
     ));
-    final secondId = await patients.create(Patient(firstName: 'Otro'));
+    final secondId = await patients.create(Patient(firstName: 'Otro', lastName: 'Prueba'));
     final planId = await MealPlanService().createPlan(
       MealPlan(patientId: firstId, name: 'Plan de prueba'),
     );
