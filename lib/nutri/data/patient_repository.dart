@@ -298,13 +298,6 @@ class PatientRepository {
       heightCm: (row['height_cm'] as num?)?.toDouble(),
       waistCm: (row['waist_cm'] as num?)?.toDouble(),
       notes: row['notes'] as String?,
-      consultationReason: row['consultation_reason'] as String?,
-      dietaryHistory: row['dietary_history'] as String?,
-      foodContext: row['food_context'] as String?,
-      reportedAllergies: row['reported_allergies'] as String?,
-      reportedIntolerances: row['reported_intolerances'] as String?,
-      clinicalContext: row['clinical_context'] as String?,
-      historySource: row['history_source'] as String?,
     );
   }
 
@@ -320,6 +313,13 @@ class PatientRepository {
       email: row['email'] as String?,
       phone: row['phone'] as String?,
       notes: row['notes'] as String?,
+      consultationReason: row['consultation_reason'] as String?,
+      dietaryHistory: row['dietary_history'] as String?,
+      foodContext: row['food_context'] as String?,
+      reportedAllergies: row['reported_allergies'] as String?,
+      reportedIntolerances: row['reported_intolerances'] as String?,
+      clinicalContext: row['clinical_context'] as String?,
+      historySource: row['history_source'] as String?,
       isActive: (row['is_active'] as int? ?? 1) == 1,
       createdAt: DateTime.parse(row['created_at'] as String),
       updatedAt: DateTime.parse(row['updated_at'] as String),
