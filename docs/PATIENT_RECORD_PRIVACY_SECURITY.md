@@ -45,7 +45,8 @@ escalas clínicas o diagnósticos automáticos sin validación y licencia.
 ## Modelo técnico incremental
 
 La primera entrega añade campos de evaluación inicial opcionales a patients
-y patient_encounters con fecha, evaluación, problema nutricional redactado por
+y separación entre alergias e intolerancias reportadas. patient_encounters
+incluye fecha, evaluación, problema nutricional redactado por
 el profesional, intervención, seguimiento, próxima revisión, fuente y plan
 opcional vinculado. Los registros existentes se conservan por migración
 aditiva. Las observaciones antropométricas siguen en patient_measurements.

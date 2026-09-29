@@ -119,6 +119,7 @@ class NutriDatabase {
         dietary_history TEXT,
         food_context TEXT,
         reported_allergies TEXT,
+        reported_intolerances TEXT,
         clinical_context TEXT,
         history_source TEXT,
         is_active INTEGER NOT NULL DEFAULT 1,
@@ -416,6 +417,7 @@ class NutriDatabase {
         'dietary_history',
         'food_context',
         'reported_allergies',
+        'reported_intolerances',
         'clinical_context',
         'history_source',
       ]) {
@@ -680,6 +682,7 @@ class NutriDatabase {
       'dietary_history': patient.dietaryHistory,
       'food_context': patient.foodContext,
       'reported_allergies': patient.reportedAllergies,
+      'reported_intolerances': patient.reportedIntolerances,
       'clinical_context': patient.clinicalContext,
       'history_source': patient.historySource,
       'is_active': patient.isActive ? 1 : 0,

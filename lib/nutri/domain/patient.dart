@@ -13,6 +13,7 @@ class Patient {
   final String? dietaryHistory;
   final String? foodContext;
   final String? reportedAllergies;
+  final String? reportedIntolerances;
   final String? clinicalContext;
   final String? historySource;
   final bool isActive;
@@ -32,6 +33,7 @@ class Patient {
     this.dietaryHistory,
     this.foodContext,
     this.reportedAllergies,
+    this.reportedIntolerances,
     this.clinicalContext,
     this.historySource,
     this.isActive = true,

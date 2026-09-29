@@ -39,6 +39,7 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
   final _dietaryHistory = TextEditingController();
   final _foodContext = TextEditingController();
   final _reportedAllergies = TextEditingController();
+  final _reportedIntolerances = TextEditingController();
   final _clinicalContext = TextEditingController();
   final _historySource = TextEditingController();
 
@@ -126,6 +127,7 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
       _dietaryHistory,
       _foodContext,
       _reportedAllergies,
+      _reportedIntolerances,
       _clinicalContext,
       _historySource,
       _encounterDate,
@@ -238,6 +240,7 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
       _dietaryHistory.clear();
       _foodContext.clear();
       _reportedAllergies.clear();
+      _reportedIntolerances.clear();
       _clinicalContext.clear();
       _historySource.clear();
       _clearEncounterDraft();
@@ -277,6 +280,7 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
       _dietaryHistory.text = patient.dietaryHistory ?? '';
       _foodContext.text = patient.foodContext ?? '';
       _reportedAllergies.text = patient.reportedAllergies ?? '';
+      _reportedIntolerances.text = patient.reportedIntolerances ?? '';
       _clinicalContext.text = patient.clinicalContext ?? '';
       _historySource.text = patient.historySource ?? '';
       _isActive = patient.isActive;
@@ -384,6 +388,7 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
       _dietaryHistory,
       _foodContext,
       _reportedAllergies,
+      _reportedIntolerances,
       _clinicalContext,
     ].any((field) => field.text.trim().isNotEmpty) &&
         _historySource.text.trim().isEmpty) {
@@ -409,6 +414,7 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
             dietaryHistory: _nullIfBlank(_dietaryHistory.text),
             foodContext: _nullIfBlank(_foodContext.text),
             reportedAllergies: _nullIfBlank(_reportedAllergies.text),
+            reportedIntolerances: _nullIfBlank(_reportedIntolerances.text),
             clinicalContext: _nullIfBlank(_clinicalContext.text),
             historySource: _nullIfBlank(_historySource.text),
             isActive: _isActive,
@@ -434,6 +440,7 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
             dietaryHistory: _nullIfBlank(_dietaryHistory.text),
             foodContext: _nullIfBlank(_foodContext.text),
             reportedAllergies: _nullIfBlank(_reportedAllergies.text),
+            reportedIntolerances: _nullIfBlank(_reportedIntolerances.text),
             clinicalContext: _nullIfBlank(_clinicalContext.text),
             historySource: _nullIfBlank(_historySource.text),
             isActive: _isActive,
@@ -922,7 +929,9 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
                 _longField(_foodContext,
                     'Preferencias, restricciones, cultura, presupuesto y acceso'),
                 _longField(_reportedAllergies,
-                    'Alergias o intolerancias reportadas y reacción'),
+                    'Alergias reportadas, reacción y confirmación'),
+                _longField(_reportedIntolerances,
+                    'Intolerancias reportadas (separadas de alergias)'),
                 _longField(_clinicalContext,
                     'Condiciones y medicación relevantes para la atención'),
                 _field(_historySource,

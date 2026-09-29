@@ -360,6 +360,7 @@ void main() {
       dietaryHistory: 'Horarios declarados',
       foodContext: 'Preferencias declaradas',
       reportedAllergies: 'Sin verificar',
+      reportedIntolerances: 'Reportada por paciente ficticio',
       historySource: 'Declarado por paciente ficticio',
     ));
     final secondId = await patients.create(Patient(firstName: 'Otro', lastName: 'Prueba'));
@@ -388,6 +389,8 @@ void main() {
     ));
     expect((await patients.getById(firstId))!.dietaryHistory,
         'Horarios declarados');
+    expect((await patients.getById(firstId))!.reportedIntolerances,
+        'Reportada por paciente ficticio');
     expect((await patients.encountersFor(firstId)).single.planId, planId);
     expect(await patients.encountersFor(secondId), isEmpty);
     expect(await patients.observationsFor(secondId), isEmpty);

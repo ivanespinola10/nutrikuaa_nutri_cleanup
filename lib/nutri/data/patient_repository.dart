@@ -81,6 +81,7 @@ class PatientRepository {
         'dietary_history': patient.dietaryHistory,
         'food_context': patient.foodContext,
         'reported_allergies': patient.reportedAllergies,
+        'reported_intolerances': patient.reportedIntolerances,
         'clinical_context': patient.clinicalContext,
         'history_source': patient.historySource,
         'is_active': patient.isActive ? 1 : 0,
@@ -301,6 +302,7 @@ class PatientRepository {
       dietaryHistory: row['dietary_history'] as String?,
       foodContext: row['food_context'] as String?,
       reportedAllergies: row['reported_allergies'] as String?,
+      reportedIntolerances: row['reported_intolerances'] as String?,
       clinicalContext: row['clinical_context'] as String?,
       historySource: row['history_source'] as String?,
     );
