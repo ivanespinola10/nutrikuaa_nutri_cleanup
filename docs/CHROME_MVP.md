@@ -14,7 +14,7 @@ después de verificar CI y la cuenta activa:
 flutter pub get
 dart run tools/setup_sqlite_web.dart
 flutter build web --release
-firebase deploy --only hosting:nutri --project nutrikuaa
+firebase deploy --only hosting:nutri --project nutrikuaa-nutri
 ~~~
 
 El target nutri está vinculado únicamente a nutrikuaa-nutri en .firebaserc.
