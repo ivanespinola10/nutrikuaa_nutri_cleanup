@@ -7,10 +7,15 @@ class TesterFirebaseOptions {
   static const contact = String.fromEnvironment('NUTRI_PRIVACY_CONTACT');
   static const projectId = 'nutrikuaa-nutri';
 
-  static bool get ready => apiKey.isNotEmpty &&
+  static bool get ready =>
+      apiKey.isNotEmpty &&
+      !apiKey.contains('REEMPLAZAR') &&
       appId.isNotEmpty &&
+      !appId.contains('REEMPLAZAR') &&
       senderId.isNotEmpty &&
-      contact.contains('@');
+      !senderId.contains('REEMPLAZAR') &&
+      contact.contains('@') &&
+      !contact.contains('ejemplo.com');
 
   static FirebaseOptions get web => const FirebaseOptions(
         apiKey: apiKey,
