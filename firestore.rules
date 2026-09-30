@@ -1,0 +1,45 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function own(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    function approved(uid) {
+      return own(uid) &&
+        exists(/databases/$(database)/documents/testers/$(uid)) &&
+        get(/databases/$(database)/documents/testers/$(uid)).data.approved == true;
+    }
+
+    match /testers/{uid} {
+      allow get: if own(uid);
+      allow list, create, update, delete: if false;
+    }
+
+    match /tester_consents/{uid}/versions/{version} {
+      allow get: if approved(uid);
+      allow create: if approved(uid) &&
+        version == 'beta-2026-09-30-v1' &&
+        request.resource.data.keys().hasAll(['email', 'version', 'acceptedAt']) &&
+        request.resource.data.keys().hasOnly(['email', 'version', 'acceptedAt']) &&
+        request.resource.data.email == request.auth.token.email &&
+        request.resource.data.version == version &&
+        request.resource.data.acceptedAt == request.time;
+      allow list, update, delete: if false;
+    }
+
+    match /tester_activity/{uid} {
+      allow get: if approved(uid);
+      allow create, update: if approved(uid) &&
+        request.resource.data.keys().hasAll(['email', 'lastSeenAt']) &&
+        request.resource.data.keys().hasOnly(['email', 'lastSeenAt']) &&
+        request.resource.data.email == request.auth.token.email &&
+        request.resource.data.lastSeenAt == request.time;
+      allow list, delete: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

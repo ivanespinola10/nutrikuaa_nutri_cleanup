@@ -8,9 +8,12 @@ import 'patient_workspace_page.dart';
 import 'recipe_editor_page.dart';
 import 'settings_workspace_page.dart';
 import 'weekly_planner_page.dart';
+import 'tester_access_gate.dart';
 
 class NutriMainShell extends StatefulWidget {
-  const NutriMainShell({super.key});
+  const NutriMainShell({super.key, this.onSignOut});
+
+  final Future<void> Function()? onSignOut;
 
   @override
   State<NutriMainShell> createState() => _NutriMainShellState();
@@ -92,6 +95,23 @@ class _NutriMainShellState extends State<NutriMainShell> {
               },
             ),
             ListTile(
+              leading: const Icon(Icons.policy_outlined),
+              title: const Text('Privacidad y condiciones'),
+              onTap: () {
+                Navigator.pop(sheetContext);
+                showTesterPolicy(context);
+              },
+            ),
+            if (widget.onSignOut != null)
+              ListTile(
+                leading: const Icon(Icons.logout),
+                title: const Text('Cerrar sesión'),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  widget.onSignOut!();
+                },
+              ),
+            ListTile(
               leading: const Icon(Icons.settings_outlined),
               title: Text(NutriI18n.t('Configuración')),
               onTap: () {
@@ -131,6 +151,13 @@ class _NutriMainShellState extends State<NutriMainShell> {
                         ),
                       ],
                     ),
+                  ),
+                  trailing: widget.onSignOut == null ? null : Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(tooltip: 'Privacidad y condiciones', icon: const Icon(Icons.policy_outlined), onPressed: () => showTesterPolicy(context)),
+                      IconButton(tooltip: 'Cerrar sesión', icon: const Icon(Icons.logout), onPressed: () => widget.onSignOut!()),
+                    ],
                   ),
                   destinations: [
                     NavigationRailDestination(
