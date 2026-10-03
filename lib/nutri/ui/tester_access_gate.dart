@@ -37,7 +37,6 @@ class _TesterAccessGateState extends State<TesterAccessGate> {
     NutriI18n.setLanguage(settings.languageCode);
     await profile.setString('nutri_tester_browser_uid', user.uid);
     await FirebaseFirestore.instance.collection('tester_activity').doc(user.uid).set({
-      'email': user.email,
       'lastSeenAt': FieldValue.serverTimestamp(),
     });
   }
@@ -261,7 +260,6 @@ class _TesterConsentPageState extends State<TesterConsentPage> {
           .collection('versions')
           .doc(TesterAccessPolicy.version)
           .set({
-        'email': widget.user.email,
         'version': TesterAccessPolicy.version,
         'acceptedAt': FieldValue.serverTimestamp(),
       });

@@ -73,6 +73,8 @@ beta. El código en la PR no cambia la web por sí solo.
 - Authentication → Users: listado de cuentas y correos. Firestore → `testers`:
   estado `approved`. `tester_consents/{uid}/versions/beta-2026-09-30-v1`:
   fecha de aceptación. `tester_activity/{uid}`: última entrada completada.
+  El correo queda en Authentication; Firestore sólo conserva UID, aprobación,
+  versión de consentimiento y marcas de tiempo.
 - Para revocar, poner `approved = false`; la sesión con conexión activa deja
   de mostrar el programa. También se puede deshabilitar la cuenta en Auth.
   Una pestaña desconectada o archivos locales del dispositivo no pueden
