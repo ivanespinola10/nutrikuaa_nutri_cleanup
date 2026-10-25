@@ -728,6 +728,7 @@ void main() {
     final history = await plans.listForPatient(patientId);
     expect(history, hasLength(1));
     expect(history.first.name, 'Patient history plan');
+    expect(await plans.countAll(), 1);
 
     await patients.deleteMeasurement(firstMeasurementId);
     final afterDelete = await patients.measurementsFor(patientId);
@@ -854,6 +855,17 @@ void main() {
 
     expect(bytes.length, greaterThan(1000));
     expect(String.fromCharCodes(bytes.take(5)), '%PDF-');
+
+    final previewBytes = await PlanPdfService().build(
+      planId: planId,
+      profile: savedProfile,
+      includeNutritionSummary: true,
+      includeRecipeInstructions: true,
+      isPreview: true,
+    );
+
+    expect(previewBytes.length, greaterThan(1000));
+    expect(previewBytes, isNot(orderedEquals(bytes)));
   });
 
   test('V0.8 backup restores portable data settings and logo', () async {

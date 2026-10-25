@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../localization/nutri_i18n.dart';
 
 import '../application/meal_plan_service.dart';
+import '../application/license_service.dart';
 import '../data/app_settings_repository.dart';
 import '../data/patient_repository.dart';
 import '../domain/app_settings.dart';
@@ -26,6 +27,7 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
   final PatientRepository _patients = PatientRepository();
   final MealPlanService _plans = MealPlanService();
   final AppSettingsRepository _settingsRepository = AppSettingsRepository();
+  final LicenseService _licenseService = LicenseService();
 
   final _firstName = TextEditingController();
   final _lastName = TextEditingController();
@@ -110,6 +112,7 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
     ]) {
       controller.dispose();
     }
+    _licenseService.close();
     super.dispose();
   }
 
@@ -292,6 +295,13 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
       int patientId;
 
       if (currentId == null) {
+        if (_patientList.isNotEmpty &&
+            !await _licenseService.isProActive()) {
+          _message(NutriI18n.t(
+            'Vista previa: máximo 1 paciente. Activa la licencia para crear más.',
+          ));
+          return;
+        }
         patientId = await _patients.create(
           Patient(
             firstName: first,

@@ -353,6 +353,12 @@ class MealPlanService {
     return rows.map(_planFromMap).toList();
   }
 
+  Future<int> countAll() async {
+    final db = await database.database;
+    final rows = await db.rawQuery('SELECT COUNT(*) AS count FROM meal_plans');
+    return rows.first['count'] as int? ?? 0;
+  }
+
   Future<int> duplicatePlan(
     int planId, {
     String? newName,

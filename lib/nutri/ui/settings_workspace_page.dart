@@ -1,8 +1,10 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../application/backup_file.dart';
+import '../application/license_service.dart';
 import '../application/nutri_backup_service.dart';
 import '../data/app_settings_repository.dart';
 import '../domain/app_settings.dart';
@@ -24,12 +26,16 @@ class SettingsWorkspacePage extends StatefulWidget {
 
 class _SettingsWorkspacePageState extends State<SettingsWorkspacePage> {
   final AppSettingsRepository _settingsRepository = AppSettingsRepository();
+  final LicenseService _licenseService = LicenseService();
   final NutriBackupService _backupService = NutriBackupService();
 
   final _country = TextEditingController(text: 'PY');
+  final _licenseKey = TextEditingController();
 
   String _languageCode = 'es';
   UnitSystem _unitSystem = UnitSystem.metric;
+  bool _licenseActive = false;
+  bool _licenseHasStoredKey = false;
   bool _encryptBackup = false;
   bool _loading = true;
   bool _busy = false;
@@ -46,17 +52,21 @@ class _SettingsWorkspacePageState extends State<SettingsWorkspacePage> {
   @override
   void dispose() {
     _country.dispose();
+    _licenseKey.dispose();
     super.dispose();
   }
 
   Future<void> _loadSettings() async {
     try {
       final settings = await _settingsRepository.load();
+      final licenseStatus = await _licenseService.status();
       if (!mounted) return;
       setState(() {
         _languageCode = settings.languageCode;
         _country.text = settings.countryCode;
         _unitSystem = settings.unitSystem;
+        _licenseActive = licenseStatus.isActive;
+        _licenseHasStoredKey = licenseStatus.hasStoredKey;
         _loading = false;
       });
     } catch (error) {
@@ -67,6 +77,58 @@ class _SettingsWorkspacePageState extends State<SettingsWorkspacePage> {
         });
       }
     }
+  }
+
+  Future<void> _openCheckout() async {
+    await _execute(() async {
+      final opened = await launchUrl(
+        Uri.parse(LicenseService.checkoutUrl),
+        mode: LaunchMode.externalApplication,
+      );
+      if (!opened) {
+        throw const LicenseException(
+          'Could not open the Lemon Squeezy checkout.',
+        );
+      }
+    });
+  }
+
+  Future<void> _activateLicense() async {
+    await _execute(() async {
+      await _licenseService.activate(_licenseKey.text);
+      if (!mounted) return;
+      setState(() {
+        _licenseActive = true;
+        _licenseHasStoredKey = true;
+        _licenseKey.clear();
+      });
+      _message(_t('Licencia activada.'));
+    });
+  }
+
+  Future<void> _validateLicense() async {
+    await _execute(() async {
+      final isValid = await _licenseService.validate();
+      if (!mounted) return;
+      setState(() => _licenseActive = isValid);
+      _message(
+        isValid
+            ? _t('Licencia válida.')
+            : _t('La licencia no es válida o fue desactivada.'),
+      );
+    });
+  }
+
+  Future<void> _deactivateLicense() async {
+    await _execute(() async {
+      await _licenseService.deactivate();
+      if (!mounted) return;
+      setState(() {
+        _licenseActive = false;
+        _licenseHasStoredKey = false;
+      });
+      _message(_t('Licencia desactivada en este navegador.'));
+    });
   }
 
   Future<void> _saveSettings() async {
@@ -387,6 +449,8 @@ class _SettingsWorkspacePageState extends State<SettingsWorkspacePage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      _licenseCard(),
+                      const SizedBox(height: 14),
                       _regionalCard(),
                       const SizedBox(height: 14),
                       _backupCard(),
@@ -404,6 +468,81 @@ class _SettingsWorkspacePageState extends State<SettingsWorkspacePage> {
                 ),
               ),
             ),
+    );
+  }
+
+  Widget _licenseCard() {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              _t('Licencia profesional'),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              _licenseActive
+                  ? _t('Licencia activada en este navegador.')
+                  : _t('Activa tu compra para registrar este navegador.'),
+            ),
+            const SizedBox(height: 12),
+            if (!_licenseActive) ...[
+              TextField(
+                controller: _licenseKey,
+                enabled: !_busy,
+                textCapitalization: TextCapitalization.characters,
+                decoration: InputDecoration(labelText: _t('Clave de licencia')),
+              ),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  FilledButton.icon(
+                    onPressed: _busy ? null : _activateLicense,
+                    icon: const Icon(Icons.key_outlined),
+                    label: Text(_t('Activar licencia')),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: _busy ? null : _openCheckout,
+                    icon: const Icon(Icons.open_in_new),
+                    label: Text(_t('Comprar licencia')),
+                  ),
+                ],
+              ),
+            ] else ...[
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: _busy ? null : _validateLicense,
+                    icon: const Icon(Icons.verified_outlined),
+                    label: Text(_t('Validar licencia')),
+                  ),
+                  TextButton.icon(
+                    onPressed: _busy ? null : _deactivateLicense,
+                    icon: const Icon(Icons.logout),
+                    label: Text(_t('Desactivar en este navegador')),
+                  ),
+                ],
+              ),
+            ],
+            if (!_licenseActive && _licenseHasStoredKey) ...[
+              const SizedBox(height: 8),
+              Text(
+                _t(
+                  'Hay una clave guardada. Actívala de nuevo para verificarla.',
+                ),
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
+          ],
+        ),
+      ),
     );
   }
 

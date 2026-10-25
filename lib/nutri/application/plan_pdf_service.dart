@@ -42,6 +42,7 @@ class PlanPdfService {
     bool includeNutritionSummary = true,
     bool includeRecipeInstructions = true,
     AppSettings settings = const AppSettings(),
+    bool isPreview = false,
   }) async {
     final details = await plans.getById(planId);
     if (details == null) {
@@ -82,11 +83,33 @@ class PlanPdfService {
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
         margin: const pw.EdgeInsets.fromLTRB(34, 34, 34, 42),
-        header: (context) => _header(
-          profile: profile,
-          logo: logo,
-          primary: primary,
-          labels: labels,
+        header: (context) => pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            if (isPreview)
+              pw.Container(
+                width: double.infinity,
+                margin: const pw.EdgeInsets.only(bottom: 6),
+                padding: const pw.EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 4,
+                ),
+                color: PdfColors.orange100,
+                child: pw.Text(
+                  labels.previewWatermark,
+                  style: const pw.TextStyle(
+                    fontSize: 8,
+                    color: PdfColors.deepOrange800,
+                  ),
+                ),
+              ),
+            _header(
+              profile: profile,
+              logo: logo,
+              primary: primary,
+              labels: labels,
+            ),
+          ],
         ),
         footer: (context) => _footer(
           context,
@@ -936,6 +959,11 @@ class _PdfLabels {
 
   String get page => _t(es: 'Página', en: 'Page', pt: 'Página');
   String get ofWord => _t(es: 'de', en: 'of', pt: 'de');
+  String get previewWatermark => _t(
+        es: 'VISTA PREVIA - ACTIVA TU LICENCIA PARA COMPARTIR ESTE PLAN',
+        en: 'PREVIEW - ACTIVATE YOUR LICENSE BEFORE SHARING THIS PLAN',
+        pt: 'PREVIA - ATIVE SUA LICENCA ANTES DE COMPARTILHAR ESTE PLANO',
+      );
 
   String nutrient(String code) {
     switch (code) {

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../localization/nutri_i18n.dart';
 
 import '../application/food_placement_service.dart';
+import '../application/license_service.dart';
 import '../application/meal_plan_service.dart';
 import '../application/plan_nutrition_service.dart';
 import '../application/portion_converter.dart';
@@ -48,6 +49,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
   ];
 
   final PatientRepository _patients = PatientRepository();
+  final LicenseService _licenseService = LicenseService();
   final MealPlanService _plans = MealPlanService();
   final PlanNutritionService _nutrition = PlanNutritionService();
   final UnifiedFoodSearchService _foodSearch = UnifiedFoodSearchService();
@@ -105,6 +107,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
     _grams.dispose();
     _servings.dispose();
     _portionAmount.dispose();
+    _licenseService.close();
     super.dispose();
   }
 
@@ -214,6 +217,14 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
     }
 
     await _execute(() async {
+      if (await _plans.countAll() > 0 &&
+          !await _licenseService.isProActive()) {
+        _message(NutriI18n.t(
+          'Vista previa: máximo 1 plan. Activa la licencia para crear más.',
+        ));
+        return;
+      }
+
       final now = DateTime.now();
       final day = DateTime(now.year, now.month, now.day);
       final monday = day.subtract(Duration(days: day.weekday - 1));
@@ -562,6 +573,14 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
       final newEnd = newStart.add(const Duration(days: 6));
       final name =
           'Semana ${_two(newStart.day)}/${_two(newStart.month)}/${newStart.year}';
+
+      if (await _plans.countAll() > 0 &&
+          !await _licenseService.isProActive()) {
+        _message(NutriI18n.t(
+          'Vista previa: máximo 1 plan. Activa la licencia para crear más.',
+        ));
+        return;
+      }
 
       final newPlanId = await _plans.duplicatePlan(
         planId,

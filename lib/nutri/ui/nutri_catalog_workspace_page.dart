@@ -4,6 +4,7 @@ import '../localization/nutri_i18n.dart';
 
 import '../application/food_library_service.dart';
 import '../application/food_placement_service.dart';
+import '../application/license_service.dart';
 import '../application/meal_plan_service.dart';
 import '../application/plan_nutrition_service.dart';
 import '../application/unified_food_search_service.dart';
@@ -32,6 +33,7 @@ class _NutriCatalogWorkspacePageState
   final FoodLibraryService _foods = FoodLibraryService();
   final UnifiedFoodSearchService _search = UnifiedFoodSearchService();
   final OfficialFoodCatalog _officialCatalog = OfficialFoodCatalog();
+  final LicenseService _licenseService = LicenseService();
   final MealPlanService _plans = MealPlanService();
   final FoodPlacementService _placement = FoodPlacementService();
   final PlanNutritionService _nutrition = PlanNutritionService();
@@ -99,6 +101,7 @@ class _NutriCatalogWorkspacePageState
     ]) {
       controller.dispose();
     }
+    _licenseService.close();
     super.dispose();
   }
 
@@ -197,6 +200,14 @@ class _NutriCatalogWorkspacePageState
     }
 
     await _execute(() async {
+      if (_patientList.isNotEmpty &&
+          !await _licenseService.isProActive()) {
+        _message(NutriI18n.t(
+          'Vista previa: máximo 1 paciente. Activa la licencia para crear más.',
+        ));
+        return;
+      }
+
       final id = await _patients.create(
         Patient(
           firstName: first,
@@ -347,6 +358,14 @@ class _NutriCatalogWorkspacePageState
     }
 
     await _execute(() async {
+      if (await _plans.countAll() > 0 &&
+          !await _licenseService.isProActive()) {
+        _message(NutriI18n.t(
+          'Vista previa: máximo 1 plan. Activa la licencia para crear más.',
+        ));
+        return;
+      }
+
       final planId = await _plans.createPlan(
         MealPlan(
           patientId: patientId,

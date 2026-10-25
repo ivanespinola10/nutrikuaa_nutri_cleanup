@@ -77,6 +77,28 @@ Fake/sample catalog records are allowed in automated tests only.
 A development fixture must never be published as an official NutriKuaa food
 catalog.
 
+## Web license test (Lemon Squeezy test mode)
+
+1. Open **Settings → Professional license** and use **Buy license** to open
+   the configured Lemon Squeezy checkout.
+2. Complete a test-mode purchase and copy the generated license key from the
+   test order.
+3. Return to Nutrikuaa, enter the key and choose **Activate license**.
+4. Confirm the license status changes to active.
+5. Reload the browser and use **Validate license** to confirm the saved
+   activation is still valid.
+6. Choose **Deactivate in this browser** and confirm the activation is removed.
+
+Without an active license, the preview allows up to one patient, one plan and
+one recipe. Existing records can still be edited, and generated PDFs include a
+preview notice. Activating a valid license removes these limits and the PDF
+notice.
+
+7. With no active license, verify a second patient, plan or recipe is blocked,
+   while editing the existing records remains available.
+8. Generate a PDF without a license and confirm the preview notice appears;
+   activate the license and generate another PDF to confirm it is removed.
+
 ## Next phase after this milestone
 
 Once this backend milestone is green:

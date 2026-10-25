@@ -9,6 +9,7 @@ import 'package:pdf/pdf.dart';
 import 'package:printing/printing.dart';
 
 import '../application/meal_plan_service.dart';
+import '../application/license_service.dart';
 import '../application/plan_pdf_service.dart';
 import '../data/app_settings_repository.dart';
 import '../data/patient_repository.dart';
@@ -33,6 +34,7 @@ class DocumentWorkspacePage extends StatefulWidget {
 class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
   final PatientRepository _patients = PatientRepository();
   final MealPlanService _plans = MealPlanService();
+  final LicenseService _licenseService = LicenseService();
   final ProfessionalProfileRepository _profileRepository =
       ProfessionalProfileRepository();
   final AppSettingsRepository _settingsRepository = AppSettingsRepository();
@@ -90,6 +92,7 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
     ]) {
       controller.dispose();
     }
+    _licenseService.close();
     super.dispose();
   }
 
@@ -272,6 +275,7 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
     await _execute(() async {
       final profile = _profileFromForm();
       await _profileRepository.save(profile);
+      final isLicensed = await _licenseService.isProActive();
 
       final bytes = await _pdfService.build(
         planId: planId,
@@ -280,6 +284,7 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
         includeNutritionSummary: _includeNutrition,
         includeRecipeInstructions: _includeRecipeInstructions,
         settings: _settings,
+        isPreview: !isLicensed,
       );
 
       if (!mounted) return;

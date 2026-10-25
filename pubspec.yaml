@@ -9,6 +9,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  http: ^1.6.0
   
   # --- ALMACENAMIENTO LOCAL ---
   shared_preferences: ^2.2.2

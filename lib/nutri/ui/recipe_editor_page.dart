@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../localization/nutri_i18n.dart';
 
 import '../application/food_placement_service.dart';
+import '../application/license_service.dart';
 import '../application/nutrition_calculator.dart';
 import '../application/recipe_service.dart';
 import '../application/unified_food_search_service.dart';
@@ -29,6 +30,7 @@ class _DraftIngredient {
 
 class _RecipeEditorPageState extends State<RecipeEditorPage> {
   final RecipeService _recipes = RecipeService();
+  final LicenseService _licenseService = LicenseService();
   final UnifiedFoodSearchService _search = UnifiedFoodSearchService();
   final FoodPlacementService _placement = FoodPlacementService();
 
@@ -69,6 +71,7 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
     ]) {
       controller.dispose();
     }
+    _licenseService.close();
     super.dispose();
   }
 
@@ -278,6 +281,13 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
       int recipeId;
 
       if (currentId == null) {
+        if (_recipeList.isNotEmpty &&
+            !await _licenseService.isProActive()) {
+          _message(NutriI18n.t(
+            'Vista previa: máximo 1 receta. Activa la licencia para crear más.',
+          ));
+          return;
+        }
         recipeId = await _recipes.create(
           Recipe(
             name: name,
@@ -325,6 +335,14 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
     if (id == null) return;
 
     await _execute(() async {
+      if (_recipeList.isNotEmpty &&
+          !await _licenseService.isProActive()) {
+        _message(NutriI18n.t(
+          'Vista previa: máximo 1 receta. Activa la licencia para crear más.',
+        ));
+        return;
+      }
+
       final newId = await _recipes.duplicate(
         id,
         newName: '${_name.text.trim()} ${_copySuffix()}',
