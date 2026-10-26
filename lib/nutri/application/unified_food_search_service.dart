@@ -7,17 +7,11 @@ class FoodSearchResults {
   final List<Food> professional;
   final List<Food> official;
 
-  const FoodSearchResults({
-    required this.professional,
-    required this.official,
-  });
+  const FoodSearchResults({required this.professional, required this.official});
 
   bool get isEmpty => professional.isEmpty && official.isEmpty;
 
-  List<Food> get combined => [
-        ...professional,
-        ...official,
-      ];
+  List<Food> get combined => [...professional, ...official];
 }
 
 class UnifiedFoodSearchService {
@@ -27,25 +21,29 @@ class UnifiedFoodSearchService {
   UnifiedFoodSearchService({
     NutriDatabase? privateDatabase,
     OfficialFoodCatalog? officialCatalog,
-  })  : privateDatabase = privateDatabase ?? NutriDatabase.instance,
-        officialCatalog = officialCatalog ?? OfficialFoodCatalog();
+  }) : privateDatabase = privateDatabase ?? NutriDatabase.instance,
+       officialCatalog = officialCatalog ?? OfficialFoodCatalog();
 
   Future<FoodSearchResults> search(
     String query, {
     String? countryCode,
     int professionalLimit = 20,
     int officialLimit = 50,
+    bool includeProfessional = true,
+    bool includeOfficial = true,
   }) async {
-    final officialQuery =
-        OfficialFoodSearchAliases.forOfficialCatalog(query);
+    final officialQuery = OfficialFoodSearchAliases.forOfficialCatalog(query);
 
-    final professional = await privateDatabase.searchFoods(
-      query,
-      countryCode: countryCode,
-      limit: professionalLimit,
-    );
+    final professional = includeProfessional
+        ? await privateDatabase.searchFoods(
+            query,
+            countryCode: countryCode,
+            limit: professionalLimit,
+          )
+        : <Food>[];
 
-    if (officialQuery.toLowerCase() != query.trim().toLowerCase()) {
+    if (includeProfessional &&
+        officialQuery.toLowerCase() != query.trim().toLowerCase()) {
       final translatedProfessional = await privateDatabase.searchFoods(
         officialQuery,
         countryCode: countryCode,
@@ -61,14 +59,16 @@ class UnifiedFoodSearchService {
       }
     }
 
-    List<Food> official;
-    try {
-      official = await officialCatalog.search(
-        officialQuery,
-        limit: officialLimit,
-      );
-    } catch (_) {
-      official = const [];
+    List<Food> official = <Food>[];
+    if (includeOfficial) {
+      try {
+        official = await officialCatalog.search(
+          officialQuery,
+          limit: officialLimit,
+        );
+      } catch (_) {
+        official = const [];
+      }
     }
 
     final snapshotKeys = professional
@@ -77,17 +77,12 @@ class UnifiedFoodSearchService {
         .whereType<String>()
         .toSet();
 
-    official = official
-        .where((food) {
-          final key = _sourceKey(food);
-          return key == null || !snapshotKeys.contains(key);
-        })
-        .toList();
+    official = official.where((food) {
+      final key = _sourceKey(food);
+      return key == null || !snapshotKeys.contains(key);
+    }).toList();
 
-    return FoodSearchResults(
-      professional: professional,
-      official: official,
-    );
+    return FoodSearchResults(professional: professional, official: official);
   }
 
   static String? _sourceKey(Food food) {
@@ -95,10 +90,6 @@ class UnifiedFoodSearchService {
     final sourceFoodId = food.sourceFoodId;
     if (sourceName == null || sourceFoodId == null) return null;
 
-    return [
-      sourceName,
-      sourceFoodId,
-      food.sourceRelease ?? '',
-    ].join('|');
+    return [sourceName, sourceFoodId, food.sourceRelease ?? ''].join('|');
   }
 }

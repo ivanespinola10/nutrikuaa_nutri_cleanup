@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../localization/nutri_i18n.dart';
 
 import 'document_workspace_page.dart';
-import 'nutri_catalog_workspace_page.dart';
+import 'library_workspace_page.dart';
 import 'patient_workspace_page.dart';
 import 'recipe_editor_page.dart';
 import 'settings_workspace_page.dart';
@@ -152,13 +152,23 @@ class _NutriMainShellState extends State<NutriMainShell> {
                       ],
                     ),
                   ),
-                  trailing: widget.onSignOut == null ? null : Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(tooltip: 'Privacidad y condiciones', icon: const Icon(Icons.policy_outlined), onPressed: () => showTesterPolicy(context)),
-                      IconButton(tooltip: 'Cerrar sesión', icon: const Icon(Icons.logout), onPressed: () => widget.onSignOut!()),
-                    ],
-                  ),
+                  trailing: widget.onSignOut == null
+                      ? null
+                      : Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              tooltip: 'Privacidad y condiciones',
+                              icon: const Icon(Icons.policy_outlined),
+                              onPressed: () => showTesterPolicy(context),
+                            ),
+                            IconButton(
+                              tooltip: 'Cerrar sesión',
+                              icon: const Icon(Icons.logout),
+                              onPressed: () => widget.onSignOut!(),
+                            ),
+                          ],
+                        ),
                   destinations: [
                     NavigationRailDestination(
                       icon: const Icon(Icons.calendar_view_week_outlined),
@@ -210,9 +220,7 @@ class _NutriMainShellState extends State<NutriMainShell> {
                         refreshToken: _patientRefreshToken,
                         onPlanForPatient: _planForPatient,
                       ),
-                      RecipeEditorPage(
-                        key: ValueKey('recipes-$_dataEpoch'),
-                      ),
+                      RecipeEditorPage(key: ValueKey('recipes-$_dataEpoch')),
                       DocumentWorkspacePage(
                         key: ValueKey('documents-$_dataEpoch'),
                         refreshToken: _documentRefreshToken,
@@ -220,7 +228,7 @@ class _NutriMainShellState extends State<NutriMainShell> {
                         preferredPlanId: _documentPlanId,
                         onEditPlan: _editDocumentPlan,
                       ),
-                      NutriCatalogWorkspacePage(
+                      LibraryWorkspacePage(
                         key: ValueKey('library-$_dataEpoch'),
                       ),
                       SettingsWorkspacePage(
@@ -252,9 +260,7 @@ class _NutriMainShellState extends State<NutriMainShell> {
                 refreshToken: _patientRefreshToken,
                 onPlanForPatient: _planForPatient,
               ),
-              RecipeEditorPage(
-                key: ValueKey('recipes-$_dataEpoch'),
-              ),
+              RecipeEditorPage(key: ValueKey('recipes-$_dataEpoch')),
               DocumentWorkspacePage(
                 key: ValueKey('documents-$_dataEpoch'),
                 refreshToken: _documentRefreshToken,
@@ -262,9 +268,7 @@ class _NutriMainShellState extends State<NutriMainShell> {
                 preferredPlanId: _documentPlanId,
                 onEditPlan: _editDocumentPlan,
               ),
-              NutriCatalogWorkspacePage(
-                key: ValueKey('library-$_dataEpoch'),
-              ),
+              LibraryWorkspacePage(key: ValueKey('library-$_dataEpoch')),
               SettingsWorkspacePage(
                 onDataRestored: _handleDataRestored,
                 onSettingsChanged: _handleSettingsChanged,

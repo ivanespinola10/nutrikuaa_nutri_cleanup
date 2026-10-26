@@ -11,7 +11,9 @@ import '../domain/nutrition/nutrient.dart';
 import '../domain/recipe.dart';
 
 class RecipeEditorPage extends StatefulWidget {
-  const RecipeEditorPage({super.key});
+  final bool embedded;
+
+  const RecipeEditorPage({super.key, this.embedded = false});
 
   @override
   State<RecipeEditorPage> createState() => _RecipeEditorPageState();
@@ -21,10 +23,7 @@ class _DraftIngredient {
   final Food food;
   double grams;
 
-  _DraftIngredient({
-    required this.food,
-    required this.grams,
-  });
+  _DraftIngredient({required this.food, required this.grams});
 }
 
 class _RecipeEditorPageState extends State<RecipeEditorPage> {
@@ -41,8 +40,10 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
   final _ingredientGrams = TextEditingController(text: '100');
 
   List<Recipe> _recipeList = const [];
-  FoodSearchResults _foodResults =
-      const FoodSearchResults(professional: [], official: []);
+  FoodSearchResults _foodResults = const FoodSearchResults(
+    professional: [],
+    official: [],
+  );
   final List<_DraftIngredient> _ingredients = [];
 
   int? _editingRecipeId;
@@ -105,8 +106,7 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
       _notes.clear();
       _foodQuery.clear();
       _ingredientGrams.text = '100';
-      _foodResults =
-          const FoodSearchResults(professional: [], official: []);
+      _foodResults = const FoodSearchResults(professional: [], official: []);
       _ingredients.clear();
       _error = null;
     });
@@ -120,12 +120,7 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
     for (final item in details.items) {
       final food = await _recipes.database.getFood(item.foodId);
       if (food != null) {
-        draft.add(
-          _DraftIngredient(
-            food: food,
-            grams: item.quantityGrams,
-          ),
-        );
+        draft.add(_DraftIngredient(food: food, grams: item.quantityGrams));
       }
     }
 
@@ -172,12 +167,7 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
         if (existingIndex >= 0) {
           _ingredients[existingIndex].grams += grams;
         } else {
-          _ingredients.add(
-            _DraftIngredient(
-              food: resolved,
-              grams: grams,
-            ),
-          );
+          _ingredients.add(_DraftIngredient(food: resolved, grams: grams));
         }
       });
 
@@ -199,7 +189,9 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
           controller: controller,
           autofocus: true,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          decoration: InputDecoration(labelText: NutriI18n.t('Cantidad en gramos')),
+          decoration: InputDecoration(
+            labelText: NutriI18n.t('Cantidad en gramos'),
+          ),
         ),
         actions: [
           TextButton(
@@ -225,11 +217,9 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
   NutritionTotals get _totalNutrition {
     var total = const NutritionTotals(<String, double>{});
     for (final ingredient in _ingredients) {
-      total = total +
-          NutritionCalculator.forFood(
-            ingredient.food,
-            ingredient.grams,
-          );
+      total =
+          total +
+          NutritionCalculator.forFood(ingredient.food, ingredient.grams);
     }
     return total;
   }
@@ -314,9 +304,11 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
       }
 
       await _refreshRecipes(selectId: recipeId);
-      _message(currentId == null
-          ? NutriI18n.t('Receta creada.')
-          : NutriI18n.t('Receta actualizada.'));
+      _message(
+        currentId == null
+            ? NutriI18n.t('Receta creada.')
+            : NutriI18n.t('Receta actualizada.'),
+      );
     });
   }
 
@@ -342,7 +334,10 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(NutriI18n.t('Eliminar receta')),
-        content: Text(NutriI18n.t('La receta se eliminará si todavía no está utilizada en un plan.'),
+        content: Text(
+          NutriI18n.t(
+            'La receta se eliminará si todavía no está utilizada en un plan.',
+          ),
         ),
         actions: [
           TextButton(
@@ -392,10 +387,29 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
 
   @override
   Widget build(BuildContext context) {
+    final body = _loading
+        ? const Center(child: CircularProgressIndicator())
+        : LayoutBuilder(
+            builder: (context, constraints) {
+              if (constraints.maxWidth >= 980) {
+                return Row(
+                  children: [
+                    SizedBox(width: 300, child: _recipeSidebar()),
+                    const VerticalDivider(width: 1),
+                    Expanded(child: _editor()),
+                  ],
+                );
+              }
+              return _editor(includeRecipeList: true);
+            },
+          );
+
+    if (widget.embedded) return body;
     return Scaffold(
       appBar: AppBar(
-        title: Text(NutriI18n.t('Recetas'),
-          style: TextStyle(fontWeight: FontWeight.w700),
+        title: Text(
+          NutriI18n.t('Recetas'),
+          style: const TextStyle(fontWeight: FontWeight.w700),
         ),
         actions: const [
           Padding(
@@ -404,22 +418,7 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
           ),
         ],
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : LayoutBuilder(
-              builder: (context, constraints) {
-                if (constraints.maxWidth >= 980) {
-                  return Row(
-                    children: [
-                      SizedBox(width: 300, child: _recipeSidebar()),
-                      const VerticalDivider(width: 1),
-                      Expanded(child: _editor()),
-                    ],
-                  );
-                }
-                return _editor(includeRecipeList: true);
-              },
-            ),
+      body: body,
     );
   }
 
@@ -448,9 +447,7 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
                       selected: recipe.id == _editingRecipeId,
                       leading: const Icon(Icons.restaurant_menu),
                       title: Text(recipe.name),
-                      subtitle: Text(
-                        _servingsText(recipe.servings),
-                      ),
+                      subtitle: Text(_servingsText(recipe.servings)),
                       onTap: () => _loadRecipe(recipe.id!),
                     );
                   },
@@ -484,9 +481,7 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
                 const SizedBox(height: 12),
                 SelectableText(
                   _error!,
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.error,
-                  ),
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
                 ),
               ],
             ],
@@ -558,8 +553,9 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
                 Expanded(
                   child: TextField(
                     controller: _servings,
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                     decoration: InputDecoration(
                       labelText: NutriI18n.t('Porciones que rinde'),
                     ),
@@ -570,8 +566,9 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
                 Expanded(
                   child: TextField(
                     controller: _yieldGrams,
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                     decoration: InputDecoration(
                       labelText: NutriI18n.t('Rendimiento final g (opcional)'),
                       helperText: _ingredientWeight > 0
@@ -632,7 +629,8 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(NutriI18n.t('Agregar ingredientes'),
+            Text(
+              NutriI18n.t('Agregar ingredientes'),
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 10),
@@ -654,9 +652,12 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
                   width: 125,
                   child: TextField(
                     controller: _ingredientGrams,
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
-                    decoration: InputDecoration(labelText: NutriI18n.t('Gramos')),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    decoration: InputDecoration(
+                      labelText: NutriI18n.t('Gramos'),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -686,9 +687,7 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
             : Icons.inventory_2_outlined,
       ),
       title: Text(
-        food.brand == null
-            ? food.name
-            : '${food.name} · ${food.brand}',
+        food.brand == null ? food.name : '${food.name} · ${food.brand}',
       ),
       subtitle: Text(
         food.sourceType == FoodSourceType.officialDatabase
@@ -711,10 +710,7 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
           children: [
             Text(
               _ingredientsCountText(_ingredients.length),
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-              ),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 8),
             if (_ingredients.isEmpty)
@@ -749,8 +745,8 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
                         onPressed: _busy
                             ? null
                             : () => setState(
-                                  () => _ingredients.remove(ingredient),
-                                ),
+                                () => _ingredients.remove(ingredient),
+                              ),
                         icon: const Icon(Icons.delete_outline),
                       ),
                     ],
@@ -774,7 +770,8 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(NutriI18n.t('Nutrición calculada'),
+            Text(
+              NutriI18n.t('Nutrición calculada'),
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 4),
@@ -890,10 +887,7 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
           const SizedBox(height: 4),
           Text(
             _perServingText(perServing, unit),
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-            ),
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
           ),
           Text(
             _totalText(total, unit),

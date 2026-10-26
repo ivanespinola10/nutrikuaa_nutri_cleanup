@@ -5,6 +5,7 @@ import '../localization/nutri_i18n.dart';
 
 import '../application/food_placement_service.dart';
 import '../application/meal_plan_service.dart';
+import '../application/offline_plan_assistant_service.dart';
 import '../application/plan_nutrition_service.dart';
 import '../application/portion_converter.dart';
 import '../application/recipe_service.dart';
@@ -17,6 +18,7 @@ import '../domain/meal_plan.dart';
 import '../domain/nutrition/nutrient.dart';
 import '../domain/patient.dart';
 import '../domain/recipe.dart';
+import 'offline_plan_assistant_sheet.dart';
 
 class WeeklyPlannerPage extends StatefulWidget {
   final int refreshToken;
@@ -75,8 +77,10 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
   List<NutritionTarget> _targets = const [];
   MealPlanDetails? _details;
   PlanNutritionSummary? _summary;
-  FoodSearchResults _foodResults =
-      const FoodSearchResults(professional: [], official: []);
+  FoodSearchResults _foodResults = const FoodSearchResults(
+    professional: [],
+    official: [],
+  );
   List<Recipe> _recipeResults = const [];
 
   final Map<int, String> _itemLabels = {};
@@ -175,7 +179,9 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
     final candidatePlanId = preferredPlanId ?? _selectedPlanId;
     final selectedPlanId = plans.any((plan) => plan.id == candidatePlanId)
         ? candidatePlanId
-        : plans.isEmpty ? null : plans.first.id;
+        : plans.isEmpty
+        ? null
+        : plans.first.id;
 
     if (!mounted) return;
     setState(() {
@@ -209,8 +215,8 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
           labels[itemId] = food == null
               ? NutriI18n.t('Alimentos')
               : food.brand == null
-                  ? food.name
-                  : '${food.name} · ${food.brand}';
+              ? food.name
+              : '${food.name} · ${food.brand}';
         } else {
           final recipe = await _recipes.getById(item.recipeId!);
           labels[itemId] = recipe?.recipe.name ?? NutriI18n.t('Receta');
@@ -317,8 +323,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
     setState(() {
       _selectedFood = food;
       _portionOptions = List.unmodifiable(portions);
-      _selectedPortion =
-          _portionOptions.isEmpty ? null : _portionOptions.first;
+      _selectedPortion = _portionOptions.isEmpty ? null : _portionOptions.first;
       _usePortion = false;
     });
   }
@@ -407,9 +412,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
         ? item.quantityGrams ?? 0
         : item.servings ?? 1;
     final controller = TextEditingController(
-      text: initial.toStringAsFixed(
-        item.itemType == MealItemType.food ? 0 : 1,
-      ),
+      text: initial.toStringAsFixed(item.itemType == MealItemType.food ? 0 : 1),
     );
 
     final value = await showDialog<double>(
@@ -514,9 +517,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(NutriI18n.t('Vaciar comida')),
-        content: Text(
-          _clearMealQuestion(meal.meal.name),
-        ),
+        content: Text(_clearMealQuestion(meal.meal.name)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -567,9 +568,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
         replaceTarget: true,
       );
       await _loadPlan(planId);
-      _message(
-        _copiedDayMessage(_selectedDay, targetDay),
-      );
+      _message(_copiedDayMessage(_selectedDay, targetDay));
     });
   }
 
@@ -652,6 +651,80 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
     }
   }
 
+  Future<void> _showOfflineAssistant() async {
+    final planId = _selectedPlanId;
+    if (planId == null) {
+      _message('Crea o selecciona una semana antes de prearmar el plan.');
+      return;
+    }
+
+    final energyTarget = _target(NutrientCodes.energyKcal);
+    final proteinTarget = _target(NutrientCodes.protein);
+    final applied = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (context) => OfflinePlanAssistantSheet(
+        dayLabel: _dayLabel(_selectedDay),
+        targetKcal: energyTarget > 0 ? energyTarget : null,
+        targetProteinGrams: proteinTarget > 0 ? proteinTarget : null,
+        onApply: _applyOfflineAssistantDraft,
+      ),
+    );
+
+    if (applied == true && mounted) {
+      await _loadPlan(planId);
+      _message(
+        'Borrador aplicado a ${_dayLabel(_selectedDay)}. Revisa y ajusta antes de entregar.',
+      );
+    }
+  }
+
+  Future<void> _applyOfflineAssistantDraft(OfflinePlanDraft draft) async {
+    final planId = _selectedPlanId;
+    if (planId == null) {
+      throw StateError('No hay una semana seleccionada.');
+    }
+    if (_busy) {
+      throw StateError('El planificador está ocupado. Intenta nuevamente.');
+    }
+
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+
+    try {
+      for (var mealIndex = 0; mealIndex < draft.meals.length; mealIndex++) {
+        final meal = draft.meals[mealIndex];
+        final sortOrder = _mealNames.indexOf(meal.name);
+        final mealId = await _plans.getOrCreateMeal(
+          planId: planId,
+          dayIndex: _selectedDay,
+          name: meal.name,
+          sortOrder: sortOrder < 0 ? mealIndex : sortOrder,
+        );
+        await _plans.clearMeal(mealId);
+
+        for (var itemIndex = 0; itemIndex < meal.items.length; itemIndex++) {
+          final item = meal.items[itemIndex];
+          await _placement.addSelectedFoodToMeal(
+            mealId: mealId,
+            selectedFood: item.food,
+            quantityGrams: item.grams,
+            notes: 'Borrador Nutri IA offline · revisar profesionalmente',
+            sortOrder: itemIndex,
+          );
+        }
+      }
+    } catch (error) {
+      if (mounted) setState(() => _error = error.toString());
+      rethrow;
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
   Future<void> _showShoppingList() async {
     final planId = _selectedPlanId;
     if (planId == null) return;
@@ -662,10 +735,12 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
     });
     if (!mounted || entries == null) return;
 
-    final lines = entries!.map((entry) {
-      final brand = entry.food.isBranded ? ' (${entry.food.brand})' : '';
-      return '${entry.food.name}$brand: ${entry.grams.toStringAsFixed(1)} g';
-    }).join('\n');
+    final lines = entries!
+        .map((entry) {
+          final brand = entry.food.isBranded ? ' (${entry.food.brand})' : '';
+          return '${entry.food.name}$brand: ${entry.grams.toStringAsFixed(1)} g';
+        })
+        .join('\n');
     await showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
@@ -677,12 +752,17 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(NutriI18n.t(
-                    'Suma de los alimentos y recetas del plan. Revisa cantidades, preparaciones y desperdicio antes de comprar.')),
+                Text(
+                  NutriI18n.t(
+                    'Suma de los alimentos y recetas del plan. Revisa cantidades, preparaciones y desperdicio antes de comprar.',
+                  ),
+                ),
                 const SizedBox(height: 16),
-                SelectableText(lines.isEmpty
-                    ? NutriI18n.t('Aún no hay alimentos en esta semana.')
-                    : lines),
+                SelectableText(
+                  lines.isEmpty
+                      ? NutriI18n.t('Aún no hay alimentos en esta semana.')
+                      : lines,
+                ),
               ],
             ),
           ),
@@ -718,7 +798,8 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(NutriI18n.t('Planificador semanal'),
+        title: Text(
+          NutriI18n.t('Planificador semanal'),
           style: TextStyle(fontWeight: FontWeight.w700),
         ),
         actions: [
@@ -729,7 +810,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
           ),
           const Padding(
             padding: EdgeInsets.only(right: 18),
-            child: Center(child: Text('V0.4')),
+            child: Center(child: Text('PREVENTA Â· V0.6')),
           ),
         ],
       ),
@@ -745,7 +826,10 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(NutriI18n.t('Todavía no hay pacientes. Crea el primero para empezar a planificar.'),
+            Text(
+              NutriI18n.t(
+                'Todavía no hay pacientes. Crea el primero para empezar a planificar.',
+              ),
             ),
             const SizedBox(height: 12),
             FilledButton.icon(
@@ -771,9 +855,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
                 const SizedBox(height: 10),
                 SelectableText(
                   _error!,
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.error,
-                  ),
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
                 ),
               ],
               const SizedBox(height: 16),
@@ -853,6 +935,13 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
               icon: const Icon(Icons.calendar_month),
               label: Text(NutriI18n.t('Nueva semana')),
             ),
+            FilledButton.tonalIcon(
+              onPressed: _busy || _selectedPlanId == null
+                  ? null
+                  : _showOfflineAssistant,
+              icon: const Icon(Icons.auto_awesome),
+              label: const Text('Nutri IA · Beta'),
+            ),
             OutlinedButton.icon(
               onPressed: _busy || _selectedPlanId == null
                   ? null
@@ -872,7 +961,9 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
                 onPressed: _busy
                     ? null
                     : () => widget.onReviewDocument?.call(
-                          _selectedPatientId!, _selectedPlanId!),
+                        _selectedPatientId!,
+                        _selectedPlanId!,
+                      ),
                 icon: const Icon(Icons.picture_as_pdf_outlined),
                 label: Text(NutriI18n.t('Revisar y exportar')),
               ),
@@ -890,7 +981,10 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
           children: [
             const Icon(Icons.calendar_view_week_outlined, size: 48),
             const SizedBox(height: 12),
-            Text(NutriI18n.t('Este paciente todavía no tiene una semana de alimentación.'),
+            Text(
+              NutriI18n.t(
+                'Este paciente todavía no tiene una semana de alimentación.',
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 14),
@@ -916,23 +1010,24 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(NutriI18n.t('Resumen semanal'),
+            Text(
+              NutriI18n.t('Resumen semanal'),
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 4),
-            Text(NutriI18n.format('Días planificados: {count} de 7', {
-              'count': plannedDays.length,
-            })),
+            Text(
+              NutriI18n.format('Días planificados: {count} de 7', {
+                'count': plannedDays.length,
+              }),
+            ),
             const SizedBox(height: 12),
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: List.generate(7, (index) {
                   final totals = summary?.totalsForDay(index);
-                  final kcal =
-                      totals?.value(NutrientCodes.energyKcal) ?? 0;
-                  final protein =
-                      totals?.value(NutrientCodes.protein) ?? 0;
+                  final kcal = totals?.value(NutrientCodes.energyKcal) ?? 0;
+                  final protein = totals?.value(NutrientCodes.protein) ?? 0;
                   final selected = index == _selectedDay;
                   final hasContent = plannedDays.contains(index);
 
@@ -946,12 +1041,10 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
                           color: selected
-                              ? Theme.of(context)
-                                  .colorScheme
-                                  .primaryContainer
-                              : Theme.of(context)
-                                  .colorScheme
-                                  .surfaceContainerHighest,
+                              ? Theme.of(context).colorScheme.primaryContainer
+                              : Theme.of(
+                                  context,
+                                ).colorScheme.surfaceContainerHighest,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Column(
@@ -1053,10 +1146,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
           children: [
             Text(
               _composerTitle(),
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-              ),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 12),
             Wrap(
@@ -1144,61 +1234,60 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
                           keyboardType: const TextInputType.numberWithOptions(
                             decimal: true,
                           ),
-                          decoration:
-                              InputDecoration(labelText: NutriI18n.t('Porciones')),
+                          decoration: InputDecoration(
+                            labelText: NutriI18n.t('Porciones'),
+                          ),
                         )
                       : _usePortion && _availablePortions.isNotEmpty
-                          ? Row(
-                              children: [
-                                Expanded(
-                                  child: TextField(
-                                    controller: _portionAmount,
-                                    keyboardType:
-                                        const TextInputType.numberWithOptions(
+                      ? Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: _portionAmount,
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
                                       decimal: true,
                                     ),
-                                    decoration: InputDecoration(
-                                      labelText: NutriI18n.t('Cantidad'),
-                                    ),
-                                  ),
+                                decoration: InputDecoration(
+                                  labelText: NutriI18n.t('Cantidad'),
                                 ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  flex: 2,
-                                  child: DropdownButtonFormField<FoodPortion>(
-                                    value: _selectedPortion,
-                                    isExpanded: true,
-                                    decoration: InputDecoration(
-                                      labelText: NutriI18n.t('Medida'),
-                                    ),
-                                    items: _availablePortions
-                                        .map(
-                                          (portion) => DropdownMenuItem(
-                                            value: portion,
-                                            child: Text(
-                                              '${portion.measure ?? _portionWord()} · ${portion.gramWeight.toStringAsFixed(0)} g',
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          ),
-                                        )
-                                        .toList(),
-                                    onChanged: (value) => setState(
-                                      () => _selectedPortion = value,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            )
-                          : TextField(
-                              controller: _grams,
-                              keyboardType:
-                                  const TextInputType.numberWithOptions(
-                                decimal: true,
-                              ),
-                              decoration: InputDecoration(
-                                labelText: NutriI18n.t('Cantidad en gramos'),
                               ),
                             ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              flex: 2,
+                              child: DropdownButtonFormField<FoodPortion>(
+                                value: _selectedPortion,
+                                isExpanded: true,
+                                decoration: InputDecoration(
+                                  labelText: NutriI18n.t('Medida'),
+                                ),
+                                items: _availablePortions
+                                    .map(
+                                      (portion) => DropdownMenuItem(
+                                        value: portion,
+                                        child: Text(
+                                          '${portion.measure ?? _portionWord()} · ${portion.gramWeight.toStringAsFixed(0)} g',
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    )
+                                    .toList(),
+                                onChanged: (value) =>
+                                    setState(() => _selectedPortion = value),
+                              ),
+                            ),
+                          ],
+                        )
+                      : TextField(
+                          controller: _grams,
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          decoration: InputDecoration(
+                            labelText: NutriI18n.t('Cantidad en gramos'),
+                          ),
+                        ),
                 ),
                 const SizedBox(width: 10),
                 FilledButton.icon(
@@ -1217,13 +1306,17 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
   Widget _foodSearchResults() {
     final combined = _foodResults.combined.take(8).toList();
     if (combined.isEmpty) {
-      return Text(NutriI18n.t('Busca un alimento de tu biblioteca o del catálogo oficial.'),
+      return Text(
+        NutriI18n.t(
+          'Busca un alimento de tu biblioteca o del catálogo oficial.',
+        ),
       );
     }
 
     return Column(
       children: combined.map((food) {
-        final selected = identical(food, _selectedFood) ||
+        final selected =
+            identical(food, _selectedFood) ||
             (_selectedFood?.sourceName == food.sourceName &&
                 _selectedFood?.sourceFoodId == food.sourceFoodId &&
                 food.sourceFoodId != null);
@@ -1236,9 +1329,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
                 : Icons.inventory_2_outlined,
           ),
           title: Text(
-            food.brand == null
-                ? food.name
-                : '${food.name} · ${food.brand}',
+            food.brand == null ? food.name : '${food.name} · ${food.brand}',
           ),
           subtitle: Text(
             food.sourceType == FoodSourceType.officialDatabase
@@ -1258,7 +1349,10 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
 
   Widget _recipeSearchResults() {
     if (_recipeResults.isEmpty) {
-      return Text(NutriI18n.t('No hay recetas para esta búsqueda. Las recetas guardadas podrán reutilizarse aquí.'),
+      return Text(
+        NutriI18n.t(
+          'No hay recetas para esta búsqueda. Las recetas guardadas podrán reutilizarse aquí.',
+        ),
       );
     }
 
@@ -1291,10 +1385,9 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
           padding: const EdgeInsets.only(bottom: 12),
           child: Card(
             color: selected
-                ? Theme.of(context)
-                    .colorScheme
-                    .primaryContainer
-                    .withValues(alpha: 0.45)
+                ? Theme.of(
+                    context,
+                  ).colorScheme.primaryContainer.withValues(alpha: 0.45)
                 : null,
             child: Padding(
               padding: const EdgeInsets.all(14),
@@ -1326,14 +1419,14 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
                           if (meal != null && meal.items.isNotEmpty)
                             IconButton(
                               tooltip: NutriI18n.t('Vaciar comida'),
-                              onPressed:
-                                  _busy ? null : () => _clearMeal(meal),
-                              icon: const Icon(Icons.cleaning_services_outlined),
+                              onPressed: _busy ? null : () => _clearMeal(meal),
+                              icon: const Icon(
+                                Icons.cleaning_services_outlined,
+                              ),
                             ),
                           OutlinedButton.icon(
-                            onPressed: () => setState(
-                              () => _selectedMealName = mealName,
-                            ),
+                            onPressed: () =>
+                                setState(() => _selectedMealName = mealName),
                             icon: const Icon(Icons.add, size: 18),
                             label: Text(
                               selected
@@ -1384,9 +1477,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
         children: [
           IconButton(
             tooltip: NutriI18n.t('Editar cantidad'),
-            onPressed: _busy || item.id == null
-                ? null
-                : () => _editItem(item),
+            onPressed: _busy || item.id == null ? null : () => _editItem(item),
             icon: const Icon(Icons.edit_outlined),
           ),
           IconButton(
@@ -1437,7 +1528,8 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
   String _clearMealQuestion(String mealName) {
     final meal = _mealLabel(mealName);
     if (NutriI18n.languageCode == 'en') return 'Remove all items from $meal?';
-    if (NutriI18n.languageCode == 'pt') return 'Remover todos os itens de $meal?';
+    if (NutriI18n.languageCode == 'pt')
+      return 'Remover todos os itens de $meal?';
     return '¿Eliminar todos los elementos de $meal?';
   }
 
@@ -1505,12 +1597,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
     return '$value% de meta';
   }
 
-  Widget _miniMetric(
-    String label,
-    double value,
-    String unit,
-    double target,
-  ) {
+  Widget _miniMetric(String label, double value, String unit, double target) {
     final percent = target <= 0 ? null : value / target * 100;
 
     return Container(
@@ -1526,10 +1613,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
           Text(label),
           Text(
             '${value.toStringAsFixed(1)} $unit',
-            style: const TextStyle(
-              fontSize: 19,
-              fontWeight: FontWeight.w800,
-            ),
+            style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w800),
           ),
           if (percent != null) ...[
             const SizedBox(height: 6),

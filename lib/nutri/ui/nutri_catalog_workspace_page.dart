@@ -43,8 +43,12 @@ const _allergenLabels = <String, String>{
   'sulphites': 'Sulfitos',
 };
 
+enum _CatalogSourceFilter { all, professional, official }
+
 class NutriCatalogWorkspacePage extends StatefulWidget {
-  const NutriCatalogWorkspacePage({super.key});
+  final bool embedded;
+
+  const NutriCatalogWorkspacePage({super.key, this.embedded = false});
 
   @override
   State<NutriCatalogWorkspacePage> createState() =>
@@ -67,8 +71,10 @@ class _NutriCatalogWorkspacePageState extends State<NutriCatalogWorkspacePage> {
   };
   final _editorKey = GlobalKey();
   final _selectedAllergens = <String>{};
-  FoodSearchResults _results =
-      const FoodSearchResults(professional: [], official: []);
+  FoodSearchResults _results = const FoodSearchResults(
+    professional: [],
+    official: [],
+  );
   Food? _editing;
   OfficialFoodCatalogManifest? _manifest;
   String? _error;
@@ -79,6 +85,7 @@ class _NutriCatalogWorkspacePageState extends State<NutriCatalogWorkspacePage> {
   bool _showEditor = false;
   int _officialCount = 0;
   int _ownCount = 0;
+  _CatalogSourceFilter _sourceFilter = _CatalogSourceFilter.all;
 
   @override
   void initState() {
@@ -89,7 +96,13 @@ class _NutriCatalogWorkspacePageState extends State<NutriCatalogWorkspacePage> {
   @override
   void dispose() {
     for (final controller in [
-      _query, _name, _brand, _source, _serving, _measure, _notes,
+      _query,
+      _name,
+      _brand,
+      _source,
+      _serving,
+      _measure,
+      _notes,
       ..._values.values,
     ]) {
       controller.dispose();
@@ -99,7 +112,9 @@ class _NutriCatalogWorkspacePageState extends State<NutriCatalogWorkspacePage> {
 
   Future<void> _initialize() async {
     try {
-      await NutriDatabase.instance.database.timeout(const Duration(seconds: 12));
+      await NutriDatabase.instance.database.timeout(
+        const Duration(seconds: 12),
+      );
       _privateReady = true;
       _ownCount = (await _foods.search('', limit: 5000)).length;
     } catch (error) {
@@ -107,7 +122,8 @@ class _NutriCatalogWorkspacePageState extends State<NutriCatalogWorkspacePage> {
     }
     try {
       _manifest = await OfficialFoodCatalogInstaller.readBundledManifest();
-      _catalogReady = await OfficialFoodCatalogInstaller.installIfNeeded() !=
+      _catalogReady =
+          await OfficialFoodCatalogInstaller.installIfNeeded() !=
           OfficialCatalogInstallResult.noCatalogBundled;
       if (_catalogReady) _officialCount = await _official.count();
     } catch (error) {
@@ -121,7 +137,12 @@ class _NutriCatalogWorkspacePageState extends State<NutriCatalogWorkspacePage> {
     if (!_privateReady) return;
     try {
       final result = await _search.search(
-        _query.text.trim(), professionalLimit: 25, officialLimit: 25);
+        _query.text.trim(),
+        professionalLimit: 25,
+        officialLimit: 25,
+        includeProfessional: _sourceFilter != _CatalogSourceFilter.official,
+        includeOfficial: _sourceFilter != _CatalogSourceFilter.professional,
+      );
       if (mounted) setState(() => _results = result);
     } catch (error) {
       if (mounted) setState(() => _error = 'Búsqueda: $error');
@@ -147,16 +168,19 @@ class _NutriCatalogWorkspacePageState extends State<NutriCatalogWorkspacePage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final target = _editorKey.currentContext;
       if (target != null) {
-        Scrollable.ensureVisible(target,
-            duration: const Duration(milliseconds: 280), alignment: 0.04);
+        Scrollable.ensureVisible(
+          target,
+          duration: const Duration(milliseconds: 280),
+          alignment: 0.04,
+        );
       }
     });
   }
 
   void _closeEditor() => setState(() {
-        _editing = null;
-        _showEditor = false;
-      });
+    _editing = null;
+    _showEditor = false;
+  });
 
   double? _parse(String text) =>
       double.tryParse(text.trim().replaceAll(',', '.'));
@@ -177,7 +201,9 @@ class _NutriCatalogWorkspacePageState extends State<NutriCatalogWorkspacePage> {
       final raw = _values[field.$1]!.text.trim();
       if (raw.isEmpty) {
         if (_nutrientFields.take(4).any((basic) => basic.$1 == field.$1)) {
-          _message('Completa energía, proteínas, carbohidratos y grasas por 100 g.');
+          _message(
+            'Completa energía, proteínas, carbohidratos y grasas por 100 g.',
+          );
           return;
         }
         continue;
@@ -185,19 +211,27 @@ class _NutriCatalogWorkspacePageState extends State<NutriCatalogWorkspacePage> {
       final value = _parse(raw);
       final max = field.$1 == NutrientCodes.energyKcal
           ? 1000.0
-          : field.$3 == NutrientUnit.gram ? 100.0 : null;
-      if (value == null || !value.isFinite || value < 0 ||
+          : field.$3 == NutrientUnit.gram
+          ? 100.0
+          : null;
+      if (value == null ||
+          !value.isFinite ||
+          value < 0 ||
           (max != null && value > max)) {
         _message('Revisa ' + field.$2 + ': usa un valor válido por 100 g.');
         return;
       }
-      nutrients.add(NutrientValue(
-          code: field.$1, valuePer100g: value, unit: field.$3));
+      nutrients.add(
+        NutrientValue(code: field.$1, valuePer100g: value, unit: field.$3),
+      );
     }
     final portionText = _serving.text.trim();
     final portion = portionText.isEmpty ? null : _parse(portionText);
     if (portionText.isNotEmpty &&
-        (portion == null || !portion.isFinite || portion <= 0 || portion > 10000)) {
+        (portion == null ||
+            !portion.isFinite ||
+            portion <= 0 ||
+            portion > 10000)) {
       _message('La porción debe ser un peso en gramos mayor que cero.');
       return;
     }
@@ -211,53 +245,67 @@ class _NutriCatalogWorkspacePageState extends State<NutriCatalogWorkspacePage> {
       final allergens = _selectedAllergens.toList()..sort();
       int id;
       if (current != null) {
-        id = await _foods.update(Food(
-          id: current.id,
-          name: name,
-          brand: brand.isEmpty ? null : brand,
-          countryCode: current.countryCode,
-          sourceType: current.sourceType,
-          sourceName: source.isEmpty ? null : source,
-          sourceFoodId: current.sourceFoodId,
-          sourceRelease: current.sourceRelease,
-          servingQuantity: portion,
-          servingUnit: portion == null ? null : 'g',
-          householdMeasure: measure.isEmpty ? null : measure,
-          notes: notes.isEmpty ? null : notes,
-          isArchived: current.isArchived,
-          createdAt: current.createdAt,
-          nutrients: [
-            ...current.nutrients.where((item) => !_values.containsKey(item.code)),
-            ...nutrients,
-          ],
-          portions: current.portions,
-          allergens: allergens,
-        ));
+        id = await _foods.update(
+          Food(
+            id: current.id,
+            name: name,
+            brand: brand.isEmpty ? null : brand,
+            countryCode: current.countryCode,
+            sourceType: current.sourceType,
+            sourceName: source.isEmpty ? null : source,
+            sourceFoodId: current.sourceFoodId,
+            sourceRelease: current.sourceRelease,
+            servingQuantity: portion,
+            servingUnit: portion == null ? null : 'g',
+            householdMeasure: measure.isEmpty ? null : measure,
+            notes: notes.isEmpty ? null : notes,
+            isArchived: current.isArchived,
+            createdAt: current.createdAt,
+            nutrients: [
+              ...current.nutrients.where(
+                (item) => !_values.containsKey(item.code),
+              ),
+              ...nutrients,
+            ],
+            portions: current.portions,
+            allergens: allergens,
+          ),
+        );
       } else {
         final country = (await AppSettingsRepository().load()).countryCode;
         id = await (brand.isEmpty
             ? _foods.addProfessionalFood(
-                name: name, countryCode: country, servingQuantity: portion,
-                servingUnit: portion == null ? null : 'g',
-                householdMeasure: measure.isEmpty ? null : measure,
-                sourceName: source.isEmpty ? null : source,
-                notes: notes.isEmpty ? null : notes,
-                nutrients: nutrients, allergens: allergens)
-            : _foods.addBrandedFood(
-                name: name, brand: brand, countryCode: country,
+                name: name,
+                countryCode: country,
                 servingQuantity: portion,
                 servingUnit: portion == null ? null : 'g',
                 householdMeasure: measure.isEmpty ? null : measure,
                 sourceName: source.isEmpty ? null : source,
                 notes: notes.isEmpty ? null : notes,
-                nutrients: nutrients, allergens: allergens));
+                nutrients: nutrients,
+                allergens: allergens,
+              )
+            : _foods.addBrandedFood(
+                name: name,
+                brand: brand,
+                countryCode: country,
+                servingQuantity: portion,
+                servingUnit: portion == null ? null : 'g',
+                householdMeasure: measure.isEmpty ? null : measure,
+                sourceName: source.isEmpty ? null : source,
+                notes: notes.isEmpty ? null : notes,
+                nutrients: nutrients,
+                allergens: allergens,
+              ));
       }
       _ownCount = (await _foods.search('', limit: 5000)).length;
       _closeEditor();
       await _runSearch();
-      _message(current != null && current.id != id
-          ? 'Nueva versión guardada. Los planes anteriores conservan sus valores.'
-          : 'Alimento guardado en tu biblioteca.');
+      _message(
+        current != null && current.id != id
+            ? 'Nueva versión guardada. Los planes anteriores conservan sus valores.'
+            : 'Alimento guardado en tu biblioteca.',
+      );
     } catch (error) {
       if (mounted) setState(() => _error = 'Guardado: $error');
       _message('No se pudo guardar el alimento.');
@@ -283,29 +331,49 @@ class _NutriCatalogWorkspacePageState extends State<NutriCatalogWorkspacePage> {
           child: ListView(
             padding: const EdgeInsets.all(24),
             children: [
-              Text(food.name, style: Theme.of(sheetContext).textTheme.headlineSmall),
+              Text(
+                food.name,
+                style: Theme.of(sheetContext).textTheme.headlineSmall,
+              ),
               if (food.brand != null) Text(food.brand!),
               const SizedBox(height: 12),
               Text('Fuente: ' + (food.sourceName ?? 'No declarada')),
               if (food.sourceFoodId != null) Text('ID: ' + food.sourceFoodId!),
-              if (food.sourceRelease != null) Text('Versión: ' + food.sourceRelease!),
+              if (food.sourceRelease != null)
+                Text('Versión: ' + food.sourceRelease!),
               const SizedBox(height: 18),
-              Text('Valores por 100 g',
-                  style: Theme.of(sheetContext).textTheme.titleMedium),
+              Text(
+                'Valores por 100 g',
+                style: Theme.of(sheetContext).textTheme.titleMedium,
+              ),
               for (final nutrient in food.nutrients)
                 ListTile(
                   dense: true,
-                  title: Text(_nutrientFields.where((f) => f.$1 == nutrient.code)
-                      .map((f) => f.$2).firstOrNull ?? nutrient.code),
-                  trailing: Text(nutrient.valuePer100g.toString() +
-                      ' ' + _unit(nutrient.unit)),
+                  title: Text(
+                    _nutrientFields
+                            .where((f) => f.$1 == nutrient.code)
+                            .map((f) => f.$2)
+                            .firstOrNull ??
+                        nutrient.code,
+                  ),
+                  trailing: Text(
+                    nutrient.valuePer100g.toString() +
+                        ' ' +
+                        _unit(nutrient.unit),
+                  ),
                 ),
               const Divider(),
-              Text('Alérgenos declarados',
-                  style: Theme.of(sheetContext).textTheme.titleMedium),
-              Text(food.allergens.isEmpty
-                  ? 'Sin información declarada. No implica ausencia de alérgenos.'
-                  : food.allergens.map((code) => _allergenLabels[code] ?? code).join(', ')),
+              Text(
+                'Alérgenos declarados',
+                style: Theme.of(sheetContext).textTheme.titleMedium,
+              ),
+              Text(
+                food.allergens.isEmpty
+                    ? 'Sin información declarada. No implica ausencia de alérgenos.'
+                    : food.allergens
+                          .map((code) => _allergenLabels[code] ?? code)
+                          .join(', '),
+              ),
               if (food.notes?.isNotEmpty == true) ...[
                 const SizedBox(height: 12),
                 Text('Notas: ' + food.notes!),
@@ -318,255 +386,344 @@ class _NutriCatalogWorkspacePageState extends State<NutriCatalogWorkspacePage> {
   }
 
   String _unit(NutrientUnit unit) => switch (unit) {
-        NutrientUnit.kilocalorie => 'kcal',
-        NutrientUnit.gram => 'g',
-        NutrientUnit.milligram => 'mg',
-        NutrientUnit.microgram => 'µg',
-        NutrientUnit.internationalUnit => 'UI',
-      };
+    NutrientUnit.kilocalorie => 'kcal',
+    NutrientUnit.gram => 'g',
+    NutrientUnit.milligram => 'mg',
+    NutrientUnit.microgram => 'µg',
+    NutrientUnit.internationalUnit => 'UI',
+  };
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(title: const Text('Biblioteca de alimentos')),
-        body: _loading
-            ? const Center(child: CircularProgressIndicator())
-            : ListView(
-                padding: const EdgeInsets.all(16),
-                children: [
-                  Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 900),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          _overview(),
-                          const SizedBox(height: 12),
-                          if (_showEditor) ...[
-                            Container(key: _editorKey, child: _editor()),
-                            const SizedBox(height: 12),
-                          ],
-                          _searchCard(),
-                        ],
-                      ),
-                    ),
+  Widget build(BuildContext context) {
+    final body = _loading
+        ? const Center(child: CircularProgressIndicator())
+        : ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 900),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _overview(),
+                      const SizedBox(height: 12),
+                      if (_showEditor) ...[
+                        Container(key: _editorKey, child: _editor()),
+                        const SizedBox(height: 12),
+                      ],
+                      _searchCard(),
+                    ],
                   ),
-                ],
+                ),
               ),
-      );
+            ],
+          );
+
+    if (widget.embedded) return body;
+    return Scaffold(
+      appBar: AppBar(title: const Text('Biblioteca de alimentos')),
+      body: body,
+    );
+  }
 
   Widget _overview() => Card(
-        child: Padding(
-          padding: const EdgeInsets.all(18),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    child: Padding(
+      padding: const EdgeInsets.all(18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Catálogo y biblioteca profesional',
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
             children: [
-              Text('Catálogo y biblioteca profesional',
-                  style: Theme.of(context).textTheme.titleLarge),
-              const SizedBox(height: 10),
-              Wrap(spacing: 8, runSpacing: 6, children: [
-                Chip(label: Text(_privateReady
-                    ? 'Mi biblioteca · ' + _ownCount.toString()
-                    : 'Biblioteca no disponible')),
-                Chip(label: Text(_catalogReady
-                    ? 'USDA · ' + _officialCount.toString() + ' alimentos'
-                    : 'Catálogo no disponible')),
-              ]),
-              if (_manifest != null)
-                Text(_manifest!.sourceRelease + ' · offline · versionado',
-                    style: Theme.of(context).textTheme.bodySmall),
-              if (_error != null)
-                SelectableText(_error!,
-                    style: TextStyle(color: Theme.of(context).colorScheme.error)),
-              const SizedBox(height: 10),
-              FilledButton.icon(
-                onPressed: _busy || !_privateReady ? null : () => _openEditor(),
-                icon: const Icon(Icons.add),
-                label: const Text('Nuevo alimento'),
+              Chip(
+                label: Text(
+                  _privateReady
+                      ? 'Mi biblioteca · ' + _ownCount.toString()
+                      : 'Biblioteca no disponible',
+                ),
+              ),
+              Chip(
+                label: Text(
+                  _catalogReady
+                      ? 'USDA · ' + _officialCount.toString() + ' alimentos'
+                      : 'Catálogo no disponible',
+                ),
               ),
             ],
           ),
-        ),
-      );
+          if (_manifest != null)
+            Text(
+              _manifest!.sourceRelease + ' · offline · versionado',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          if (_error != null)
+            SelectableText(
+              _error!,
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
+          const SizedBox(height: 10),
+          FilledButton.icon(
+            onPressed: _busy || !_privateReady ? null : () => _openEditor(),
+            icon: const Icon(Icons.add),
+            label: const Text('Nuevo alimento'),
+          ),
+        ],
+      ),
+    ),
+  );
 
   Widget _editor() => Card(
-        child: Padding(
-          padding: const EdgeInsets.all(18),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+    child: Padding(
+      padding: const EdgeInsets.all(18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            _editing == null ? 'Nuevo alimento' : 'Editar alimento',
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+          const SizedBox(height: 6),
+          const Text('Registra los valores por 100 g y conserva la fuente.'),
+          const SizedBox(height: 12),
+          _field(_name, 'Nombre del alimento'),
+          _field(_brand, 'Marca (opcional)'),
+          _field(_source, 'Fuente / referencia (obligatoria)'),
+          const SizedBox(height: 12),
+          Text(
+            'Energía y macronutrientes · por 100 g',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          _numberGrid(_nutrientFields.take(4).toList()),
+          ExpansionTile(
+            title: const Text('Fibra, azúcares y micronutrientes'),
+            subtitle: const Text(
+              'Opcionales; deja vacío si no hay dato confiable',
+            ),
+            children: [_numberGrid(_nutrientFields.skip(4).toList())],
+          ),
+          ExpansionTile(
+            title: const Text('Alérgenos declarados'),
+            subtitle: const Text(
+              'Sin selección significa información desconocida',
+            ),
             children: [
-              Text(_editing == null ? 'Nuevo alimento' : 'Editar alimento',
-                  style: Theme.of(context).textTheme.titleLarge),
-              const SizedBox(height: 6),
-              const Text('Registra los valores por 100 g y conserva la fuente.'),
-              const SizedBox(height: 12),
-              _field(_name, 'Nombre del alimento'),
-              _field(_brand, 'Marca (opcional)'),
-              _field(_source, 'Fuente / referencia (obligatoria)'),
-              const SizedBox(height: 12),
-              Text('Energía y macronutrientes · por 100 g',
-                  style: Theme.of(context).textTheme.titleMedium),
-              _numberGrid(_nutrientFields.take(4).toList()),
-              ExpansionTile(
-                title: const Text('Fibra, azúcares y micronutrientes'),
-                subtitle: const Text('Opcionales; deja vacío si no hay dato confiable'),
-                children: [_numberGrid(_nutrientFields.skip(4).toList())],
-              ),
-              ExpansionTile(
-                title: const Text('Alérgenos declarados'),
-                subtitle: const Text('Sin selección significa información desconocida'),
-                children: [
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Wrap(
-                      spacing: 6,
-                      children: [
-                        for (final entry in _allergenLabels.entries)
-                          FilterChip(
-                            label: Text(entry.value),
-                            selected: _selectedAllergens.contains(entry.key),
-                            onSelected: (selected) => setState(() {
-                              if (selected) {
-                                _selectedAllergens.add(entry.key);
-                              } else {
-                                _selectedAllergens.remove(entry.key);
-                              }
-                            }),
-                          ),
-                      ],
-                    ),
-                  ),
-                  const Padding(
-                    padding: EdgeInsets.all(8),
-                    child: Text('Verifica la etiqueta y la contaminación cruzada. '
-                        'Estos datos no se infieren del nombre del alimento.'),
-                  ),
-                ],
-              ),
-              ExpansionTile(
-                title: const Text('Porción y notas'),
-                children: [
-                  _field(_serving, 'Porción habitual en gramos', numeric: true),
-                  _field(_measure, 'Medida casera (ej.: 1 taza)'),
-                  _field(_notes, 'Notas del profesional'),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Wrap(spacing: 8, children: [
-                FilledButton.icon(
-                  onPressed: _busy ? null : _saveFood,
-                  icon: const Icon(Icons.save_outlined),
-                  label: const Text('Guardar alimento'),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Wrap(
+                  spacing: 6,
+                  children: [
+                    for (final entry in _allergenLabels.entries)
+                      FilterChip(
+                        label: Text(entry.value),
+                        selected: _selectedAllergens.contains(entry.key),
+                        onSelected: (selected) => setState(() {
+                          if (selected) {
+                            _selectedAllergens.add(entry.key);
+                          } else {
+                            _selectedAllergens.remove(entry.key);
+                          }
+                        }),
+                      ),
+                  ],
                 ),
-                TextButton(
-                  onPressed: _busy ? null : _closeEditor,
-                  child: const Text('Cancelar'),
+              ),
+              const Padding(
+                padding: EdgeInsets.all(8),
+                child: Text(
+                  'Verifica la etiqueta y la contaminación cruzada. '
+                  'Estos datos no se infieren del nombre del alimento.',
                 ),
-              ]),
+              ),
             ],
           ),
-        ),
-      );
+          ExpansionTile(
+            title: const Text('Porción y notas'),
+            children: [
+              _field(_serving, 'Porción habitual en gramos', numeric: true),
+              _field(_measure, 'Medida casera (ej.: 1 taza)'),
+              _field(_notes, 'Notas del profesional'),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            children: [
+              FilledButton.icon(
+                onPressed: _busy ? null : _saveFood,
+                icon: const Icon(Icons.save_outlined),
+                label: const Text('Guardar alimento'),
+              ),
+              TextButton(
+                onPressed: _busy ? null : _closeEditor,
+                child: const Text('Cancelar'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    ),
+  );
 
   Widget _numberGrid(List<(String, String, NutrientUnit)> fields) =>
-      LayoutBuilder(builder: (context, constraints) {
-        final width = constraints.maxWidth >= 520
-            ? (constraints.maxWidth - 12) / 2
-            : constraints.maxWidth;
-        return Wrap(spacing: 12, children: [
-          for (final field in fields)
-            SizedBox(
-              width: width,
-              child: _field(_values[field.$1]!, field.$2, numeric: true),
-            ),
-        ]);
-      });
-
-  Widget _field(TextEditingController controller, String label,
-          {bool numeric = false}) =>
-      Padding(
-        padding: const EdgeInsets.only(bottom: 10),
-        child: TextField(
-          controller: controller,
-          keyboardType: numeric
-              ? const TextInputType.numberWithOptions(decimal: true)
-              : TextInputType.text,
-          decoration: InputDecoration(labelText: label),
-        ),
-      );
-
-  Widget _searchCard() => Card(
-        child: Padding(
-          padding: const EdgeInsets.all(18),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+      LayoutBuilder(
+        builder: (context, constraints) {
+          final width = constraints.maxWidth >= 520
+              ? (constraints.maxWidth - 12) / 2
+              : constraints.maxWidth;
+          return Wrap(
+            spacing: 12,
             children: [
-              Text('Buscar alimentos',
-                  style: Theme.of(context).textTheme.titleLarge),
-              const SizedBox(height: 4),
-              const Text('Mi biblioteca primero · catálogo USDA después'),
-              const SizedBox(height: 12),
-              TextField(
-                controller: _query,
-                onSubmitted: (_) => _runSearch(),
-                decoration: InputDecoration(
-                  labelText: 'Nombre del alimento',
-                  hintText: 'Ej.: leche entera, arroz, pollo',
-                  prefixIcon: const Icon(Icons.search),
-                  suffixIcon: IconButton(
-                    tooltip: 'Buscar',
-                    onPressed: _runSearch,
-                    icon: const Icon(Icons.arrow_forward),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              if (_results.professional.isNotEmpty) ...[
-                const Text('Mi biblioteca',
-                    style: TextStyle(fontWeight: FontWeight.bold)),
-                ..._results.professional.map(_foodTile),
-              ],
-              if (_results.official.isNotEmpty) ...[
-                const SizedBox(height: 10),
-                const Text('Catálogo USDA',
-                    style: TextStyle(fontWeight: FontWeight.bold)),
-                ..._results.official.map(_foodTile),
-              ],
-              if (_results.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.all(18),
-                  child: Text('No se encontraron alimentos para esta búsqueda.'),
+              for (final field in fields)
+                SizedBox(
+                  width: width,
+                  child: _field(_values[field.$1]!, field.$2, numeric: true),
                 ),
             ],
-          ),
-        ),
+          );
+        },
       );
 
-  Widget _foodTile(Food food) => ListTile(
-        contentPadding: EdgeInsets.zero,
-        title: Text(food.name),
-        subtitle: Text([
-          if (food.brand != null) food.brand!,
-          if (food.isOfficial) 'USDA · FDC ' + (food.sourceFoodId ?? '-'),
-          if (!food.isOfficial) 'Biblioteca profesional',
-          if (food.nutrient(NutrientCodes.energyKcal) != null)
-            food.nutrient(NutrientCodes.energyKcal)!.valuePer100g
-                .toStringAsFixed(0) + ' kcal/100 g',
-        ].join(' · ')),
-        trailing: Wrap(
-          spacing: 0,
-          children: [
-            IconButton(
-              tooltip: 'Ver ficha',
-              onPressed: () => _showDetails(food),
-              icon: const Icon(Icons.info_outline),
-            ),
-            if (food.isUserEditable)
-              IconButton(
-                tooltip: 'Editar alimento',
-                onPressed: _busy ? null : () => _openEditor(food),
-                icon: const Icon(Icons.edit_outlined),
+  Widget _field(
+    TextEditingController controller,
+    String label, {
+    bool numeric = false,
+  }) => Padding(
+    padding: const EdgeInsets.only(bottom: 10),
+    child: TextField(
+      controller: controller,
+      keyboardType: numeric
+          ? const TextInputType.numberWithOptions(decimal: true)
+          : TextInputType.text,
+      decoration: InputDecoration(labelText: label),
+    ),
+  );
+
+  Widget _searchCard() => Card(
+    child: Padding(
+      padding: const EdgeInsets.all(18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'Buscar alimentos',
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Elige qué base quieres consultar. Puedes cambiarla sin conexión.',
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              ChoiceChip(
+                label: const Text('Todas'),
+                selected: _sourceFilter == _CatalogSourceFilter.all,
+                onSelected: (_) {
+                  setState(() => _sourceFilter = _CatalogSourceFilter.all);
+                  _runSearch();
+                },
               ),
+              ChoiceChip(
+                label: const Text('Mi biblioteca'),
+                selected: _sourceFilter == _CatalogSourceFilter.professional,
+                onSelected: (_) {
+                  setState(
+                    () => _sourceFilter = _CatalogSourceFilter.professional,
+                  );
+                  _runSearch();
+                },
+              ),
+              ChoiceChip(
+                label: const Text('USDA'),
+                selected: _sourceFilter == _CatalogSourceFilter.official,
+                onSelected: (_) {
+                  setState(() => _sourceFilter = _CatalogSourceFilter.official);
+                  _runSearch();
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _query,
+            onSubmitted: (_) => _runSearch(),
+            decoration: InputDecoration(
+              labelText: 'Nombre del alimento',
+              hintText: 'Ej.: leche entera, arroz, pollo',
+              prefixIcon: const Icon(Icons.search),
+              suffixIcon: IconButton(
+                tooltip: 'Buscar',
+                onPressed: _runSearch,
+                icon: const Icon(Icons.arrow_forward),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          if (_results.professional.isNotEmpty) ...[
+            const Text(
+              'Mi biblioteca',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            ..._results.professional.map(_foodTile),
           ],
+          if (_results.official.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            const Text(
+              'Catálogo USDA',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            ..._results.official.map(_foodTile),
+          ],
+          if (_results.isEmpty)
+            const Padding(
+              padding: EdgeInsets.all(18),
+              child: Text('No se encontraron alimentos para esta búsqueda.'),
+            ),
+        ],
+      ),
+    ),
+  );
+
+  Widget _foodTile(Food food) => ListTile(
+    contentPadding: EdgeInsets.zero,
+    title: Text(food.name),
+    subtitle: Text(
+      [
+        if (food.brand != null) food.brand!,
+        if (food.isOfficial) 'USDA · FDC ' + (food.sourceFoodId ?? '-'),
+        if (!food.isOfficial) 'Biblioteca profesional',
+        if (food.nutrient(NutrientCodes.energyKcal) != null)
+          food
+                  .nutrient(NutrientCodes.energyKcal)!
+                  .valuePer100g
+                  .toStringAsFixed(0) +
+              ' kcal/100 g',
+      ].join(' · '),
+    ),
+    trailing: Wrap(
+      spacing: 0,
+      children: [
+        IconButton(
+          tooltip: 'Ver ficha',
+          onPressed: () => _showDetails(food),
+          icon: const Icon(Icons.info_outline),
         ),
-      );
+        if (food.isUserEditable)
+          IconButton(
+            tooltip: 'Editar alimento',
+            onPressed: _busy ? null : () => _openEditor(food),
+            icon: const Icon(Icons.edit_outlined),
+          ),
+      ],
+    ),
+  );
 }

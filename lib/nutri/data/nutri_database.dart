@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, visibleForTesting;
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -11,22 +11,28 @@ import '../domain/nutrition/nutrient.dart';
 import '../domain/patient.dart';
 
 class NutriDatabase {
-  NutriDatabase._();
+  NutriDatabase._({String? databasePathOverride})
+    : _databasePathOverride = databasePathOverride;
 
   static final NutriDatabase instance = NutriDatabase._();
+
+  @visibleForTesting
+  factory NutriDatabase.forTesting(String databasePath) =>
+      NutriDatabase._(databasePathOverride: databasePath);
 
   static const databaseName = 'nutrikuaa_nutri.db';
   static const databaseVersion = 10;
 
+  final String? _databasePathOverride;
   Database? _database;
 
   Future<Database> get database async {
     final existing = _database;
     if (existing != null) return existing;
 
-    final path = kIsWeb
-        ? databaseName
-        : join(await getDatabasesPath(), databaseName);
+    final path =
+        _databasePathOverride ??
+        (kIsWeb ? databaseName : join(await getDatabasesPath(), databaseName));
 
     Future<Database> open() {
       return openDatabase(
@@ -210,7 +216,6 @@ class NutriDatabase {
       )
     ''');
 
-
     await db.execute('''
       CREATE TABLE nutrition_targets (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -302,9 +307,7 @@ class NutriDatabase {
     await db.execute(
       'CREATE INDEX idx_foods_brand ON foods(brand COLLATE NOCASE)',
     );
-    await db.execute(
-      'CREATE INDEX idx_foods_country ON foods(country_code)',
-    );
+    await db.execute('CREATE INDEX idx_foods_country ON foods(country_code)');
     await db.execute(
       'CREATE INDEX idx_recipes_name ON recipes(name COLLATE NOCASE)',
     );
@@ -318,13 +321,37 @@ class NutriDatabase {
     );
   }
 
+  static Future<bool> _columnExists(
+    Database db,
+    String table,
+    String column,
+  ) async {
+    final columns = await db.rawQuery('PRAGMA table_info($table)');
+    return columns.any((row) => row['name'] == column);
+  }
+
+  static Future<void> _addColumnIfMissing(
+    Database db,
+    String table,
+    String column,
+    String definition,
+  ) async {
+    if (await _columnExists(db, table, column)) return;
+    await db.execute('ALTER TABLE $table ADD COLUMN $definition');
+  }
+
   static Future<void> _upgradeSchema(
     Database db,
     int oldVersion,
     int newVersion,
   ) async {
     if (oldVersion < 2) {
-      await db.execute('ALTER TABLE foods ADD COLUMN source_release TEXT');
+      await _addColumnIfMissing(
+        db,
+        'foods',
+        'source_release',
+        'source_release TEXT',
+      );
     }
 
     if (oldVersion < 3) {
@@ -387,11 +414,17 @@ class NutriDatabase {
     }
 
     if (oldVersion < 7) {
-      await db.execute(
-        'ALTER TABLE professional_profile ADD COLUMN logo_bytes BLOB',
+      await _addColumnIfMissing(
+        db,
+        'professional_profile',
+        'logo_bytes',
+        'logo_bytes BLOB',
       );
-      await db.execute(
-        'ALTER TABLE professional_profile ADD COLUMN logo_file_name TEXT',
+      await _addColumnIfMissing(
+        db,
+        'professional_profile',
+        'logo_file_name',
+        'logo_file_name TEXT',
       );
     }
 
@@ -408,7 +441,12 @@ class NutriDatabase {
     }
 
     if (oldVersion < 9) {
-      await db.execute('ALTER TABLE foods ADD COLUMN allergens_json TEXT');
+      await _addColumnIfMissing(
+        db,
+        'foods',
+        'allergens_json',
+        'allergens_json TEXT',
+      );
     }
 
     if (oldVersion < 10) {
@@ -421,10 +459,11 @@ class NutriDatabase {
         'clinical_context',
         'history_source',
       ]) {
-        await db.execute('ALTER TABLE patients ADD COLUMN $column TEXT');
+        await _addColumnIfMissing(db, 'patients', column, '$column TEXT');
       }
+
       await db.execute('''
-        CREATE TABLE patient_encounters (
+        CREATE TABLE IF NOT EXISTS patient_encounters (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           patient_id INTEGER NOT NULL,
           occurred_at TEXT NOT NULL,
@@ -440,12 +479,14 @@ class NutriDatabase {
           FOREIGN KEY (plan_id) REFERENCES meal_plans(id) ON DELETE SET NULL
         )
       ''');
+
       await db.execute(
-        'CREATE INDEX idx_patient_encounters_patient_date '
+        'CREATE INDEX IF NOT EXISTS idx_patient_encounters_patient_date '
         'ON patient_encounters(patient_id, occurred_at DESC)',
       );
+
       await db.execute('''
-        CREATE TABLE patient_observations (
+        CREATE TABLE IF NOT EXISTS patient_observations (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           patient_id INTEGER NOT NULL,
           observed_at TEXT NOT NULL,
@@ -457,8 +498,9 @@ class NutriDatabase {
           FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE
         )
       ''');
+
       await db.execute(
-        'CREATE INDEX idx_patient_observations_patient_date '
+        'CREATE INDEX IF NOT EXISTS idx_patient_observations_patient_date '
         'ON patient_observations(patient_id, observed_at DESC)',
       );
     }
@@ -481,10 +523,7 @@ class NutriDatabase {
       }
 
       for (final portion in food.portions) {
-        await txn.insert(
-          'food_portions',
-          _portionToMap(foodId, portion),
-        );
+        await txn.insert('food_portions', _portionToMap(foodId, portion));
       }
 
       return foodId;
@@ -513,17 +552,25 @@ class NutriDatabase {
         limit: 1,
       );
       if (stored.isEmpty) throw StateError('Food no longer exists.');
-      final sourceType =
-          FoodSourceType.values.byName(stored.single['source_type'] as String);
+      final sourceType = FoodSourceType.values.byName(
+        stored.single['source_type'] as String,
+      );
       if (sourceType != food.sourceType || !food.isUserEditable) {
         throw StateError('Official foods cannot be edited.');
       }
 
-      final usage = Sqflite.firstIntValue(await txn.rawQuery('''
+      final usage =
+          Sqflite.firstIntValue(
+            await txn.rawQuery(
+              '''
         SELECT
           (SELECT COUNT(*) FROM recipe_items WHERE food_id = ?) +
           (SELECT COUNT(*) FROM meal_items WHERE food_id = ?)
-      ''', [foodId, foodId])) ?? 0;
+      ''',
+              [foodId, foodId],
+            ),
+          ) ??
+          0;
       if (usage > 0) {
         final revision = Food(
           name: food.name,
@@ -588,10 +635,7 @@ class NutriDatabase {
       );
 
       for (final portion in food.portions) {
-        await txn.insert(
-          'food_portions',
-          _portionToMap(foodId, portion),
-        );
+        await txn.insert('food_portions', _portionToMap(foodId, portion));
       }
       return foodId;
     });
@@ -694,18 +738,14 @@ class NutriDatabase {
   Future<void> upsertNutritionTarget(NutritionTarget target) async {
     final db = await database;
 
-    await db.insert(
-      'nutrition_targets',
-      {
-        'patient_id': target.patientId,
-        'nutrient_code': target.nutrientCode,
-        'target_value': target.targetValue,
-        'unit': target.unit.name,
-        'minimum_value': target.minimumValue,
-        'maximum_value': target.maximumValue,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await db.insert('nutrition_targets', {
+      'patient_id': target.patientId,
+      'nutrient_code': target.nutrientCode,
+      'target_value': target.targetValue,
+      'unit': target.unit.name,
+      'minimum_value': target.minimumValue,
+      'maximum_value': target.maximumValue,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   Future<List<NutritionTarget>> getNutritionTargets(int patientId) async {
@@ -764,10 +804,7 @@ class NutriDatabase {
     };
   }
 
-  static Map<String, Object?> _portionToMap(
-    int foodId,
-    FoodPortion portion,
-  ) {
+  static Map<String, Object?> _portionToMap(int foodId, FoodPortion portion) {
     return {
       'food_id': foodId,
       'amount': portion.amount,
@@ -842,8 +879,9 @@ class NutriDatabase {
       servingUnit: row['serving_unit'] as String?,
       householdMeasure: row['household_measure'] as String?,
       notes: row['notes'] as String?,
-      allergens: (jsonDecode((row['allergens_json'] as String?) ?? '[]') as List)
-          .cast<String>(),
+      allergens:
+          (jsonDecode((row['allergens_json'] as String?) ?? '[]') as List)
+              .cast<String>(),
       isArchived: (row['is_archived'] as int? ?? 0) == 1,
       createdAt: DateTime.parse(row['created_at'] as String),
       updatedAt: DateTime.parse(row['updated_at'] as String),
