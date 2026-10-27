@@ -16,9 +16,11 @@ class PatientDocumentText {
         'Clara de huevo cruda, congelada y pasteurizada',
     'egg, whole, raw, fresh': 'Huevo entero crudo',
     'oat milk, unsweetened, plain, refrigerated':
-        'Bebida de avena sin azúcar, natural, refrigerada',
+        'Bebida de avena sin azÃºcar, natural, refrigerada',
     'almond milk, unsweetened, plain, refrigerated':
-        'Bebida de almendras sin azúcar, natural, refrigerada',
+        'Bebida de almendras sin azÃºcar, natural, refrigerada',
+    'flour, almond': 'Harina de almendras',
+    'oats, whole grain, rolled, old fashioned': 'Avena integral en hojuelas',
     'bananas, overripe, raw': 'Banana madura cruda',
     'bananas, raw': 'Banana cruda',
     'yogurt, greek, plain, nonfat': 'Yogur griego natural descremado',
@@ -30,7 +32,7 @@ class PatientDocumentText {
         'Arroz blanco de grano largo, crudo',
     'carrots, baby, raw': 'Zanahoria baby cruda',
     'carrots, raw': 'Zanahoria cruda',
-    'broccoli, raw': 'Brócoli crudo',
+    'broccoli, raw': 'BrÃ³coli crudo',
     'potatoes, gold, without skin, raw': 'Papa amarilla pelada, cruda',
     'potatoes, raw, skin': 'Papa con piel, cruda',
     'beans, black, canned, sodium added, drained and rinsed':
@@ -41,7 +43,7 @@ class PatientDocumentText {
     'apples, raw, with skin': 'Manzana con piel, cruda',
     'tomatoes, red, ripe, raw, year round average': 'Tomate rojo maduro, crudo',
     'spinach, raw': 'Espinaca cruda',
-    'corn, sweet, yellow, raw': 'Maíz dulce amarillo, crudo',
+    'corn, sweet, yellow, raw': 'MaÃ­z dulce amarillo, crudo',
   };
 
   static String foodDisplayName(Food food, String languageCode) {
@@ -93,7 +95,7 @@ class PatientDocumentText {
       'potato': 'papa',
       'carrots': 'zanahorias',
       'carrot': 'zanahoria',
-      'broccoli': 'brócoli',
+      'broccoli': 'brÃ³coli',
       'spinach': 'espinaca',
       'tomatoes': 'tomates',
       'tomato': 'tomate',
@@ -101,7 +103,7 @@ class PatientDocumentText {
       'banana': 'banana',
       'apples': 'manzanas',
       'apple': 'manzana',
-      'unsweetened': 'sin azúcar',
+      'unsweetened': 'sin azÃºcar',
       'plain': 'natural',
       'nonfat': 'descremado',
       'whole milk': 'entero',
@@ -114,7 +116,7 @@ class PatientDocumentText {
       'dried': 'deshidratado',
       'drained and rinsed': 'escurrido y enjuagado',
       'canned': 'enlatado',
-      'sodium added': 'con sodio añadido',
+      'sodium added': 'con sodio aÃ±adido',
       'refrigerated': 'refrigerado',
       'overripe': 'maduro',
     };
@@ -138,12 +140,12 @@ class PatientDocumentText {
   static String _normalize(String value) => value
       .trim()
       .toLowerCase()
-      .replaceAll('á', 'a')
-      .replaceAll('é', 'e')
-      .replaceAll('í', 'i')
-      .replaceAll('ó', 'o')
-      .replaceAll('ú', 'u')
-      .replaceAll('ü', 'u')
-      .replaceAll('ñ', 'n')
+      .replaceAll('Ã¡', 'a')
+      .replaceAll('Ã©', 'e')
+      .replaceAll('Ã­', 'i')
+      .replaceAll('Ã³', 'o')
+      .replaceAll('Ãº', 'u')
+      .replaceAll('Ã¼', 'u')
+      .replaceAll('Ã±', 'n')
       .replaceAll(RegExp(r'\s+'), ' ');
 }
