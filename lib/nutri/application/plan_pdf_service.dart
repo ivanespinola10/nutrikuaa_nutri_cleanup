@@ -13,6 +13,7 @@ import '../domain/patient.dart';
 import '../domain/professional_profile.dart';
 import 'meal_plan_service.dart';
 import 'nutrition_calculator.dart';
+import 'patient_document_text.dart';
 import 'plan_nutrition_service.dart';
 import 'recipe_service.dart';
 
@@ -29,11 +30,11 @@ class PlanPdfService {
     MealPlanService? plans,
     PlanNutritionService? nutrition,
     RecipeService? recipes,
-  })  : database = database ?? NutriDatabase.instance,
-        patients = patients ?? PatientRepository(database: database),
-        plans = plans ?? MealPlanService(database: database),
-        nutrition = nutrition ?? PlanNutritionService(database: database),
-        recipes = recipes ?? RecipeService(database: database);
+  }) : database = database ?? NutriDatabase.instance,
+       patients = patients ?? PatientRepository(database: database),
+       plans = plans ?? MealPlanService(database: database),
+       nutrition = nutrition ?? PlanNutritionService(database: database),
+       recipes = recipes ?? RecipeService(database: database);
 
   Future<Uint8List> build({
     required int planId,
@@ -96,11 +97,7 @@ class PlanPdfService {
           primary: primary,
           labels: labels,
         ),
-        footer: (context) => _footer(
-          context,
-          profile: profile,
-          labels: labels,
-        ),
+        footer: (context) => _footer(context, profile: profile, labels: labels),
         build: (context) => [
           pw.SizedBox(height: 10),
           _patientCard(
@@ -134,10 +131,7 @@ class PlanPdfService {
             pw.Text(
               '${labels.pendingDays}: '
               '${pendingDays.map((day) => labels.days[day]).join(', ')}.',
-              style: const pw.TextStyle(
-                fontSize: 9,
-                color: PdfColors.grey700,
-              ),
+              style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700),
             ),
             pw.SizedBox(height: 8),
           ],
@@ -160,10 +154,18 @@ class PlanPdfService {
             // Ordinary day cards should move as a unit to the next page.
             // A very long day may still need to split to fit the page.
             final itemCount = dayMeals.fold<int>(
-              0, (count, meal) => count + meal.items.length,
+              0,
+              (count, meal) => count + meal.items.length,
             );
-            return itemCount <= 10 ? pw.Inseparable(child: daySection) : daySection;
+            return itemCount <= 10
+                ? pw.Inseparable(child: daySection)
+                : daySection;
           }),
+          pw.SizedBox(height: 4),
+          pw.Text(
+            labels.documentNotice,
+            style: const pw.TextStyle(fontSize: 7.5, color: PdfColors.grey600),
+          ),
           if (details.plan.notes != null &&
               details.plan.notes!.trim().isNotEmpty) ...[
             pw.SizedBox(height: 14),
@@ -193,9 +195,9 @@ class PlanPdfService {
                 ],
               ),
             ),
-            ...recipeInstructions.skip(1).map(
-              (recipe) => _recipeCard(recipe, border: border),
-            ),
+            ...recipeInstructions
+                .skip(1)
+                .map((recipe) => _recipeCard(recipe, border: border)),
           ],
         ],
       ),
@@ -244,12 +246,14 @@ class PlanPdfService {
           final food = await database.getFood(item.foodId!);
           if (food == null) continue;
 
-          final label = _foodDisplayName(
-            food.name,
-            food.brand,
+          final label = PatientDocumentText.foodDisplayName(
+            food,
+            labels.languageCode,
           );
           final grams = item.quantityGrams ?? 0;
-          final portionText = item.notes?.trim();
+          final portionText = PatientDocumentText.patientFacingPortionNote(
+            item.notes,
+          );
 
           items.add(
             _ResolvedItem(
@@ -308,10 +312,7 @@ class PlanPdfService {
       if (notes == null || notes.isEmpty) continue;
 
       result.add(
-        _RecipeInstruction(
-          name: details.recipe.name,
-          instructions: notes,
-        ),
+        _RecipeInstruction(name: details.recipe.name, instructions: notes),
       );
     }
     return result;
@@ -331,12 +332,13 @@ class PlanPdfService {
     final headline = fullName.isNotEmpty
         ? fullName
         : practice.isNotEmpty
-            ? practice
-            : labels.planTitle;
+        ? practice
+        : labels.planTitle;
 
     final credentialLine = [
       if (credentials.isNotEmpty) credentials,
-      if (registration.isNotEmpty) '${labels.registrationAbbreviation} $registration',
+      if (registration.isNotEmpty)
+        '${labels.registrationAbbreviation} $registration',
     ].join(' - ');
 
     return pw.Row(
@@ -346,10 +348,7 @@ class PlanPdfService {
           pw.Container(
             width: 42,
             height: 42,
-            child: pw.Image(
-              logo,
-              fit: pw.BoxFit.contain,
-            ),
+            child: pw.Image(logo, fit: pw.BoxFit.contain),
           ),
           pw.SizedBox(width: 10),
         ],
@@ -367,10 +366,7 @@ class PlanPdfService {
               ),
               if (credentialLine.isNotEmpty) ...[
                 pw.SizedBox(height: 2),
-                pw.Text(
-                  credentialLine,
-                  style: const pw.TextStyle(fontSize: 9),
-                ),
+                pw.Text(credentialLine, style: const pw.TextStyle(fontSize: 9)),
               ],
               if (practice.isNotEmpty && practice != headline) ...[
                 pw.SizedBox(height: 1),
@@ -398,10 +394,7 @@ class PlanPdfService {
             ),
             pw.Text(
               'Nutrikuaa Nutri',
-              style: const pw.TextStyle(
-                fontSize: 8,
-                color: PdfColors.grey600,
-              ),
+              style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey600),
             ),
           ],
         ),
@@ -425,10 +418,7 @@ class PlanPdfService {
       padding: const pw.EdgeInsets.only(top: 8),
       decoration: const pw.BoxDecoration(
         border: pw.Border(
-          top: pw.BorderSide(
-            color: PdfColors.grey300,
-            width: 0.5,
-          ),
+          top: pw.BorderSide(color: PdfColors.grey300, width: 0.5),
         ),
       ),
       child: pw.Row(
@@ -446,10 +436,7 @@ class PlanPdfService {
           ),
           pw.Text(
             '${labels.page} ${context.pageNumber} ${labels.ofWord} ${context.pagesCount}',
-            style: const pw.TextStyle(
-              fontSize: 7.5,
-              color: PdfColors.grey600,
-            ),
+            style: const pw.TextStyle(fontSize: 7.5, color: PdfColors.grey600),
           ),
         ],
       ),
@@ -498,10 +485,7 @@ class PlanPdfService {
           if (dates.isNotEmpty)
             pw.Text(
               dates,
-              style: const pw.TextStyle(
-                fontSize: 9,
-                color: PdfColors.grey700,
-              ),
+              style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700),
             ),
         ],
       ),
@@ -593,10 +577,7 @@ class PlanPdfService {
         crossAxisAlignment: pw.CrossAxisAlignment.stretch,
         children: [
           pw.Container(
-            padding: const pw.EdgeInsets.symmetric(
-              horizontal: 10,
-              vertical: 7,
-            ),
+            padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 7),
             decoration: pw.BoxDecoration(
               color: soft,
               borderRadius: const pw.BorderRadius.only(
@@ -658,8 +639,9 @@ class PlanPdfService {
                                 pw.SizedBox(height: 2),
                                 ...meal.items.map(
                                   (item) => pw.Padding(
-                                    padding:
-                                        const pw.EdgeInsets.only(bottom: 2),
+                                    padding: const pw.EdgeInsets.only(
+                                      bottom: 2,
+                                    ),
                                     child: pw.Row(
                                       crossAxisAlignment:
                                           pw.CrossAxisAlignment.start,
@@ -721,25 +703,10 @@ class PlanPdfService {
             ),
           ),
           pw.SizedBox(height: 4),
-          pw.Text(
-            body,
-            style: const pw.TextStyle(fontSize: 9),
-          ),
+          pw.Text(body, style: const pw.TextStyle(fontSize: 9)),
         ],
       ),
     );
-  }
-
-  String _foodDisplayName(String name, String? brand) {
-    final cleanName = name.trim().replaceAll(RegExp(r'\s+'), ' ');
-    final cleanBrand = brand?.trim().replaceAll(RegExp(r'\s+'), ' ') ?? '';
-
-    if (cleanBrand.isEmpty ||
-        cleanBrand.toLowerCase() == cleanName.toLowerCase()) {
-      return cleanName;
-    }
-
-    return '$cleanName - $cleanBrand';
   }
 
   String _foodQuantityText({
@@ -777,10 +744,8 @@ class PlanPdfService {
     return '$household = ${_formatFoodWeight(servingQuantity, unitSystem)}; '
         '$weight';
   }
-  String _patientFacingPlanName(
-    String rawName,
-    _PdfLabels labels,
-  ) {
+
+  String _patientFacingPlanName(String rawName, _PdfLabels labels) {
     final name = rawName.trim();
     if (name.isEmpty) return labels.weeklyPlan;
 
@@ -825,10 +790,7 @@ class PlanPdfService {
     }
   }
 
-  static String _formatFoodWeight(
-    double grams,
-    UnitSystem unitSystem,
-  ) {
+  static String _formatFoodWeight(double grams, UnitSystem unitSystem) {
     if (unitSystem == UnitSystem.imperial) {
       final ounces = grams / 28.349523125;
       return '${_number(ounces)} oz';
@@ -860,30 +822,23 @@ class _ResolvedItem {
   final String label;
   final String quantity;
 
-  const _ResolvedItem({
-    required this.label,
-    required this.quantity,
-  });
+  const _ResolvedItem({required this.label, required this.quantity});
 }
 
 class _RecipeInstruction {
   final String name;
   final String instructions;
 
-  const _RecipeInstruction({
-    required this.name,
-    required this.instructions,
-  });
+  const _RecipeInstruction({required this.name, required this.instructions});
 }
-
 
 class _PdfLabels {
   final String languageCode;
 
   _PdfLabels(String languageCode)
-      : languageCode = const ['es', 'en', 'pt'].contains(languageCode)
-            ? languageCode
-            : 'es';
+    : languageCode = const ['es', 'en', 'pt'].contains(languageCode)
+          ? languageCode
+          : 'es';
 
   List<String> get days {
     switch (languageCode) {
@@ -920,59 +875,46 @@ class _PdfLabels {
     }
   }
 
-  String get registrationAbbreviation => _t(
-        es: 'Reg.',
-        en: 'Reg.',
-        pt: 'Reg.',
-      );
+  String get registrationAbbreviation => _t(es: 'Reg.', en: 'Reg.', pt: 'Reg.');
 
-  String get planTitle => _t(
-        es: 'Plan nutricional',
-        en: 'Nutrition plan',
-        pt: 'Plano nutricional',
-      );
+  String get planTitle =>
+      _t(es: 'Plan nutricional', en: 'Nutrition plan', pt: 'Plano nutricional');
 
-  String get weeklyPlan => _t(
-        es: 'Plan semanal',
-        en: 'Weekly plan',
-        pt: 'Plano semanal',
-      );
+  String get weeklyPlan =>
+      _t(es: 'Plan semanal', en: 'Weekly plan', pt: 'Plano semanal');
 
   String get generalInstructions => _t(
-        es: 'Indicaciones generales',
-        en: 'General instructions',
-        pt: 'Orientações gerais',
-      );
+    es: 'Indicaciones generales',
+    en: 'General instructions',
+    pt: 'Orientações gerais',
+  );
 
-  String get preparations => _t(
-        es: 'Preparaciones',
-        en: 'Preparations',
-        pt: 'Preparações',
-      );
+  String get preparations =>
+      _t(es: 'Preparaciones', en: 'Preparations', pt: 'Preparações');
 
-  String get dailyTargets => _t(
-        es: 'Objetivos diarios',
-        en: 'Daily targets',
-        pt: 'Metas diárias',
-      );
+  String get dailyTargets =>
+      _t(es: 'Objetivos diarios', en: 'Daily targets', pt: 'Metas diárias');
 
   String get emptyDay => _t(
-        es: 'Sin alimentos ni recetas.',
-        en: 'No foods or recipes.',
-        pt: 'Sem alimentos ou receitas.',
-      );
+    es: 'Sin alimentos ni recetas.',
+    en: 'No foods or recipes.',
+    pt: 'Sem alimentos ou receitas.',
+  );
 
   String get pendingDays => _t(
-        es: 'Días pendientes de planificar',
-        en: 'Days awaiting planning',
-        pt: 'Dias pendentes de planejamento',
-      );
+    es: 'Días pendientes de planificar',
+    en: 'Days awaiting planning',
+    pt: 'Dias pendentes de planejamento',
+  );
 
-  String get servings => _t(
-        es: 'porción(es)',
-        en: 'serving(s)',
-        pt: 'porção(ões)',
-      );
+  String get servings =>
+      _t(es: 'porción(es)', en: 'serving(s)', pt: 'porção(ões)');
+
+  String get documentNotice => _t(
+    es: 'Documento preparado con Nutrikuaa Nutri. La indicación final corresponde al profesional responsable.',
+    en: 'Document prepared with Nutrikuaa Nutri. Final guidance remains the responsibility of the professional.',
+    pt: 'Documento preparado com Nutrikuaa Nutri. A orientação final é de responsabilidade do profissional.',
+  );
 
   String get page => _t(es: 'Página', en: 'Page', pt: 'Página');
   String get ofWord => _t(es: 'de', en: 'of', pt: 'de');
@@ -984,11 +926,7 @@ class _PdfLabels {
       case NutrientCodes.protein:
         return _t(es: 'Proteína', en: 'Protein', pt: 'Proteína');
       case NutrientCodes.carbohydrate:
-        return _t(
-          es: 'Carbohidratos',
-          en: 'Carbohydrates',
-          pt: 'Carboidratos',
-        );
+        return _t(es: 'Carbohidratos', en: 'Carbohydrates', pt: 'Carboidratos');
       case NutrientCodes.fat:
         return _t(es: 'Grasas', en: 'Fat', pt: 'Gorduras');
       case NutrientCodes.fiber:
@@ -1013,11 +951,7 @@ class _PdfLabels {
     return languageCode == 'en' ? translated[0] : translated[1];
   }
 
-  String _t({
-    required String es,
-    required String en,
-    required String pt,
-  }) {
+  String _t({required String es, required String en, required String pt}) {
     switch (languageCode) {
       case 'en':
         return en;

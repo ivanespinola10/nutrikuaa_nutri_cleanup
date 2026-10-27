@@ -27,3 +27,14 @@ La interfaz y el contrato del servicio están separados del motor, de modo que u
 ## Criterio de validación de preventa
 
 La beta cumple su objetivo si un nutricionista puede crear o seleccionar un paciente, abrir una semana, describir un día alimentario, generar un borrador offline, revisarlo, aplicarlo y continuar editando el plan sin salir del Planificador.
+
+## Validador independiente del borrador
+
+Nutri IA genera el borrador y una segunda capa local independiente vuelve a revisar:
+- energía y macronutrientes contra las metas disponibles;
+- restricciones expresadas en el pedido;
+- alergias e intolerancias registradas en la ficha del paciente;
+- cantidades inválidas o extremas;
+- disponibilidad mínima de composición nutricional.
+
+Una incompatibilidad dura bloquea la acción "Aplicar borrador". Las advertencias no equivalen a aprobación clínica y siempre requieren revisión profesional.

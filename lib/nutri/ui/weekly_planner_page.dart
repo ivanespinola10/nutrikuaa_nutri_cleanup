@@ -6,6 +6,7 @@ import '../localization/nutri_i18n.dart';
 import '../application/food_placement_service.dart';
 import '../application/meal_plan_service.dart';
 import '../application/offline_plan_assistant_service.dart';
+import '../application/patient_document_text.dart';
 import '../application/plan_nutrition_service.dart';
 import '../application/portion_converter.dart';
 import '../application/recipe_service.dart';
@@ -13,6 +14,7 @@ import '../application/shopping_list_service.dart';
 import '../application/unified_food_search_service.dart';
 import '../data/nutri_database.dart';
 import '../data/patient_repository.dart';
+import '../config/app_build_info.dart';
 import '../domain/food.dart';
 import '../domain/meal_plan.dart';
 import '../domain/nutrition/nutrient.dart';
@@ -214,9 +216,10 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
           final food = await _database.getFood(item.foodId!);
           labels[itemId] = food == null
               ? NutriI18n.t('Alimentos')
-              : food.brand == null
-              ? food.name
-              : '${food.name} · ${food.brand}';
+              : PatientDocumentText.foodDisplayName(
+                  food,
+                  NutriI18n.languageCode,
+                );
         } else {
           final recipe = await _recipes.getById(item.recipeId!);
           labels[itemId] = recipe?.recipe.name ?? NutriI18n.t('Receta');
@@ -387,7 +390,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
           return;
         }
         final portionNote = _usePortion && _selectedPortion != null
-            ? '${_portionAmount.text.trim()} × ${_selectedPortion!.measure ?? 'porción'}'
+            ? '${_portionAmount.text.trim()} Ã— ${_selectedPortion!.measure ?? 'porción'}'
             : null;
 
         await _placement.addSelectedFoodToMeal(
@@ -658,8 +661,14 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
       return;
     }
 
+    final patientId = _selectedPatientId;
+    final patient = patientId == null
+        ? null
+        : await _patients.getById(patientId);
     final energyTarget = _target(NutrientCodes.energyKcal);
     final proteinTarget = _target(NutrientCodes.protein);
+    final carbohydrateTarget = _target(NutrientCodes.carbohydrate);
+    final fatTarget = _target(NutrientCodes.fat);
     final applied = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
@@ -668,6 +677,12 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
         dayLabel: _dayLabel(_selectedDay),
         targetKcal: energyTarget > 0 ? energyTarget : null,
         targetProteinGrams: proteinTarget > 0 ? proteinTarget : null,
+        targetCarbohydrateGrams: carbohydrateTarget > 0
+            ? carbohydrateTarget
+            : null,
+        targetFatGrams: fatTarget > 0 ? fatTarget : null,
+        patientAllergies: patient?.reportedAllergies,
+        patientIntolerances: patient?.reportedIntolerances,
         onApply: _applyOfflineAssistantDraft,
       ),
     );
@@ -712,7 +727,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
             mealId: mealId,
             selectedFood: item.food,
             quantityGrams: item.grams,
-            notes: 'Borrador Nutri IA offline · revisar profesionalmente',
+            notes: 'nutrikuaa:assistant-draft',
             sortOrder: itemIndex,
           );
         }
@@ -810,7 +825,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
           ),
           const Padding(
             padding: EdgeInsets.only(right: 18),
-            child: Center(child: Text('PREVENTA Â· V0.6')),
+            child: Center(child: Text('PREVENTA Ã‚· V0.6')),
           ),
         ],
       ),

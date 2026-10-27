@@ -11,6 +11,7 @@ import 'package:printing/printing.dart';
 import '../application/meal_plan_service.dart';
 import '../application/plan_nutrition_service.dart';
 import '../application/plan_pdf_service.dart';
+import '../config/app_build_info.dart';
 import '../data/app_settings_repository.dart';
 import '../data/patient_repository.dart';
 import '../data/professional_profile_repository.dart';
@@ -183,8 +184,11 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
     final plans = await _plans.listForPatient(patientId);
     if (!mounted) return;
 
-    var planId = _selectedPlanId ??
-        (patientId == widget.preferredPatientId ? widget.preferredPlanId : null);
+    var planId =
+        _selectedPlanId ??
+        (patientId == widget.preferredPatientId
+            ? widget.preferredPlanId
+            : null);
     if (!plans.any((plan) => plan.id == planId)) {
       planId = plans.isEmpty ? null : plans.first.id;
     }
@@ -206,9 +210,7 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
       webWildCards: ['image/png', 'image/jpeg'],
     );
 
-    final file = await openFile(
-      acceptedTypeGroups: const [typeGroup],
-    );
+    final file = await openFile(acceptedTypeGroups: const [typeGroup]);
     if (file == null) return;
 
     final bytes = await file.readAsBytes();
@@ -266,8 +268,7 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
         bytes[2] == 0xFF;
   }
 
-  Uint8List? get _activeLogoBytes =>
-      _customLogoBytes ?? _nutrikuaaLogoBytes;
+  Uint8List? get _activeLogoBytes => _customLogoBytes ?? _nutrikuaaLogoBytes;
 
   Future<void> _saveProfile() async {
     await _execute(() async {
@@ -297,9 +298,11 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
           context: context,
           builder: (dialogContext) => AlertDialog(
             title: Text(NutriI18n.t('El plan está vacío')),
-            content: Text(NutriI18n.t(
-              'Agrega al menos un alimento o receta antes de generar el PDF.',
-            )),
+            content: Text(
+              NutriI18n.t(
+                'Agrega al menos un alimento o receta antes de generar el PDF.',
+              ),
+            ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(dialogContext),
@@ -329,7 +332,9 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
       final outOfRangeDays = summary == null || energyTarget == null
           ? <int>[]
           : plannedDays.where((day) {
-              final kcal = summary.totalsForDay(day).value(NutrientCodes.energyKcal);
+              final kcal = summary
+                  .totalsForDay(day)
+                  .value(NutrientCodes.energyKcal);
               return (kcal - energyTarget).abs() / energyTarget > 0.15;
             }).toList();
       if (plannedDays.length < 7 || outOfRangeDays.isNotEmpty) {
@@ -431,13 +436,14 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(NutriI18n.t('Documentos'),
+        title: Text(
+          NutriI18n.t('Documentos'),
           style: TextStyle(fontWeight: FontWeight.w700),
         ),
         actions: const [
           Padding(
             padding: EdgeInsets.only(right: 18),
-            child: Center(child: Text('V0.8.2')),
+            child: Center(child: Text(NutriBuildInfo.displayLabel)),
           ),
         ],
       ),
@@ -482,11 +488,15 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(NutriI18n.t('Identidad profesional'),
+            Text(
+              NutriI18n.t('Identidad profesional'),
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 4),
-            Text(NutriI18n.t('Estos datos quedan guardados localmente y aparecerán en tus documentos.'),
+            Text(
+              NutriI18n.t(
+                'Estos datos quedan guardados localmente y aparecerán en tus documentos.',
+              ),
             ),
             const SizedBox(height: 12),
             Row(
@@ -507,10 +517,7 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: _field(
-                    _practice,
-                    'Consultorio / marca profesional',
-                  ),
+                  child: _field(_practice, 'Consultorio / marca profesional'),
                 ),
               ],
             ),
@@ -557,9 +564,7 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: Theme.of(context).colorScheme.outlineVariant,
-        ),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -598,8 +603,11 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
                 const SizedBox(height: 3),
                 Text(
                   usingCustom
-                      ? (_customLogoFileName ?? NutriI18n.t('Logo personalizado'))
-                      : NutriI18n.t('Se usa como respaldo mientras no cargues uno propio.'),
+                      ? (_customLogoFileName ??
+                            NutriI18n.t('Logo personalizado'))
+                      : NutriI18n.t(
+                          'Se usa como respaldo mientras no cargues uno propio.',
+                        ),
                 ),
                 const SizedBox(height: 8),
                 Wrap(
@@ -638,7 +646,8 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(NutriI18n.t('Generar plan para el paciente'),
+            Text(
+              NutriI18n.t('Generar plan para el paciente'),
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 12),
@@ -652,7 +661,9 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
                     key: ValueKey('document-patient-$_selectedPatientId'),
                     value: _selectedPatientId,
                     isExpanded: true,
-                    decoration: InputDecoration(labelText: NutriI18n.t('Paciente')),
+                    decoration: InputDecoration(
+                      labelText: NutriI18n.t('Paciente'),
+                    ),
                     items: _patientList
                         .map(
                           (patient) => DropdownMenuItem(
@@ -674,7 +685,9 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
                     key: ValueKey('document-plan-$_selectedPlanId'),
                     value: _selectedPlanId,
                     isExpanded: true,
-                    decoration: InputDecoration(labelText: NutriI18n.t('Plan / semana')),
+                    decoration: InputDecoration(
+                      labelText: NutriI18n.t('Plan / semana'),
+                    ),
                     items: _planList
                         .map(
                           (plan) => DropdownMenuItem(
@@ -699,7 +712,9 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
               runSpacing: 4,
               children: [
                 FilterChip(
-                  label: Text(NutriI18n.t('Mostrar resumen nutricional diario')),
+                  label: Text(
+                    NutriI18n.t('Mostrar resumen nutricional diario'),
+                  ),
                   selected: _includeNutrition,
                   onSelected: (value) => setState(() {
                     _includeNutrition = value;
@@ -718,15 +733,16 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
             ),
             const SizedBox(height: 12),
             FilledButton.icon(
-              onPressed: _busy || _selectedPlanId == null
-                  ? null
-                  : _generatePdf,
+              onPressed: _busy || _selectedPlanId == null ? null : _generatePdf,
               icon: const Icon(Icons.picture_as_pdf_outlined),
               label: Text(NutriI18n.t('Generar vista previa PDF')),
             ),
             if (_planList.isEmpty && _selectedPatientId != null) ...[
               const SizedBox(height: 8),
-              Text(NutriI18n.t('Este paciente todavía no tiene planes para exportar.'),
+              Text(
+                NutriI18n.t(
+                  'Este paciente todavía no tiene planes para exportar.',
+                ),
               ),
             ],
           ],
@@ -754,10 +770,7 @@ class _DocumentWorkspacePageState extends State<DocumentWorkspacePage> {
     );
   }
 
-  Widget _field(
-    TextEditingController controller,
-    String label,
-  ) {
+  Widget _field(TextEditingController controller, String label) {
     return TextField(
       controller: controller,
       onChanged: (_) => setState(() => _pdfBytes = null),
