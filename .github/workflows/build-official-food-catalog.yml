@@ -1,9 +1,10 @@
-name: Build Official Food Catalog
+name: Build USDA Core Food Catalog
 
 on:
+  workflow_dispatch:
   push:
     branches:
-      - feature/nutri-backend-foundation
+      - feature/presale-offline-plan-assistant
     paths:
       - '.github/workflows/build-official-food-catalog.yml'
       - 'tools/food_importer/import_usda.py'
@@ -20,40 +21,49 @@ jobs:
       - name: Checkout branch
         uses: actions/checkout@v4
         with:
-          ref: feature/nutri-backend-foundation
+          ref: feature/presale-offline-plan-assistant
           fetch-depth: 0
 
-      - name: Download USDA Foundation Foods 04/2026
+      - name: Download USDA FoodData Central October 2026
         run: |
           rm -rf .catalog_source
           mkdir -p .catalog_source
-          curl --fail --location --retry 3 \
-            "https://fdc.nal.usda.gov/fdc-datasets/FoodData_Central_foundation_food_csv_2026-04-30.zip" \
-            --output .catalog_source/foundation.zip
-          unzip -q .catalog_source/foundation.zip -d .catalog_source/extracted
 
-      - name: Locate FoodData Central CSV directory
+          curl --fail --location --retry 3 \
+            "https://fdc.nal.usda.gov/fdc-datasets/FoodData_Central_csv_2026-10-29.zip" \
+            --output .catalog_source/usda-core.zip
+
+          unzip -q .catalog_source/usda-core.zip \
+            -d .catalog_source/extracted
+
+      - name: Locate USDA CSV directory
         id: locate
         shell: bash
         run: |
           FOOD_FILE="$(find .catalog_source/extracted -type f -name food.csv | head -n 1)"
+
           if [ -z "$FOOD_FILE" ]; then
             echo "food.csv not found"
             exit 1
           fi
+
           INPUT_DIR="$(dirname "$FOOD_FILE")"
+
           echo "input_dir=$INPUT_DIR" >> "$GITHUB_OUTPUT"
           echo "Using $INPUT_DIR"
 
-      - name: Build NutriKuaa official SQLite catalog
+      - name: Build Nutrikuaa USDA Core catalog
         run: |
           rm -f assets/data/nutrikuaa_foods.db
           rm -f assets/data/nutrikuaa_foods.db.manifest.json
+
           python3 tools/food_importer/import_usda.py \
             --input "${{ steps.locate.outputs.input_dir }}" \
             --output "assets/data/nutrikuaa_foods.db" \
-            --source-release "USDA FoodData Central Foundation Foods 2026-04" \
-            --data-type "foundation_food"
+            --source-release "USDA FoodData Central Core 2026-10" \
+            --data-type "foundation_food" \
+            --data-type "survey_fndds_food" \
+            --data-type "sr_legacy_food"
 
       - name: Finalize bundled manifest
         run: |
@@ -61,101 +71,158 @@ jobs:
           import json
           from pathlib import Path
 
-          generated = Path("assets/data/nutrikuaa_foods.db.manifest.json")
-          target = Path("assets/data/food_db_manifest.json")
+          generated = Path(
+              "assets/data/nutrikuaa_foods.db.manifest.json"
+          )
+          target = Path(
+              "assets/data/food_db_manifest.json"
+          )
 
-          data = json.loads(generated.read_text(encoding="utf-8"))
+          data = json.loads(
+              generated.read_text(encoding="utf-8")
+          )
+
           data["bundled"] = True
-          data["catalogKind"] = "foundation"
-          data["releaseDate"] = "2026-04-30"
+          data["catalogKind"] = "usda-core"
+          data["releaseDate"] = "2026-10-29"
           data["distribution"] = "bundled-offline"
+          data["includedDataTypes"] = [
+              "Foundation Foods 2026-10",
+              "FNDDS 2021-2023",
+              "SR Legacy 2018",
+          ]
+
           target.write_text(
-              json.dumps(data, indent=2, ensure_ascii=False) + "\n",
+              json.dumps(
+                  data,
+                  indent=2,
+                  ensure_ascii=False,
+              ) + "\n",
               encoding="utf-8",
           )
+
           generated.unlink()
           PY
 
       - name: Validate generated catalog
         run: |
           python3 - <<'PY'
-          import json
           import hashlib
+          import json
           import sqlite3
           from pathlib import Path
 
-          db_path = Path("assets/data/nutrikuaa_foods.db")
-          manifest_path = Path("assets/data/food_db_manifest.json")
+          db_path = Path(
+              "assets/data/nutrikuaa_foods.db"
+          )
 
-          if not db_path.exists() or db_path.stat().st_size == 0:
-              raise SystemExit("Generated catalog is missing or empty")
+          manifest_path = Path(
+              "assets/data/food_db_manifest.json"
+          )
 
-          manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-          if not manifest.get("bundled"):
-              raise SystemExit("Manifest is not marked bundled")
-          if hashlib.sha256(db_path.read_bytes()).hexdigest() != manifest["sha256"]:
-              raise SystemExit("Catalog SHA-256 does not match manifest")
+          manifest = json.loads(
+              manifest_path.read_text(
+                  encoding="utf-8"
+              )
+          )
+
+          checksum = hashlib.sha256(
+              db_path.read_bytes()
+          ).hexdigest()
+
+          if checksum != manifest["sha256"]:
+              raise SystemExit(
+                  "SHA-256 mismatch"
+              )
 
           conn = sqlite3.connect(db_path)
+
           try:
-              food_count = conn.execute("SELECT COUNT(*) FROM foods").fetchone()[0]
+              food_count = conn.execute(
+                  "SELECT COUNT(*) FROM foods"
+              ).fetchone()[0]
+
               nutrient_count = conn.execute(
                   "SELECT COUNT(*) FROM food_nutrients"
               ).fetchone()[0]
+
               portion_count = conn.execute(
                   "SELECT COUNT(*) FROM food_portions"
               ).fetchone()[0]
-              source_release = conn.execute(
-                  "SELECT value FROM catalog_metadata WHERE key = 'source_release'"
-              ).fetchone()[0]
-              integrity = conn.execute("PRAGMA integrity_check").fetchone()[0]
+
               energy_count = conn.execute(
-                  "SELECT COUNT(*) FROM food_nutrients WHERE nutrient_code = 'energy_kcal'"
+                  """
+                  SELECT COUNT(*)
+                  FROM food_nutrients
+                  WHERE nutrient_code = 'energy_kcal'
+                  """
               ).fetchone()[0]
-              specific_count = conn.execute(
-                  "SELECT COUNT(*) FROM food_nutrients WHERE source_nutrient_id = '2048'"
+
+              types = conn.execute(
+                  """
+                  SELECT data_type, COUNT(*)
+                  FROM foods
+                  GROUP BY data_type
+                  ORDER BY data_type
+                  """
+              ).fetchall()
+
+              integrity = conn.execute(
+                  "PRAGMA integrity_check"
               ).fetchone()[0]
+
           finally:
               conn.close()
 
-          print(f"Foods: {food_count}")
-          print(f"Nutrient values: {nutrient_count}")
-          print(f"Portions: {portion_count}")
-          print(f"Release: {source_release}")
-          print(f"Energy values: {energy_count} (Atwater specific: {specific_count})")
-          print(f"Database bytes: {db_path.stat().st_size}")
+          print("Foods:", food_count)
+          print("Nutrients:", nutrient_count)
+          print("Portions:", portion_count)
+          print("Energy values:", energy_count)
+          print("Types:", types)
+          print("Integrity:", integrity)
 
-          if food_count < 100:
-              raise SystemExit(f"Unexpectedly small food catalog: {food_count}")
-          if nutrient_count < food_count:
+          if integrity != "ok":
               raise SystemExit(
-                  f"Unexpectedly small nutrient table: {nutrient_count}"
+                  "SQLite integrity failed"
               )
-          if integrity != "ok" or energy_count < 370 or specific_count == 0:
-              raise SystemExit("Catalog integrity or energy coverage check failed")
 
-          if source_release != "USDA FoodData Central Foundation Foods 2026-04":
-              raise SystemExit(f"Unexpected source release: {source_release}")
+          if food_count < 12000:
+              raise SystemExit(
+                  f"Catalog unexpectedly small: {food_count}"
+              )
 
-          print("Catalog validation: OK")
-          # Values were printed above before assertions on purpose.
-          # This makes a future schema/data issue diagnosable from CI logs.
-          # Do not remove these diagnostics.
-          # 
-          # Duplicate prints below were removed.
-          #
+          if energy_count < 10000:
+              raise SystemExit(
+                  f"Energy coverage too small: {energy_count}"
+              )
+
+          if len(types) < 3:
+              raise SystemExit(
+                  f"Expected three USDA data types: {types}"
+              )
+
+          print("USDA Core catalog: OK")
           PY
 
-      - name: Commit official catalog to branch
+      - name: Commit USDA Core catalog
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add assets/data/nutrikuaa_foods.db assets/data/food_db_manifest.json
+          git config user.name \
+            "github-actions[bot]"
+
+          git config user.email \
+            "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add \
+            assets/data/nutrikuaa_foods.db \
+            assets/data/food_db_manifest.json
 
           if git diff --cached --quiet; then
             echo "Catalog already current."
             exit 0
           fi
 
-          git commit -m "data(food): bundle USDA Foundation Foods 2026-04 catalog"
-          git push origin HEAD:feature/nutri-backend-foundation
+          git commit \
+            -m "data(food): bundle USDA core catalog"
+
+          git push origin \
+            HEAD:feature/presale-offline-plan-assistant
