@@ -1,14 +1,19 @@
 {
   "schemaVersion": 1,
-  "dataVersion": "USDA FoodData Central Foundation Foods 2026-04",
+  "dataVersion": "USDA FoodData Central Core 2026-10",
   "sourceName": "USDA FoodData Central",
-  "sourceRelease": "USDA FoodData Central Foundation Foods 2026-04",
+  "sourceRelease": "USDA FoodData Central Core 2026-10",
   "databaseFile": "nutrikuaa_foods.db",
-  "sha256": "4f90d79d50491124948747540e0b6556ea21cc88382e22053547b1b416d53c9e",
-  "builtAtUtc": "2026-09-25T02:18:01.546968+00:00",
+  "sha256": "a070cead5371f765a0d8718c84b3956b7d543517c0f633f8b620fb9686eeb0bf",
+  "builtAtUtc": "2026-10-31T20:16:21.875923+00:00",
   "networkRequiredAtRuntime": false,
   "bundled": true,
-  "catalogKind": "foundation",
-  "releaseDate": "2026-04-30",
-  "distribution": "bundled-offline"
+  "catalogKind": "usda-core",
+  "releaseDate": "2026-10-29",
+  "distribution": "bundled-offline",
+  "includedDataTypes": [
+    "Foundation Foods 2026-10",
+    "FNDDS 2021-2023",
+    "SR Legacy 2018"
+  ]
 }
