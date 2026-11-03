@@ -10,6 +10,8 @@ import '../data/official_food_catalog_manifest.dart';
 import '../domain/food.dart';
 import '../domain/nutrition/nutrient.dart';
 
+import 'food_import_button.dart';
+
 const _nutrientFields = <(String, String, NutrientUnit)>[
   (NutrientCodes.energyKcal, 'Energía (kcal)', NutrientUnit.kilocalorie),
   (NutrientCodes.protein, 'Proteínas (g)', NutrientUnit.gram),
@@ -116,7 +118,7 @@ class _NutriCatalogWorkspacePageState extends State<NutriCatalogWorkspacePage> {
         const Duration(seconds: 12),
       );
       _privateReady = true;
-      _ownCount = (await _foods.search('', limit: 5000)).length;
+      _ownCount = await _foods.count();
     } catch (error) {
       _error = 'Base profesional: $error';
     }
@@ -298,7 +300,7 @@ class _NutriCatalogWorkspacePageState extends State<NutriCatalogWorkspacePage> {
                 allergens: allergens,
               ));
       }
-      _ownCount = (await _foods.search('', limit: 5000)).length;
+      _ownCount = await _foods.count();
       _closeEditor();
       await _runSearch();
       _message(
@@ -469,10 +471,23 @@ class _NutriCatalogWorkspacePageState extends State<NutriCatalogWorkspacePage> {
               style: TextStyle(color: Theme.of(context).colorScheme.error),
             ),
           const SizedBox(height: 10),
-          FilledButton.icon(
-            onPressed: _busy || !_privateReady ? null : () => _openEditor(),
-            icon: const Icon(Icons.add),
-            label: const Text('Nuevo alimento'),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              FilledButton.icon(
+                onPressed: _busy || !_privateReady ? null : () => _openEditor(),
+                icon: const Icon(Icons.add),
+                label: const Text('Nuevo alimento'),
+              ),
+              FoodImportButton(
+                onImported: () async {
+                  _ownCount = await _foods.count();
+                  await _runSearch();
+                  if (mounted) setState(() {});
+                },
+              ),
+            ],
           ),
         ],
       ),
@@ -700,7 +715,10 @@ class _NutriCatalogWorkspacePageState extends State<NutriCatalogWorkspacePage> {
       [
         if (food.brand != null) food.brand!,
         if (food.isOfficial) 'USDA · FDC ' + (food.sourceFoodId ?? '-'),
-        if (!food.isOfficial) 'Biblioteca profesional',
+        if (food.sourceType == FoodSourceType.imported)
+          'Base importada · ' + (food.sourceName ?? 'Sin nombre'),
+        if (!food.isOfficial && food.sourceType != FoodSourceType.imported)
+          'Biblioteca profesional',
         if (food.nutrient(NutrientCodes.energyKcal) != null)
           food
                   .nutrient(NutrientCodes.energyKcal)!

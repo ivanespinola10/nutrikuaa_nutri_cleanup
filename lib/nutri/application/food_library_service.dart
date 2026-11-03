@@ -6,7 +6,7 @@ class FoodLibraryService {
   final NutriDatabase database;
 
   FoodLibraryService({NutriDatabase? database})
-      : database = database ?? NutriDatabase.instance;
+    : database = database ?? NutriDatabase.instance;
 
   Future<int> addBrandedFood({
     required String name,
@@ -102,6 +102,10 @@ class FoodLibraryService {
     );
   }
 
+  Future<int> importFoods(List<Food> foods) => database.importFoods(foods);
+
+  Future<int> count() => database.countFoods();
+
   Future<int> update(Food food) => database.updateFood(food);
 
   Future<List<Food>> search(
@@ -109,10 +113,6 @@ class FoodLibraryService {
     String? countryCode,
     int limit = 50,
   }) {
-    return database.searchFoods(
-      query,
-      countryCode: countryCode,
-      limit: limit,
-    );
+    return database.searchFoods(query, countryCode: countryCode, limit: limit);
   }
 }

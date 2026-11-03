@@ -530,6 +530,51 @@ class NutriDatabase {
     });
   }
 
+  Future<int> importFoods(List<Food> foods) async {
+    if (foods.isEmpty) return 0;
+    final db = await database;
+    return db.transaction((txn) async {
+      var imported = 0;
+      for (final food in foods) {
+        if (food.sourceType != FoodSourceType.imported) {
+          throw ArgumentError('Bulk import accepts only imported foods.');
+        }
+        final duplicate = await txn.rawQuery(
+          'SELECT id FROM foods '
+          'WHERE is_archived = 0 '
+          "AND source_type = 'imported' "
+          "AND LOWER(COALESCE(source_name, '')) = LOWER(?) "
+          'AND LOWER(name) = LOWER(?) '
+          "AND LOWER(COALESCE(brand, '')) = LOWER(?) "
+          'LIMIT 1',
+          [food.sourceName ?? '', food.name, food.brand ?? ''],
+        );
+        if (duplicate.isNotEmpty) continue;
+        final foodId = await txn.insert('foods', _foodToMap(food));
+        for (final nutrient in food.nutrients) {
+          await txn.insert(
+            'food_nutrients',
+            _nutrientToMap(foodId, nutrient),
+            conflictAlgorithm: ConflictAlgorithm.replace,
+          );
+        }
+        for (final portion in food.portions) {
+          await txn.insert('food_portions', _portionToMap(foodId, portion));
+        }
+        imported++;
+      }
+      return imported;
+    });
+  }
+
+  Future<int> countFoods({bool includeArchived = false}) async {
+    final db = await database;
+    final result = await db.rawQuery(
+      'SELECT COUNT(*) AS count FROM foods${includeArchived ? '' : ' WHERE is_archived = 0'}',
+    );
+    return (result.first['count'] as num?)?.toInt() ?? 0;
+  }
+
   /// Returns the active food ID. A used food gets a new ID so existing
   /// recipes and delivered plans retain their original composition.
   Future<int> updateFood(Food food) async {
