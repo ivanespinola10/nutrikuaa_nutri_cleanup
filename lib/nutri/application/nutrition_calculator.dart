@@ -4,10 +4,7 @@ class FoodAmount {
   final Food food;
   final double grams;
 
-  const FoodAmount({
-    required this.food,
-    required this.grams,
-  });
+  const FoodAmount({required this.food, required this.grams});
 }
 
 class NutritionTotals {
@@ -52,10 +49,7 @@ class NutritionCalculator {
     return totals;
   }
 
-  static double difference({
-    required double actual,
-    required double target,
-  }) {
+  static double difference({required double actual, required double target}) {
     return actual - target;
   }
 

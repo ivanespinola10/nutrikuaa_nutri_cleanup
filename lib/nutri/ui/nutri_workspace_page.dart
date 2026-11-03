@@ -81,10 +81,7 @@ class _NutriWorkspacePageState extends State<NutriWorkspacePage> {
     return double.tryParse(controller.text.trim().replaceAll(',', '.')) ?? 0;
   }
 
-  Future<void> _refreshData({
-    int? preferPatientId,
-    int? preferFoodId,
-  }) async {
+  Future<void> _refreshData({int? preferPatientId, int? preferFoodId}) async {
     try {
       await NutriDatabase.instance.database.timeout(
         const Duration(seconds: 12),
@@ -116,7 +113,7 @@ class _NutriWorkspacePageState extends State<NutriWorkspacePage> {
         _initializing = false;
         _databaseReady = true;
         _error = null;
-        _status = 'SQLite local activo · persistencia del navegador';
+        _status = 'SQLite local activo Â· persistencia del navegador';
       });
     } catch (error) {
       if (!mounted) return;
@@ -168,10 +165,7 @@ class _NutriWorkspacePageState extends State<NutriWorkspacePage> {
 
     await _execute(() async {
       final id = await _patients.create(
-        Patient(
-          firstName: first,
-          lastName: _lastName.text.trim(),
-        ),
+        Patient(firstName: first, lastName: _lastName.text.trim()),
       );
 
       final targets = <NutritionTarget>[];
@@ -279,7 +273,7 @@ class _NutriWorkspacePageState extends State<NutriWorkspacePage> {
       final planId = await _plans.createPlan(
         MealPlan(
           patientId: patientId,
-          name: 'Prueba Chrome V0.1',
+          name: 'Prueba Chrome',
           startDate: DateTime.now(),
         ),
       );
@@ -370,10 +364,7 @@ class _NutriWorkspacePageState extends State<NutriWorkspacePage> {
             )
           : existingFoods.first.id!;
 
-      await _refreshData(
-        preferPatientId: patientId,
-        preferFoodId: foodId,
-      );
+      await _refreshData(preferPatientId: patientId, preferFoodId: foodId);
       _message('Datos demo cargados.');
     });
   }
@@ -390,7 +381,7 @@ class _NutriWorkspacePageState extends State<NutriWorkspacePage> {
     } catch (error) {
       if (!mounted) return;
       setState(() => _error = error.toString());
-      _message('Ocurrió un error. Revisa el mensaje superior.');
+      _message('OcurriÃ³ un error. Revisa el mensaje superior.');
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -439,7 +430,7 @@ class _NutriWorkspacePageState extends State<NutriWorkspacePage> {
             padding: const EdgeInsets.only(right: 18),
             child: Center(
               child: Text(
-                'Chrome MVP · V0.1',
+                'Entorno local de prueba',
                 style: Theme.of(context).textTheme.labelLarge,
               ),
             ),
@@ -469,8 +460,8 @@ class _NutriWorkspacePageState extends State<NutriWorkspacePage> {
                   final cardWidth = width >= 1020
                       ? (width - 32) / 3
                       : width >= 680
-                          ? (width - 16) / 2
-                          : width;
+                      ? (width - 16) / 2
+                      : width;
 
                   return Wrap(
                     spacing: 16,
@@ -508,17 +499,12 @@ class _NutriWorkspacePageState extends State<NutriWorkspacePage> {
               runSpacing: 10,
               children: [
                 const Text(
-                  'Laboratorio funcional V0.1',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w800,
-                  ),
+                  'Laboratorio funcional',
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800),
                 ),
                 Chip(
                   avatar: Icon(
-                    _databaseReady
-                        ? Icons.check_circle
-                        : Icons.error_outline,
+                    _databaseReady ? Icons.check_circle : Icons.error_outline,
                     size: 18,
                   ),
                   label: Text(_status),
@@ -527,16 +513,13 @@ class _NutriWorkspacePageState extends State<NutriWorkspacePage> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Prueba el flujo real: paciente → objetivos → alimento → '
-              'plan → cálculo. Los datos quedan en SQLite local.',
+              'Prueba el flujo real: paciente â†’ objetivos â†’ alimento â†’ '
+              'plan â†’ cÃ¡lculo. Los datos quedan en SQLite local.',
               style: Theme.of(context).textTheme.bodyLarge,
             ),
             if (_error != null) ...[
               const SizedBox(height: 12),
-              SelectableText(
-                _error!,
-                style: TextStyle(color: colors.error),
-              ),
+              SelectableText(_error!, style: TextStyle(color: colors.error)),
             ],
             const SizedBox(height: 16),
             if (_databaseReady)
@@ -570,12 +553,14 @@ class _NutriWorkspacePageState extends State<NutriWorkspacePage> {
           const SizedBox(height: 10),
           Row(
             children: [
-              Expanded(child: _field(_energyTarget, 'Meta kcal', numeric: true)),
+              Expanded(
+                child: _field(_energyTarget, 'Meta kcal', numeric: true),
+              ),
               const SizedBox(width: 10),
               Expanded(
                 child: _field(
                   _proteinTarget,
-                  'Meta proteína g',
+                  'Meta proteÃ­na g',
                   numeric: true,
                 ),
               ),
@@ -608,7 +593,9 @@ class _NutriWorkspacePageState extends State<NutriWorkspacePage> {
           const SizedBox(height: 10),
           Row(
             children: [
-              Expanded(child: _field(_foodEnergy, 'kcal /100 g', numeric: true)),
+              Expanded(
+                child: _field(_foodEnergy, 'kcal /100 g', numeric: true),
+              ),
               const SizedBox(width: 8),
               Expanded(child: _field(_foodProtein, 'Prot. g', numeric: true)),
             ],
@@ -641,7 +628,7 @@ class _NutriWorkspacePageState extends State<NutriWorkspacePage> {
     return _panel(
       step: '3',
       title: 'Plan de prueba',
-      subtitle: 'Día 1 · Desayuno',
+      subtitle: 'DÃ­a 1 Â· Desayuno',
       child: Column(
         children: [
           DropdownButtonFormField<int>(
@@ -670,7 +657,7 @@ class _NutriWorkspacePageState extends State<NutriWorkspacePage> {
                     child: Text(
                       food.brand == null
                           ? food.name
-                          : '${food.name} · ${food.brand}',
+                          : '${food.name} Â· ${food.brand}',
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
@@ -679,10 +666,10 @@ class _NutriWorkspacePageState extends State<NutriWorkspacePage> {
             onChanged: _busy
                 ? null
                 : (value) => setState(() {
-                      _selectedFoodId = value;
-                      _summary = null;
-                      _lastPlanId = null;
-                    }),
+                    _selectedFoodId = value;
+                    _summary = null;
+                    _lastPlanId = null;
+                  }),
           ),
           const SizedBox(height: 10),
           _field(_grams, 'Cantidad en gramos', numeric: true),
@@ -714,8 +701,8 @@ class _NutriWorkspacePageState extends State<NutriWorkspacePage> {
               const SizedBox(width: 16),
               Expanded(
                 child: Text(
-                  'El resultado aparecerá aquí. Para la prueba rápida, pulsa '
-                  '“Cargar datos demo” y luego “Crear y calcular plan”.',
+                  'El resultado aparecerÃ¡ aquÃ­. Para la prueba rÃ¡pida, pulsa '
+                  'â€œCargar datos demoâ€ y luego â€œCrear y calcular planâ€.',
                   style: Theme.of(context).textTheme.bodyLarge,
                 ),
               ),
@@ -741,24 +728,21 @@ class _NutriWorkspacePageState extends State<NutriWorkspacePage> {
           children: [
             Text(
               'Resultado del plan #${_lastPlanId ?? '-'}',
-              style: const TextStyle(
-                fontSize: 21,
-                fontWeight: FontWeight.w800,
-              ),
+              style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 6),
             Text(
               food == null
                   ? 'Desayuno'
-                  : 'Desayuno · ${food.name} · ${_grams.text} g',
+                  : 'Desayuno Â· ${food.name} Â· ${_grams.text} g',
             ),
             const SizedBox(height: 18),
             Wrap(
               spacing: 12,
               runSpacing: 12,
               children: [
-                _metric('Energía', energy, 'kcal', energyTarget),
-                _metric('Proteína', protein, 'g', proteinTarget),
+                _metric('EnergÃ­a', energy, 'kcal', energyTarget),
+                _metric('ProteÃ­na', protein, 'g', proteinTarget),
                 _metric('Carbohidratos', carbs, 'g', null),
                 _metric('Grasas', fat, 'g', null),
               ],
@@ -767,7 +751,7 @@ class _NutriWorkspacePageState extends State<NutriWorkspacePage> {
             const Divider(),
             const SizedBox(height: 10),
             Text(
-              'El plan se guardó en SQLite y PlanNutritionService volvió a '
+              'El plan se guardÃ³ en SQLite y PlanNutritionService volviÃ³ a '
               'leerlo para calcular estos totales.',
               style: Theme.of(context).textTheme.bodyMedium,
             ),
@@ -777,12 +761,7 @@ class _NutriWorkspacePageState extends State<NutriWorkspacePage> {
     );
   }
 
-  Widget _metric(
-    String label,
-    double value,
-    String unit,
-    double? target,
-  ) {
+  Widget _metric(String label, double value, String unit, double? target) {
     final percent = target == null || target <= 0
         ? null
         : (value / target * 100).clamp(0, 999).toDouble();
@@ -801,10 +780,7 @@ class _NutriWorkspacePageState extends State<NutriWorkspacePage> {
           const SizedBox(height: 4),
           Text(
             '${value.toStringAsFixed(1)} $unit',
-            style: const TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
-            ),
+            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
           ),
           if (percent != null) ...[
             const SizedBox(height: 8),

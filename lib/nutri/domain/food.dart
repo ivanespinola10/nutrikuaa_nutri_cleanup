@@ -42,6 +42,7 @@ class Food {
   final DateTime updatedAt;
   final List<NutrientValue> nutrients;
   final List<FoodPortion> portions;
+
   /// Declared by the professional; an empty list means unknown, not allergen free.
   final List<String> allergens;
 
@@ -64,8 +65,8 @@ class Food {
     this.nutrients = const [],
     this.portions = const [],
     this.allergens = const [],
-  })  : createdAt = createdAt ?? DateTime.now(),
-        updatedAt = updatedAt ?? DateTime.now();
+  }) : createdAt = createdAt ?? DateTime.now(),
+       updatedAt = updatedAt ?? DateTime.now();
 
   bool get isBranded => brand != null && brand!.trim().isNotEmpty;
 

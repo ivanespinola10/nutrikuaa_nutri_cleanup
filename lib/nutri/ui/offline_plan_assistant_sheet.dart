@@ -38,7 +38,7 @@ class _OfflinePlanAssistantSheetState extends State<OfflinePlanAssistantSheet> {
   final OfflinePlanValidatorService _validator =
       const OfflinePlanValidatorService();
   final TextEditingController _prompt = TextEditingController(
-    text: '5 comidas, práctico y variado',
+    text: '5 comidas, prÃ¡ctico y variado',
   );
 
   OfflinePlanDraft? _draft;
@@ -124,7 +124,7 @@ class _OfflinePlanAssistantSheetState extends State<OfflinePlanAssistantSheet> {
       setState(() {
         _validation = freshValidation;
         _error =
-            'El validador detectó una incompatibilidad bloqueante. '
+            'El validador detectÃ³ una incompatibilidad bloqueante. '
             'Corrige el pedido o genera un nuevo borrador antes de aplicar.';
       });
       return;
@@ -177,7 +177,7 @@ class _OfflinePlanAssistantSheetState extends State<OfflinePlanAssistantSheet> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Nutri IA · Beta offline',
+                          'Nutri IA Â· Beta offline',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w800,
@@ -231,7 +231,7 @@ class _OfflinePlanAssistantSheetState extends State<OfflinePlanAssistantSheet> {
                             decoration: const InputDecoration(
                               labelText: 'Describe el plan',
                               hintText:
-                                  'Ej.: 1800 kcal, alto en proteína, económico, sin lactosa',
+                                  'Ej.: 1800 kcal, alto en proteÃ­na, econÃ³mico, sin lactosa',
                               prefixIcon: Icon(Icons.chat_bubble_outline),
                             ),
                           ),
@@ -241,13 +241,13 @@ class _OfflinePlanAssistantSheetState extends State<OfflinePlanAssistantSheet> {
                             runSpacing: 8,
                             children: [
                               ActionChip(
-                                label: const Text('Alto en proteína'),
+                                label: const Text('Alto en proteÃ­na'),
                                 onPressed: () =>
-                                    _addQualifier('alto en proteína'),
+                                    _addQualifier('alto en proteÃ­na'),
                               ),
                               ActionChip(
-                                label: const Text('Económico'),
-                                onPressed: () => _addQualifier('económico'),
+                                label: const Text('EconÃ³mico'),
+                                onPressed: () => _addQualifier('econÃ³mico'),
                               ),
                               ActionChip(
                                 label: const Text('Vegetariano'),
@@ -287,7 +287,7 @@ class _OfflinePlanAssistantSheetState extends State<OfflinePlanAssistantSheet> {
                                     size: 18,
                                   ),
                                   label: Text(
-                                    'Proteína ${widget.targetProteinGrams!.toStringAsFixed(0)} g',
+                                    'ProteÃ­na ${widget.targetProteinGrams!.toStringAsFixed(0)} g',
                                   ),
                                 ),
                               if ((widget.patientAllergies ?? '')
@@ -325,7 +325,7 @@ class _OfflinePlanAssistantSheetState extends State<OfflinePlanAssistantSheet> {
                                 : const Icon(Icons.auto_awesome),
                             label: Text(
                               _generating
-                                  ? 'Prearmando y validando…'
+                                  ? 'Prearmando y validandoâ€¦'
                                   : 'Generar y validar borrador',
                             ),
                           ),
@@ -368,8 +368,8 @@ class _OfflinePlanAssistantSheetState extends State<OfflinePlanAssistantSheet> {
                     Expanded(
                       child: Text(
                         validation?.hasBlockingIssues == true
-                            ? 'El validador bloqueó este borrador. Corrige el pedido y vuelve a generarlo.'
-                            : 'Al aplicar se reemplazarán las 5 comidas del día seleccionado. El profesional conserva la decisión final.',
+                            ? 'El validador bloqueÃ³ este borrador. Corrige el pedido y vuelve a generarlo.'
+                            : 'Al aplicar se reemplazarÃ¡n las 5 comidas del dÃ­a seleccionado. El profesional conserva la decisiÃ³n final.',
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -385,7 +385,7 @@ class _OfflinePlanAssistantSheetState extends State<OfflinePlanAssistantSheet> {
                             )
                           : const Icon(Icons.check_circle_outline),
                       label: Text(
-                        _applying ? 'Aplicando…' : 'Aplicar borrador',
+                        _applying ? 'Aplicandoâ€¦' : 'Aplicar borrador',
                       ),
                     ),
                   ],
@@ -419,8 +419,8 @@ class _OfflinePlanAssistantSheetState extends State<OfflinePlanAssistantSheet> {
                 Expanded(
                   child: Text(
                     blocking
-                        ? 'REQUIERE CORRECCIÓN ANTES DE APLICAR'
-                        : 'APTO PARA REVISIÓN PROFESIONAL',
+                        ? 'REQUIERE CORRECCIÃ“N ANTES DE APLICAR'
+                        : 'APTO PARA REVISIÃ“N PROFESIONAL',
                     style: const TextStyle(fontWeight: FontWeight.w900),
                   ),
                 ),
@@ -428,7 +428,7 @@ class _OfflinePlanAssistantSheetState extends State<OfflinePlanAssistantSheet> {
             ),
             const SizedBox(height: 6),
             Text(
-              '${report.blockingCount} bloqueo(s) · '
+              '${report.blockingCount} bloqueo(s) Â· '
               '${report.warningCount} advertencia(s)',
             ),
             const SizedBox(height: 12),
@@ -461,7 +461,7 @@ class _OfflinePlanAssistantSheetState extends State<OfflinePlanAssistantSheet> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '${check.title} · $label',
+                  '${check.title} Â· $label',
                   style: const TextStyle(fontWeight: FontWeight.w800),
                 ),
                 const SizedBox(height: 2),
@@ -531,7 +531,7 @@ class _OfflinePlanAssistantSheetState extends State<OfflinePlanAssistantSheet> {
                       ),
                       subtitle: Text(
                         item.food.isOfficial
-                            ? '${item.food.sourceName ?? 'Base oficial'} · offline'
+                            ? '${item.food.sourceName ?? 'Base oficial'} Â· offline'
                             : 'Mi biblioteca',
                       ),
                       trailing: Text('${item.grams.toStringAsFixed(0)} g'),
@@ -540,8 +540,8 @@ class _OfflinePlanAssistantSheetState extends State<OfflinePlanAssistantSheet> {
               ),
             const Divider(),
             const Text(
-              'Beta de preventa: el generador y el validador son capas locales separadas. '
-              'La validación automática detecta incompatibilidades y desvíos evidentes, '
+              'RC 1.0: el generador y el validador son capas locales separadas. '
+              'La validaciÃ³n automÃ¡tica detecta incompatibilidades y desvÃ­os evidentes, '
               'pero no diagnostica ni sustituye el criterio del nutricionista.',
               style: TextStyle(fontSize: 12),
             ),

@@ -19,17 +19,14 @@ class RecipeDetails {
   final Recipe recipe;
   final List<RecipeItem> items;
 
-  const RecipeDetails({
-    required this.recipe,
-    required this.items,
-  });
+  const RecipeDetails({required this.recipe, required this.items});
 }
 
 class RecipeService {
   final NutriDatabase database;
 
   RecipeService({NutriDatabase? database})
-      : database = database ?? NutriDatabase.instance;
+    : database = database ?? NutriDatabase.instance;
 
   Future<int> create(
     Recipe recipe,
@@ -89,7 +86,8 @@ class RecipeService {
 
     final db = await database.database;
 
-    final usage = Sqflite.firstIntValue(
+    final usage =
+        Sqflite.firstIntValue(
           await db.rawQuery(
             'SELECT COUNT(*) FROM meal_items WHERE recipe_id = ?',
             [recipeId],
@@ -142,7 +140,8 @@ class RecipeService {
   Future<void> delete(int recipeId) async {
     final db = await database.database;
 
-    final usage = Sqflite.firstIntValue(
+    final usage =
+        Sqflite.firstIntValue(
           await db.rawQuery(
             'SELECT COUNT(*) FROM meal_items WHERE recipe_id = ?',
             [recipeId],
@@ -156,11 +155,7 @@ class RecipeService {
       );
     }
 
-    await db.delete(
-      'recipes',
-      where: 'id = ?',
-      whereArgs: [recipeId],
-    );
+    await db.delete('recipes', where: 'id = ?', whereArgs: [recipeId]);
   }
 
   Future<RecipeDetails?> getById(int id) async {
@@ -197,10 +192,7 @@ class RecipeService {
     );
   }
 
-  Future<List<Recipe>> search(
-    String query, {
-    int limit = 100,
-  }) async {
+  Future<List<Recipe>> search(String query, {int limit = 100}) async {
     final db = await database.database;
     final trimmed = query.trim();
 
@@ -215,10 +207,7 @@ class RecipeService {
     return rows.map(_recipeFromMap).toList();
   }
 
-  Future<int> duplicate(
-    int recipeId, {
-    String? newName,
-  }) async {
+  Future<int> duplicate(int recipeId, {String? newName}) async {
     final details = await getById(recipeId);
     if (details == null) {
       throw StateError('Recipe does not exist.');

@@ -5,7 +5,7 @@ class PatientRepository {
   final NutriDatabase database;
 
   PatientRepository({NutriDatabase? database})
-      : database = database ?? NutriDatabase.instance;
+    : database = database ?? NutriDatabase.instance;
 
   Future<int> create(Patient patient) => database.createPatient(patient);
 
@@ -96,10 +96,7 @@ class PatientRepository {
     final db = await database.database;
     await db.update(
       'patients',
-      {
-        'is_active': 0,
-        'updated_at': DateTime.now().toIso8601String(),
-      },
+      {'is_active': 0, 'updated_at': DateTime.now().toIso8601String()},
       where: 'id = ?',
       whereArgs: [patientId],
     );
@@ -118,17 +115,14 @@ class PatientRepository {
       );
 
       for (final target in targets) {
-        await txn.insert(
-          'nutrition_targets',
-          {
-            'patient_id': patientId,
-            'nutrient_code': target.nutrientCode,
-            'target_value': target.targetValue,
-            'unit': target.unit.name,
-            'minimum_value': target.minimumValue,
-            'maximum_value': target.maximumValue,
-          },
-        );
+        await txn.insert('nutrition_targets', {
+          'patient_id': patientId,
+          'nutrient_code': target.nutrientCode,
+          'target_value': target.targetValue,
+          'unit': target.unit.name,
+          'minimum_value': target.minimumValue,
+          'maximum_value': target.maximumValue,
+        });
       }
     });
   }
@@ -193,11 +187,13 @@ class PatientRepository {
     final existing = await getById(encounter.patientId);
     if (existing == null) throw StateError('Patient no longer exists.');
     if (encounter.planId != null) {
-      final plans = await db.query('meal_plans',
-          columns: ['id'],
-          where: 'id = ? AND patient_id = ?',
-          whereArgs: [encounter.planId, encounter.patientId],
-          limit: 1);
+      final plans = await db.query(
+        'meal_plans',
+        columns: ['id'],
+        where: 'id = ? AND patient_id = ?',
+        whereArgs: [encounter.planId, encounter.patientId],
+        limit: 1,
+      );
       if (plans.isEmpty) {
         throw ArgumentError('The linked plan must belong to this patient.');
       }
@@ -228,20 +224,24 @@ class PatientRepository {
       orderBy: 'occurred_at DESC, id DESC',
       limit: limit,
     );
-    return rows.map((row) => PatientEncounter(
-      id: row['id'] as int,
-      patientId: row['patient_id'] as int,
-      occurredAt: DateTime.parse(row['occurred_at'] as String),
-      assessment: row['assessment'] as String?,
-      nutritionProblem: row['nutrition_problem'] as String?,
-      intervention: row['intervention'] as String?,
-      monitoring: row['monitoring'] as String?,
-      nextReviewAt: row['next_review_at'] == null
-          ? null
-          : DateTime.parse(row['next_review_at'] as String),
-      informationSource: row['information_source'] as String?,
-      planId: row['plan_id'] as int?,
-    )).toList();
+    return rows
+        .map(
+          (row) => PatientEncounter(
+            id: row['id'] as int,
+            patientId: row['patient_id'] as int,
+            occurredAt: DateTime.parse(row['occurred_at'] as String),
+            assessment: row['assessment'] as String?,
+            nutritionProblem: row['nutrition_problem'] as String?,
+            intervention: row['intervention'] as String?,
+            monitoring: row['monitoring'] as String?,
+            nextReviewAt: row['next_review_at'] == null
+                ? null
+                : DateTime.parse(row['next_review_at'] as String),
+            informationSource: row['information_source'] as String?,
+            planId: row['plan_id'] as int?,
+          ),
+        )
+        .toList();
   }
 
   Future<int> addObservation(PatientObservation observation) async {
@@ -249,7 +249,9 @@ class PatientRepository {
         observation.unit.trim().isEmpty ||
         observation.source.trim().isEmpty ||
         !observation.value.isFinite) {
-      throw ArgumentError('Indicator, finite value, unit and source are required.');
+      throw ArgumentError(
+        'Indicator, finite value, unit and source are required.',
+      );
     }
     final db = await database.database;
     return db.insert('patient_observations', {
@@ -275,21 +277,23 @@ class PatientRepository {
       orderBy: 'observed_at DESC, id DESC',
       limit: limit,
     );
-    return rows.map((row) => PatientObservation(
-      id: row['id'] as int,
-      patientId: row['patient_id'] as int,
-      observedAt: DateTime.parse(row['observed_at'] as String),
-      indicator: row['indicator'] as String,
-      value: (row['value'] as num).toDouble(),
-      unit: row['unit'] as String,
-      source: row['source'] as String,
-      referenceRange: row['reference_range'] as String?,
-    )).toList();
+    return rows
+        .map(
+          (row) => PatientObservation(
+            id: row['id'] as int,
+            patientId: row['patient_id'] as int,
+            observedAt: DateTime.parse(row['observed_at'] as String),
+            indicator: row['indicator'] as String,
+            value: (row['value'] as num).toDouble(),
+            unit: row['unit'] as String,
+            source: row['source'] as String,
+            referenceRange: row['reference_range'] as String?,
+          ),
+        )
+        .toList();
   }
 
-  static PatientMeasurement _measurementFromMap(
-    Map<String, Object?> row,
-  ) {
+  static PatientMeasurement _measurementFromMap(Map<String, Object?> row) {
     return PatientMeasurement(
       id: row['id'] as int,
       patientId: row['patient_id'] as int,

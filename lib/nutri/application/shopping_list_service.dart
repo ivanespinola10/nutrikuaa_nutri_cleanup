@@ -22,9 +22,9 @@ class ShoppingListService {
     NutriDatabase? database,
     MealPlanService? plans,
     RecipeService? recipes,
-  })  : database = database ?? NutriDatabase.instance,
-        plans = plans ?? MealPlanService(database: database),
-        recipes = recipes ?? RecipeService(database: database);
+  }) : database = database ?? NutriDatabase.instance,
+       plans = plans ?? MealPlanService(database: database),
+       recipes = recipes ?? RecipeService(database: database);
 
   Future<List<ShoppingListEntry>> forPlan(int planId) async {
     final plan = await plans.getById(planId);
@@ -38,8 +38,11 @@ class ShoppingListService {
           if (grams == null || grams <= 0) {
             throw StateError('Invalid food quantity in meal plan.');
           }
-          quantities.update(item.foodId!, (value) => value + grams,
-              ifAbsent: () => grams);
+          quantities.update(
+            item.foodId!,
+            (value) => value + grams,
+            ifAbsent: () => grams,
+          );
           continue;
         }
 
@@ -57,8 +60,11 @@ class ShoppingListService {
           if (grams <= 0) {
             throw StateError('Invalid recipe ingredient quantity.');
           }
-          quantities.update(ingredient.foodId, (value) => value + grams,
-              ifAbsent: () => grams);
+          quantities.update(
+            ingredient.foodId,
+            (value) => value + grams,
+            ifAbsent: () => grams,
+          );
         }
       }
     }
@@ -72,7 +78,9 @@ class ShoppingListService {
       result.add(ShoppingListEntry(food: food, grams: entry.value));
     }
     result.sort((a, b) {
-      final order = a.food.name.toLowerCase().compareTo(b.food.name.toLowerCase());
+      final order = a.food.name.toLowerCase().compareTo(
+        b.food.name.toLowerCase(),
+      );
       return order != 0 ? order : a.food.id!.compareTo(b.food.id!);
     });
     return result;

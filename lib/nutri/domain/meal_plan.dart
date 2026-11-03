@@ -1,7 +1,4 @@
-enum MealItemType {
-  food,
-  recipe,
-}
+enum MealItemType { food, recipe }
 
 class MealPlan {
   final int? id;
@@ -22,8 +19,8 @@ class MealPlan {
     this.notes,
     DateTime? createdAt,
     DateTime? updatedAt,
-  })  : createdAt = createdAt ?? DateTime.now(),
-        updatedAt = updatedAt ?? DateTime.now();
+  }) : createdAt = createdAt ?? DateTime.now(),
+       updatedAt = updatedAt ?? DateTime.now();
 }
 
 class Meal {
@@ -64,10 +61,12 @@ class MealItem {
     this.notes,
     this.sortOrder = 0,
   }) : assert(
-          (itemType == MealItemType.food && foodId != null && recipeId == null) ||
-              (itemType == MealItemType.recipe &&
-                  recipeId != null &&
-                  foodId == null),
-          'MealItem must reference exactly one food or recipe.',
-        );
+         (itemType == MealItemType.food &&
+                 foodId != null &&
+                 recipeId == null) ||
+             (itemType == MealItemType.recipe &&
+                 recipeId != null &&
+                 foodId == null),
+         'MealItem must reference exactly one food or recipe.',
+       );
 }

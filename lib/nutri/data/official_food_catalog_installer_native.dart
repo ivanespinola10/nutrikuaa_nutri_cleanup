@@ -51,10 +51,13 @@ class OfficialFoodCatalogInstaller {
     if (await targetDb.exists()) {
       try {
         await OfficialFoodCatalogVerifier.verifyBytes(
-          await targetDb.readAsBytes(), bundled,
+          await targetDb.readAsBytes(),
+          bundled,
         );
         final db = await openDatabase(
-          targetDb.path, readOnly: true, singleInstance: false,
+          targetDb.path,
+          readOnly: true,
+          singleInstance: false,
         );
         try {
           await OfficialFoodCatalogVerifier.verifyDatabase(db, bundled);
@@ -67,21 +70,19 @@ class OfficialFoodCatalogInstaller {
       }
     }
 
-    final existed = previous != null ||
+    final existed =
+        previous != null ||
         await File(p.join(dbDir, bundled.databaseFile)).exists() ||
         await targetDb.exists();
     final assetPath = '$_assetDirectory/${bundled.databaseFile}';
     final bytes = await rootBundle.load(assetPath);
 
     final catalogBytes = bytes.buffer.asUint8List(
-      bytes.offsetInBytes, bytes.lengthInBytes,
+      bytes.offsetInBytes,
+      bytes.lengthInBytes,
     );
     await OfficialFoodCatalogVerifier.verifyBytes(catalogBytes, bundled);
-    await _installChecked(
-      targetDb,
-      catalogBytes,
-      bundled,
-    );
+    await _installChecked(targetDb, catalogBytes, bundled);
 
     final temporaryManifest = File('${localManifest.path}.tmp');
     await temporaryManifest.writeAsString(
@@ -104,11 +105,7 @@ class OfficialFoodCatalogInstaller {
 
     final dbDir = await getDatabasesPath();
     final path = p.join(dbDir, bundled.installedFile);
-    return openDatabase(
-      path,
-      readOnly: true,
-      singleInstance: true,
-    );
+    return openDatabase(path, readOnly: true, singleInstance: true);
   }
 
   static Future<OfficialFoodCatalogManifest?> _readInstalledManifest(
@@ -140,10 +137,13 @@ class OfficialFoodCatalogInstaller {
     try {
       await temporary.writeAsBytes(bytes, flush: true);
       await OfficialFoodCatalogVerifier.verifyBytes(
-        await temporary.readAsBytes(), manifest,
+        await temporary.readAsBytes(),
+        manifest,
       );
       final db = await openDatabase(
-        temporary.path, readOnly: true, singleInstance: false,
+        temporary.path,
+        readOnly: true,
+        singleInstance: false,
       );
       try {
         await OfficialFoodCatalogVerifier.verifyDatabase(db, manifest);

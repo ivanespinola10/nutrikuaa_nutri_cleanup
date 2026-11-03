@@ -36,14 +36,14 @@ class OfficialFoodCatalogManifest {
   }
 
   Map<String, dynamic> toJson() => {
-        'schemaVersion': schemaVersion,
-        'dataVersion': dataVersion,
-        'sourceName': sourceName,
-        'sourceRelease': sourceRelease,
-        'databaseFile': databaseFile,
-        'sha256': sha256,
-        'bundled': bundled,
-      };
+    'schemaVersion': schemaVersion,
+    'dataVersion': dataVersion,
+    'sourceName': sourceName,
+    'sourceRelease': sourceRelease,
+    'databaseFile': databaseFile,
+    'sha256': sha256,
+    'bundled': bundled,
+  };
 
   // New releases use a new storage key. A failed replacement cannot erase
   // the previously installed catalog (or the separate professional database).

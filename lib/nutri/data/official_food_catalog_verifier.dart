@@ -40,10 +40,13 @@ class OfficialFoodCatalogVerifier {
     };
     if (metadata['schema_version'] != manifest.schemaVersion.toString() ||
         metadata['source_release'] != manifest.sourceRelease) {
-      throw StateError('Official catalog metadata does not match its manifest.');
+      throw StateError(
+        'Official catalog metadata does not match its manifest.',
+      );
     }
 
-    final foodCount = Sqflite.firstIntValue(
+    final foodCount =
+        Sqflite.firstIntValue(
           await db.rawQuery('SELECT COUNT(*) FROM foods'),
         ) ??
         0;

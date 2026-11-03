@@ -14,10 +14,7 @@ Future<void> saveNutrikuaaBackup(
   Uint8List bytes, {
   required String suggestedName,
 }) async {
-  final blob = html.Blob(
-    [bytes],
-    'application/octet-stream',
-  );
+  final blob = html.Blob([bytes], 'application/octet-stream');
   final url = html.Url.createObjectUrlFromBlob(blob);
 
   final anchor = html.AnchorElement(href: url)
@@ -31,9 +28,7 @@ Future<void> saveNutrikuaaBackup(
 }
 
 Future<Uint8List?> pickNutrikuaaBackup() async {
-  final file = await openFile(
-    acceptedTypeGroups: const [_backupType],
-  );
+  final file = await openFile(acceptedTypeGroups: const [_backupType]);
   if (file == null) return null;
   return file.readAsBytes();
 }

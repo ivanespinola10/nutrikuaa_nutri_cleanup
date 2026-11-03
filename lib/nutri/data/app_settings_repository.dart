@@ -7,15 +7,11 @@ class AppSettingsRepository {
   final NutriDatabase database;
 
   AppSettingsRepository({NutriDatabase? database})
-      : database = database ?? NutriDatabase.instance;
+    : database = database ?? NutriDatabase.instance;
 
   Future<AppSettings> load() async {
     final db = await database.database;
-    final rows = await db.query(
-      'app_settings',
-      where: 'id = 1',
-      limit: 1,
-    );
+    final rows = await db.query('app_settings', where: 'id = 1', limit: 1);
 
     if (rows.isEmpty) {
       return const AppSettings();
@@ -36,16 +32,12 @@ class AppSettingsRepository {
 
   Future<void> save(AppSettings settings) async {
     final db = await database.database;
-    await db.insert(
-      'app_settings',
-      {
-        'id': 1,
-        'language_code': settings.languageCode.trim().toLowerCase(),
-        'country_code': settings.countryCode.trim().toUpperCase(),
-        'unit_system': settings.unitSystem.name,
-        'updated_at': DateTime.now().toIso8601String(),
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await db.insert('app_settings', {
+      'id': 1,
+      'language_code': settings.languageCode.trim().toLowerCase(),
+      'country_code': settings.countryCode.trim().toUpperCase(),
+      'unit_system': settings.unitSystem.name,
+      'updated_at': DateTime.now().toIso8601String(),
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 }

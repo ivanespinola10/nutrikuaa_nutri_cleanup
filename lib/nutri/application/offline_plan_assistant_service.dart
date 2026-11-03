@@ -179,6 +179,7 @@ class OfflinePlanAssistantService {
     var adjustedMeals = _scaleToEnergy(meals, targetKcal);
     if (targetProtein != null && targetProtein > 0) {
       adjustedMeals = _boostProtein(adjustedMeals, targetProtein);
+      adjustedMeals = _scaleToEnergy(adjustedMeals, targetKcal);
     }
 
     final tags = <String>[
@@ -226,6 +227,7 @@ class OfflinePlanAssistantService {
       final candidates = [...results.professional, ...results.official];
       for (final food in candidates) {
         if (usedFoods.contains(_foodIdentity(food))) continue;
+        if (!_assistantSuitable(food)) continue;
         if (!_acceptable(food, preferences)) continue;
         if (!_fitsRole(food, slot.role)) continue;
         return food;
@@ -241,11 +243,49 @@ class OfflinePlanAssistantService {
     if (kcal <= 0) return false;
 
     return switch (role) {
-      _FoodRole.protein => protein >= 4,
+      _FoodRole.protein => protein >= 5,
       _FoodRole.carbohydrate => carbs >= 4 || kcal >= 70,
       _FoodRole.produce => true,
       _FoodRole.flexible => true,
     };
+  }
+
+  static bool _assistantSuitable(Food food) {
+    final name = _normalize(food.name);
+    const excluded = [
+      'fast food',
+      'restaurant',
+      'with hot sauce',
+      'cereal bar',
+      'snack bar',
+      'potato chips',
+      'banana chips',
+      'burrito',
+      'pizza',
+      'hamburger',
+      'burger',
+      'sandwich',
+      'taco',
+      'nacho',
+      'parfait',
+      'flavored',
+      'prepared with',
+      'margarine',
+      'fat added',
+      'fried',
+      'breaded',
+      'battered',
+      'sweetened',
+      'candy',
+      'dessert',
+      'cookie',
+      'cake',
+      'ice cream',
+      'soft drink',
+      'soda',
+      'juice',
+    ];
+    return !excluded.any(name.contains);
   }
 
   static bool _acceptable(Food food, _Preferences preferences) {

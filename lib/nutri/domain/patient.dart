@@ -39,12 +39,11 @@ class Patient {
     this.isActive = true,
     DateTime? createdAt,
     DateTime? updatedAt,
-  })  : createdAt = createdAt ?? DateTime.now(),
-        updatedAt = updatedAt ?? DateTime.now();
+  }) : createdAt = createdAt ?? DateTime.now(),
+       updatedAt = updatedAt ?? DateTime.now();
 
-  String get displayName => [firstName, lastName]
-      .where((value) => value.trim().isNotEmpty)
-      .join(' ');
+  String get displayName =>
+      [firstName, lastName].where((value) => value.trim().isNotEmpty).join(' ');
 }
 
 /// One dated professional note. This is not an automated diagnosis.
@@ -116,7 +115,6 @@ class NutritionTarget {
     this.maximumValue,
   });
 }
-
 
 class PatientMeasurement {
   final int? id;

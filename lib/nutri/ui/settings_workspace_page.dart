@@ -1,9 +1,8 @@
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 
 import '../application/backup_file.dart';
 import '../application/nutri_backup_service.dart';
+import '../config/app_build_info.dart';
 import '../data/app_settings_repository.dart';
 import '../domain/app_settings.dart';
 import '../localization/nutri_i18n.dart';
@@ -72,11 +71,13 @@ class _SettingsWorkspacePageState extends State<SettingsWorkspacePage> {
   Future<void> _saveSettings() async {
     final country = _country.text.trim().toUpperCase();
     if (country.length != 2) {
-      _message(_languageCode == 'en'
-          ? 'Use a 2-letter ISO country code, for example US, AR or ES.'
-          : _languageCode == 'pt'
-              ? 'Use um código ISO de país com 2 letras, por exemplo BR, AR ou ES.'
-              : 'Usa un código de país ISO de 2 letras, por ejemplo PY, AR o ES.');
+      _message(
+        _languageCode == 'en'
+            ? 'Use a 2-letter ISO country code, for example US, AR or ES.'
+            : _languageCode == 'pt'
+            ? 'Use um código ISO de país com 2 letras, por exemplo BR, AR ou ES.'
+            : 'Usa un código de país ISO de 2 letras, por ejemplo PY, AR o ES.',
+      );
       return;
     }
 
@@ -114,7 +115,9 @@ class _SettingsWorkspacePageState extends State<SettingsWorkspacePage> {
                 autofocus: true,
                 decoration: InputDecoration(
                   labelText: _t('Contraseña del backup'),
-                  helperText: _t('La contraseña debe tener al menos 8 caracteres.'),
+                  helperText: _t(
+                    'La contraseña debe tener al menos 8 caracteres.',
+                  ),
                 ),
               ),
               const SizedBox(height: 10),
@@ -127,7 +130,9 @@ class _SettingsWorkspacePageState extends State<SettingsWorkspacePage> {
                     tooltip: obscure ? 'Show' : 'Hide',
                     onPressed: () => setDialogState(() => obscure = !obscure),
                     icon: Icon(
-                      obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                      obscure
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
                     ),
                   ),
                 ),
@@ -142,7 +147,9 @@ class _SettingsWorkspacePageState extends State<SettingsWorkspacePage> {
             FilledButton(
               onPressed: () {
                 if (password.text.trim().length < 8) {
-                  _message(_t('La contraseña debe tener al menos 8 caracteres.'));
+                  _message(
+                    _t('La contraseña debe tener al menos 8 caracteres.'),
+                  );
                   return;
                 }
                 if (password.text.trim() != confirmation.text.trim()) {
@@ -191,7 +198,9 @@ class _SettingsWorkspacePageState extends State<SettingsWorkspacePage> {
                   suffixIcon: IconButton(
                     onPressed: () => setDialogState(() => obscure = !obscure),
                     icon: Icon(
-                      obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                      obscure
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
                     ),
                   ),
                 ),
@@ -239,10 +248,7 @@ class _SettingsWorkspacePageState extends State<SettingsWorkspacePage> {
           'nutrikuaa_backup_${now.year}${_two(now.month)}${_two(now.day)}_'
           '${_two(now.hour)}${_two(now.minute)}$secureSuffix.nutrikuaa';
 
-      await saveNutrikuaaBackup(
-        bytes,
-        suggestedName: fileName,
-      );
+      await saveNutrikuaaBackup(bytes, suggestedName: fileName);
       _message(_t('Backup generado.'));
     });
   }
@@ -373,7 +379,7 @@ class _SettingsWorkspacePageState extends State<SettingsWorkspacePage> {
         actions: const [
           Padding(
             padding: EdgeInsets.only(right: 18),
-            child: Center(child: Text('V0.8.1')),
+            child: Center(child: Text(NutriBuildInfo.displayLabel)),
           ),
         ],
       ),
@@ -411,8 +417,8 @@ class _SettingsWorkspacePageState extends State<SettingsWorkspacePage> {
     final description = NutriI18n.languageCode == 'en'
         ? 'These preferences are stored locally and apply across the professional interface and PDF documents.'
         : NutriI18n.languageCode == 'pt'
-            ? 'Estas preferências são armazenadas localmente e se aplicam à interface profissional e aos documentos PDF.'
-            : 'Estas preferencias se guardan localmente y se aplican a la interfaz profesional y a los documentos PDF.';
+        ? 'Estas preferências são armazenadas localmente e se aplicam à interface profissional e aos documentos PDF.'
+        : 'Estas preferencias se guardan localmente y se aplican a la interfaz profesional y a los documentos PDF.';
 
     return Card(
       child: Padding(
@@ -457,9 +463,7 @@ class _SettingsWorkspacePageState extends State<SettingsWorkspacePage> {
             const SizedBox(height: 4),
             DropdownButtonFormField<UnitSystem>(
               value: _unitSystem,
-              decoration: InputDecoration(
-                labelText: _t('Sistema de unidades'),
-              ),
+              decoration: InputDecoration(labelText: _t('Sistema de unidades')),
               items: [
                 DropdownMenuItem(
                   value: UnitSystem.metric,
@@ -497,8 +501,8 @@ class _SettingsWorkspacePageState extends State<SettingsWorkspacePage> {
     final description = NutriI18n.languageCode == 'en'
         ? 'The .nutrikuaa file contains your local professional data: patients, plans, recipes, custom foods, USDA snapshots, settings, identity and logo. The full official USDA catalog is not duplicated.'
         : NutriI18n.languageCode == 'pt'
-            ? 'O arquivo .nutrikuaa contém seus dados profissionais locais: pacientes, planos, receitas, alimentos próprios, snapshots USDA, configurações, identidade e logo. O catálogo oficial completo do USDA não é duplicado.'
-            : 'El archivo .nutrikuaa contiene tus datos profesionales locales: pacientes, planes, recetas, alimentos propios, snapshots USDA, configuración, identidad y logo. La base USDA oficial completa no se duplica.';
+        ? 'O arquivo .nutrikuaa contém seus dados profissionais locais: pacientes, planos, receitas, alimentos próprios, snapshots USDA, configurações, identidade e logo. O catálogo oficial completo do USDA não é duplicado.'
+        : 'El archivo .nutrikuaa contiene tus datos profesionales locales: pacientes, planes, recetas, alimentos propios, snapshots USDA, configuración, identidad y logo. La base USDA oficial completa no se duplica.';
 
     return Card(
       child: Padding(
@@ -524,8 +528,8 @@ class _SettingsWorkspacePageState extends State<SettingsWorkspacePage> {
                 NutriI18n.languageCode == 'en'
                     ? 'Recommended when the backup contains real patient data. The password is never stored.'
                     : NutriI18n.languageCode == 'pt'
-                        ? 'Recomendado quando o backup contém dados reais de pacientes. A senha nunca é armazenada.'
-                        : 'Recomendado cuando el backup contiene datos reales de pacientes. La contraseña nunca se guarda.',
+                    ? 'Recomendado quando o backup contém dados reais de pacientes. A senha nunca é armazenada.'
+                    : 'Recomendado cuando el backup contiene datos reales de pacientes. La contraseña nunca se guarda.',
               ),
             ),
             const SizedBox(height: 8),
@@ -536,7 +540,9 @@ class _SettingsWorkspacePageState extends State<SettingsWorkspacePage> {
                 FilledButton.icon(
                   onPressed: _busy ? null : _exportBackup,
                   icon: Icon(
-                    _encryptBackup ? Icons.lock_outline : Icons.download_outlined,
+                    _encryptBackup
+                        ? Icons.lock_outline
+                        : Icons.download_outlined,
                   ),
                   label: Text(_t('Crear backup .nutrikuaa')),
                 ),

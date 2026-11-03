@@ -53,4 +53,20 @@ void main() {
       'quinoa',
     );
   });
+
+  test('maps English assistant terms back to local professional foods', () {
+    expect(
+      OfficialFoodSearchAliases.forProfessionalCatalog('rice'),
+      contains('arroz'),
+    );
+    expect(
+      OfficialFoodSearchAliases.forProfessionalCatalog('chicken'),
+      contains('pollo'),
+    );
+    expect(
+      OfficialFoodSearchAliases.forProfessionalCatalog('broccoli'),
+      contains('brócoli'),
+    );
+  });
+
 }

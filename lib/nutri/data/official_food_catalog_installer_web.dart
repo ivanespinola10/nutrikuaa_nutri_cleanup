@@ -41,7 +41,8 @@ class OfficialFoodCatalogInstaller {
     }
 
     final path = bundled.installedFile;
-    final existed = await databaseFactory.databaseExists(path) ||
+    final existed =
+        await databaseFactory.databaseExists(path) ||
         await databaseFactory.databaseExists(bundled.databaseFile);
 
     if (await databaseFactory.databaseExists(path) &&
@@ -81,10 +82,7 @@ class OfficialFoodCatalogInstaller {
 
     await installIfNeeded();
 
-    return openDatabase(
-      bundled.installedFile,
-      singleInstance: true,
-    );
+    return openDatabase(bundled.installedFile, singleInstance: true);
   }
 
   static Future<bool> _matchesBundledVersion(

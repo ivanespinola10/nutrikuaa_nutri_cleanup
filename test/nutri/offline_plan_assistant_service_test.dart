@@ -44,6 +44,8 @@ void main() {
   }
 
   final catalog = <Food>[
+    food('Egg burrito', 210, 10, 20, 10),
+    food('Potato chips, baked, flavored', 470, 6, 65, 20),
     food('Egg', 143, 13, 1, 10, allergens: ['egg']),
     food('Oat', 389, 17, 66, 7, allergens: ['gluten']),
     food('Banana', 89, 1.1, 23, 0.3),
@@ -108,4 +110,20 @@ void main() {
     final items = draft.meals.expand((meal) => meal.items);
     expect(items.any((item) => item.food.allergens.contains('milk')), isFalse);
   });
+
+  test('avoids prepared catalog matches for automatic draft building', () async {
+    final service = OfflinePlanAssistantService(search: search);
+    final draft = await service.generate(
+      const OfflinePlanAssistantRequest(prompt: '2000 kcal, práctico'),
+    );
+
+    final names = draft.meals
+        .expand((meal) => meal.items)
+        .map((item) => item.food.name.toLowerCase())
+        .join(' ');
+
+    expect(names, isNot(contains('burrito')));
+    expect(names, isNot(contains('potato chips')));
+  });
+
 }

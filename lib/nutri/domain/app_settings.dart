@@ -1,7 +1,4 @@
-enum UnitSystem {
-  metric,
-  imperial,
-}
+enum UnitSystem { metric, imperial }
 
 class AppSettings {
   final String languageCode;

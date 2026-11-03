@@ -43,6 +43,20 @@ void main() {
 
   test('visible version is centralized', () {
     expect(NutriBuildInfo.version, '1.0.0');
-    expect(NutriBuildInfo.displayLabel, 'PREVENTA · 1.0.0');
+    expect(NutriBuildInfo.displayLabel, 'RC · 1.0.0');
   });
+
+  test('curated FNDDS name does not mix Spanish and English', () {
+    final food = Food(
+      name: 'Beans and brown rice',
+      sourceType: FoodSourceType.officialDatabase,
+      sourceName: 'USDA FoodData Central',
+    );
+
+    expect(
+      PatientDocumentText.foodDisplayName(food, 'es'),
+      'Frijoles con arroz integral',
+    );
+  });
+
 }

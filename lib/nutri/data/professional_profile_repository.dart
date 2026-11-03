@@ -9,7 +9,7 @@ class ProfessionalProfileRepository {
   final NutriDatabase database;
 
   ProfessionalProfileRepository({NutriDatabase? database})
-      : database = database ?? NutriDatabase.instance;
+    : database = database ?? NutriDatabase.instance;
 
   Future<ProfessionalProfile> load() async {
     final db = await database.database;
@@ -39,23 +39,19 @@ class ProfessionalProfileRepository {
 
   Future<void> save(ProfessionalProfile profile) async {
     final db = await database.database;
-    await db.insert(
-      'professional_profile',
-      {
-        'id': 1,
-        'full_name': profile.fullName.trim(),
-        'credentials': _nullIfBlank(profile.credentials),
-        'registration_number': _nullIfBlank(profile.registrationNumber),
-        'practice_name': _nullIfBlank(profile.practiceName),
-        'phone': _nullIfBlank(profile.phone),
-        'email': _nullIfBlank(profile.email),
-        'footer_text': _nullIfBlank(profile.footerText),
-        'logo_bytes': profile.logoBytes,
-        'logo_file_name': _nullIfBlank(profile.logoFileName),
-        'updated_at': DateTime.now().toIso8601String(),
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await db.insert('professional_profile', {
+      'id': 1,
+      'full_name': profile.fullName.trim(),
+      'credentials': _nullIfBlank(profile.credentials),
+      'registration_number': _nullIfBlank(profile.registrationNumber),
+      'practice_name': _nullIfBlank(profile.practiceName),
+      'phone': _nullIfBlank(profile.phone),
+      'email': _nullIfBlank(profile.email),
+      'footer_text': _nullIfBlank(profile.footerText),
+      'logo_bytes': profile.logoBytes,
+      'logo_file_name': _nullIfBlank(profile.logoFileName),
+      'updated_at': DateTime.now().toIso8601String(),
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   static String? _nullIfBlank(String? value) {

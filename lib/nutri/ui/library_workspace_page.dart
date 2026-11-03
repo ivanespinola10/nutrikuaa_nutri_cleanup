@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../config/app_build_info.dart';
+
 import 'nutri_catalog_workspace_page.dart';
 import 'recipe_editor_page.dart';
 
@@ -25,7 +27,7 @@ class LibraryWorkspacePage extends StatelessWidget {
           actions: const [
             Padding(
               padding: EdgeInsets.only(right: 18),
-              child: Center(child: Text('PREVENTA · V0.6')),
+              child: Center(child: Text(NutriBuildInfo.displayLabel)),
             ),
           ],
         ),

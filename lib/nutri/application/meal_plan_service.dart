@@ -5,27 +5,21 @@ class MealWithItems {
   final Meal meal;
   final List<MealItem> items;
 
-  const MealWithItems({
-    required this.meal,
-    required this.items,
-  });
+  const MealWithItems({required this.meal, required this.items});
 }
 
 class MealPlanDetails {
   final MealPlan plan;
   final List<MealWithItems> meals;
 
-  const MealPlanDetails({
-    required this.plan,
-    required this.meals,
-  });
+  const MealPlanDetails({required this.plan, required this.meals});
 }
 
 class MealPlanService {
   final NutriDatabase database;
 
   MealPlanService({NutriDatabase? database})
-      : database = database ?? NutriDatabase.instance;
+    : database = database ?? NutriDatabase.instance;
 
   Future<int> createPlan(MealPlan plan) async {
     final db = await database.database;
@@ -108,11 +102,7 @@ class MealPlanService {
 
   Future<void> removeMealItem(int mealItemId) async {
     final db = await database.database;
-    await db.delete(
-      'meal_items',
-      where: 'id = ?',
-      whereArgs: [mealItemId],
-    );
+    await db.delete('meal_items', where: 'id = ?', whereArgs: [mealItemId]);
   }
 
   Future<void> updateRecipeServings({
@@ -134,11 +124,7 @@ class MealPlanService {
 
   Future<void> clearMeal(int mealId) async {
     final db = await database.database;
-    await db.delete(
-      'meal_items',
-      where: 'meal_id = ?',
-      whereArgs: [mealId],
-    );
+    await db.delete('meal_items', where: 'meal_id = ?', whereArgs: [mealId]);
   }
 
   Future<void> copyMealItems({
@@ -335,10 +321,7 @@ class MealPlanService {
       );
     }
 
-    return MealPlanDetails(
-      plan: _planFromMap(planRows.first),
-      meals: meals,
-    );
+    return MealPlanDetails(plan: _planFromMap(planRows.first), meals: meals);
   }
 
   Future<List<MealPlan>> listForPatient(int patientId) async {

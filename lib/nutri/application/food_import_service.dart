@@ -34,7 +34,7 @@ class FoodImportService {
   static const _required = {'name', 'energy', 'protein', 'carbs', 'fat'};
 
   static const Map<String, List<String>> _aliases = {
-    'id': ['id', 'codigo', 'cÃ³digo', 'food id', 'food_id'],
+    'id': ['id', 'codigo', 'código', 'food id', 'food_id'],
     'name': [
       'nombre',
       'alimento',
@@ -43,17 +43,17 @@ class FoodImportService {
       'food name',
       'food_name',
       'descripcion',
-      'descripciÃ³n',
+      'descripción',
       'description',
     ],
     'brand': ['marca', 'brand'],
-    'country': ['pais', 'paÃ­s', 'country', 'country code', 'country_code'],
+    'country': ['pais', 'país', 'country', 'country code', 'country_code'],
     'source': ['fuente', 'source', 'procedencia', 'origen', 'referencia'],
     'energy': [
       'calorias',
-      'calorÃ­as',
+      'calorías',
       'energia',
-      'energÃ­a',
+      'energía',
       'kcal',
       'energy',
       'energy kcal',
@@ -61,9 +61,9 @@ class FoodImportService {
     ],
     'protein': [
       'proteina',
-      'proteÃ­na',
+      'proteína',
       'proteinas',
-      'proteÃ­nas',
+      'proteínas',
       'protein',
       'proteins',
     ],
@@ -76,9 +76,9 @@ class FoodImportService {
       'carbohydrates',
       'carbs',
     ],
-    'fat': ['lipidos', 'lÃ­pidos', 'grasa', 'grasas', 'fat', 'total fat'],
+    'fat': ['lipidos', 'lípidos', 'grasa', 'grasas', 'fat', 'total fat'],
     'fiber': ['fibra', 'fiber', 'fibre'],
-    'sugars': ['azucar', 'azÃºcar', 'azucares', 'azÃºcares', 'sugar', 'sugars'],
+    'sugars': ['azucar', 'azúcar', 'azucares', 'azúcares', 'sugar', 'sugars'],
     'sodium': ['sodio', 'sodium', 'sodio mg', 'sodium mg'],
     'calcium': ['calcio', 'calcium', 'calcio mg', 'calcium mg'],
     'iron': ['hierro', 'iron', 'hierro mg', 'iron mg'],
@@ -88,9 +88,9 @@ class FoodImportService {
     'vitamin_d': ['vitamina d', 'vitamin d'],
     'serving': [
       'porcion g',
-      'porciÃ³n g',
+      'porción g',
       'porcion gramos',
-      'porciÃ³n gramos',
+      'porción gramos',
       'serving grams',
       'serving_g',
       'serving',
@@ -101,8 +101,8 @@ class FoodImportService {
       'household_measure',
       'measure',
     ],
-    'allergens': ['alergenos', 'alÃ©rgenos', 'allergens'],
-    'notes': ['notas', 'notes', 'observaciones', 'observaciÃ³n'],
+    'allergens': ['alergenos', 'alérgenos', 'allergens'],
+    'notes': ['notas', 'notes', 'observaciones', 'observación'],
   };
 
   FoodImportPreview parse({
@@ -133,7 +133,7 @@ class FoodImportService {
     if (missing.isNotEmpty) {
       throw FormatException(
         'Faltan columnas obligatorias: ${missing.map(_label).join(', ')}. '
-        'Se requieren nombre, kcal, proteÃ­nas, carbohidratos y grasas por 100 g.',
+        'Se requieren nombre, kcal, proteínas, carbohidratos y grasas por 100 g.',
       );
     }
 
@@ -163,7 +163,7 @@ class FoodImportService {
         rejected++;
         if (warnings.length < 10) {
           warnings.add(
-            'Fila ${rowIndex + 1}: "${name.isEmpty ? 'sin nombre' : name}" omitida por datos bÃ¡sicos invÃ¡lidos.',
+            'Fila ${rowIndex + 1}: "${name.isEmpty ? 'sin nombre' : name}" omitida por datos básicos inválidos.',
           );
         }
         continue;
@@ -280,7 +280,7 @@ class FoodImportService {
           sourceName: rowSource ?? defaultSource,
           sourceFoodId: _nullable(_value(row, columns['id'])),
           sourceRelease:
-              'ImportaciÃ³n local ${DateTime.now().toIso8601String().substring(0, 10)}',
+              'Importación local ${DateTime.now().toIso8601String().substring(0, 10)}',
           servingQuantity: serving,
           servingUnit: serving == null ? null : 'g',
           householdMeasure: _nullable(_value(row, columns['measure'])),
@@ -293,7 +293,7 @@ class FoodImportService {
 
     if (foods.isEmpty)
       throw const FormatException(
-        'No se encontrÃ³ ningÃºn alimento vÃ¡lido para importar.',
+        'No se encontró ningún alimento válido para importar.',
       );
 
     return FoodImportPreview(
@@ -415,7 +415,7 @@ class FoodImportService {
     var value = raw.trim().replaceAll('\u00a0', '').replaceAll(' ', '');
     value = value.replaceAll(
       RegExp(
-        r'(kcal|kj|mg|mcg|Âµg|ug|gramos|grams|gr|g)$',
+        r'(kcal|kj|mg|mcg|µg|ug|gramos|grams|gr|g)$',
         caseSensitive: false,
       ),
       '',
@@ -506,13 +506,13 @@ class FoodImportService {
   String _normalize(String value) {
     var text = value.trim().toLowerCase();
     const replacements = {
-      'Ã¡': 'a',
-      'Ã©': 'e',
-      'Ã­': 'i',
-      'Ã³': 'o',
-      'Ãº': 'u',
-      'Ã¼': 'u',
-      'Ã±': 'n',
+      'á': 'a',
+      'é': 'e',
+      'í': 'i',
+      'ó': 'o',
+      'ú': 'u',
+      'ü': 'u',
+      'ñ': 'n',
     };
     replacements.forEach((from, to) => text = text.replaceAll(from, to));
     return text
@@ -524,7 +524,7 @@ class FoodImportService {
   String _label(String key) => switch (key) {
     'name' => 'nombre',
     'energy' => 'kcal',
-    'protein' => 'proteÃ­nas',
+    'protein' => 'proteínas',
     'carbs' => 'carbohidratos',
     'fat' => 'grasas',
     _ => key,

@@ -15,30 +15,46 @@ class PatientDocumentText {
     'egg, white, raw, frozen, pasteurized':
         'Clara de huevo cruda, congelada y pasteurizada',
     'egg, whole, raw, fresh': 'Huevo entero crudo',
+    'egg, burrito': 'Burrito de huevo',
+    'egg, burrito, with bacon': 'Burrito de huevo con tocino',
     'oat milk, unsweetened, plain, refrigerated':
         'Bebida de avena sin azÃºcar, natural, refrigerada',
     'almond milk, unsweetened, plain, refrigerated':
         'Bebida de almendras sin azÃºcar, natural, refrigerada',
     'flour, almond': 'Harina de almendras',
     'oats, whole grain, rolled, old fashioned': 'Avena integral en hojuelas',
+    'oat bran cereal, cooked': 'Cereal de salvado de avena cocido',
     'bananas, overripe, raw': 'Banana madura cruda',
     'bananas, raw': 'Banana cruda',
     'yogurt, greek, plain, nonfat': 'Yogur griego natural descremado',
     'yogurt, greek, plain, whole milk': 'Yogur griego natural entero',
+    'yogurt parfait, lowfat, with fruit and granola':
+        'Parfait de yogur descremado con fruta y granola',
+    'yogurt parfait, with fruit': 'Parfait de yogur con fruta',
     'chicken, breast, boneless, skinless, raw':
         'Pechuga de pollo sin piel ni hueso, cruda',
+    'chicken, "wings" with hot sauce, from fast food / restaurant':
+        'Alitas de pollo con salsa picante, comida rÃ¡pida/restaurante',
     'rice, black, unenriched, raw': 'Arroz negro crudo',
     'rice, white, long-grain, regular, raw, unenriched':
         'Arroz blanco de grano largo, crudo',
+    'rice and vermicelli mix, beef flavor, prepared with 80% margarine':
+        'Mezcla de arroz y fideos sabor carne, preparada con margarina',
+    'beans and brown rice': 'Frijoles con arroz integral',
     'carrots, baby, raw': 'Zanahoria baby cruda',
     'carrots, raw': 'Zanahoria cruda',
+    'carrot juice, 100%': 'Jugo de zanahoria 100%',
     'broccoli, raw': 'BrÃ³coli crudo',
+    'broccoli and cauliflower, cooked, fat added':
+        'BrÃ³coli y coliflor cocidos con grasa aÃ±adida',
     'potatoes, gold, without skin, raw': 'Papa amarilla pelada, cruda',
     'potatoes, raw, skin': 'Papa con piel, cruda',
+    'potato chips, baked, flavored': 'Chips de papa horneados saborizados',
     'beans, black, canned, sodium added, drained and rinsed':
         'Frijoles negros enlatados, escurridos y enjuagados',
     'beans, black, mature seeds, cooked, boiled, without salt':
         'Frijoles negros cocidos sin sal',
+    "milk 'n cereal bar": 'Barra de leche y cereal',
     'apple, raw': 'Manzana cruda',
     'apples, raw, with skin': 'Manzana con piel, cruda',
     'tomatoes, red, ripe, raw, year round average': 'Tomate rojo maduro, crudo',
@@ -67,77 +83,19 @@ class PatientDocumentText {
     final note = rawNote?.trim();
     if (note == null || note.isEmpty) return null;
 
-    final normalized = _normalize(note);
+    final repaired = _repairMojibake(note);
+    final normalized = _normalize(repaired);
     if (_assistantNoteMarkers.any(normalized.contains)) return null;
-    return note;
+    return repaired;
   }
 
-  static String _spanishOfficialName(String name) {
-    final normalized = name.toLowerCase();
-    final exact = _spanishOfficialNames[normalized];
-    if (exact != null) return exact;
-
-    var translated = normalized;
-    const replacements = <String, String>{
-      'chicken breast': 'pechuga de pollo',
-      'chicken': 'pollo',
-      'egg white': 'clara de huevo',
-      'egg': 'huevo',
-      'greek yogurt': 'yogur griego',
-      'yogurt': 'yogur',
-      'oat milk': 'bebida de avena',
-      'almond milk': 'bebida de almendras',
-      'black beans': 'frijoles negros',
-      'beans': 'frijoles',
-      'black rice': 'arroz negro',
-      'rice': 'arroz',
-      'potatoes': 'papas',
-      'potato': 'papa',
-      'carrots': 'zanahorias',
-      'carrot': 'zanahoria',
-      'broccoli': 'brÃ³coli',
-      'spinach': 'espinaca',
-      'tomatoes': 'tomates',
-      'tomato': 'tomate',
-      'bananas': 'bananas',
-      'banana': 'banana',
-      'apples': 'manzanas',
-      'apple': 'manzana',
-      'unsweetened': 'sin azÃºcar',
-      'plain': 'natural',
-      'nonfat': 'descremado',
-      'whole milk': 'entero',
-      'boneless': 'sin hueso',
-      'skinless': 'sin piel',
-      'without skin': 'sin piel',
-      'raw': 'crudo',
-      'frozen': 'congelado',
-      'pasteurized': 'pasteurizado',
-      'dried': 'deshidratado',
-      'drained and rinsed': 'escurrido y enjuagado',
-      'canned': 'enlatado',
-      'sodium added': 'con sodio aÃ±adido',
-      'refrigerated': 'refrigerado',
-      'overripe': 'maduro',
-    };
-
-    for (final entry in replacements.entries) {
-      translated = translated.replaceAll(entry.key, entry.value);
-    }
-    if (translated == normalized) return name;
-
-    translated = translated
-        .replaceAll(RegExp(r'\s*,\s*'), ', ')
-        .replaceAll(RegExp(r'\s+'), ' ')
-        .trim();
-    if (translated.isEmpty) return name;
-    return translated[0].toUpperCase() + translated.substring(1);
-  }
+  static String _spanishOfficialName(String name) =>
+      _spanishOfficialNames[name.toLowerCase()] ?? name;
 
   static String _clean(String value) =>
-      value.trim().replaceAll(RegExp(r'\s+'), ' ');
+      _repairMojibake(value).trim().replaceAll(RegExp(r'\s+'), ' ');
 
-  static String _normalize(String value) => value
+  static String _normalize(String value) => _repairMojibake(value)
       .trim()
       .toLowerCase()
       .replaceAll('Ã¡', 'a')
@@ -148,4 +106,8 @@ class PatientDocumentText {
       .replaceAll('Ã¼', 'u')
       .replaceAll('Ã±', 'n')
       .replaceAll(RegExp(r'\s+'), ' ');
+
+  static String _repairMojibake(String value) {
+    return value;
+  }
 }

@@ -10,7 +10,16 @@ class OfficialFoodCatalog {
   final OfficialCatalogOpener _open;
 
   OfficialFoodCatalog({OfficialCatalogOpener? open})
-      : _open = open ?? OfficialFoodCatalogInstaller.openReadOnly;
+    : _open = open ?? OfficialFoodCatalogInstaller.openReadOnly;
+
+  static const _sourceRankSql = """
+    CASE LOWER(COALESCE(data_type, ''))
+      WHEN 'foundation_food' THEN 0
+      WHEN 'sr_legacy_food' THEN 1
+      WHEN 'survey_fndds_food' THEN 2
+      ELSE 3
+    END
+  """;
 
   Future<int> count() async {
     final db = await _open();
@@ -20,26 +29,22 @@ class OfficialFoodCatalog {
     return (result.first['count'] as num?)?.toInt() ?? 0;
   }
 
-  Future<List<Food>> search(
-    String query, {
-    int limit = 50,
-  }) async {
+  Future<List<Food>> search(String query, {int limit = 50}) async {
     final db = await _open();
     if (db == null) return const [];
 
     final trimmed = query.trim();
-    // Match all words regardless of order or punctuation. INSTR treats user
-    // input literally, so '%' and '_' cannot broaden a search as SQL wildcards.
     final tokens = trimmed
         .split(RegExp(r'[\s,;]+'))
         .where((token) => token.isNotEmpty)
         .toList();
+
     final List<Map<String, Object?>> rows;
     if (tokens.isEmpty) {
-      rows = await db.query(
-        'foods',
-        orderBy: 'name COLLATE NOCASE',
-        limit: limit,
+      rows = await db.rawQuery(
+        'SELECT * FROM foods '
+        'ORDER BY $_sourceRankSql, name COLLATE NOCASE LIMIT ?',
+        [limit],
       );
     } else {
       final predicates = List.filled(
@@ -48,9 +53,9 @@ class OfficialFoodCatalog {
       ).join(' AND ');
       rows = await db.rawQuery(
         'SELECT * FROM foods WHERE $predicates '
-        'ORDER BY CASE '
-        'WHEN LOWER(name) = LOWER(?) THEN 0 '
-        "WHEN INSTR(LOWER(name), LOWER(?)) = 1 THEN 1 "
+        'ORDER BY $_sourceRankSql, '
+        'CASE WHEN LOWER(name) = LOWER(?) THEN 0 '
+        'WHEN INSTR(LOWER(name), LOWER(?)) = 1 THEN 1 '
         'ELSE 2 END, name COLLATE NOCASE LIMIT ?',
         [...tokens, trimmed, tokens.first, limit],
       );
@@ -78,10 +83,7 @@ class OfficialFoodCatalog {
     return _hydrate(db, rows.first);
   }
 
-  Future<Food> _hydrate(
-    Database db,
-    Map<String, Object?> row,
-  ) async {
+  Future<Food> _hydrate(Database db, Map<String, Object?> row) async {
     final foodId = row['id'] as int;
 
     final nutrientRows = await db.query(
@@ -108,11 +110,8 @@ class OfficialFoodCatalog {
           .map(
             (nutrient) => NutrientValue(
               code: nutrient['nutrient_code'] as String,
-              valuePer100g:
-                  (nutrient['value_per_100g'] as num).toDouble(),
-              unit: NutrientUnit.values.byName(
-                nutrient['unit'] as String,
-              ),
+              valuePer100g: (nutrient['value_per_100g'] as num).toDouble(),
+              unit: NutrientUnit.values.byName(nutrient['unit'] as String),
             ),
           )
           .toList(),

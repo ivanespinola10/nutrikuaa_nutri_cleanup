@@ -29,9 +29,7 @@ Future<void> saveNutrikuaaBackup(
 }
 
 Future<Uint8List?> pickNutrikuaaBackup() async {
-  final file = await openFile(
-    acceptedTypeGroups: const [_backupType],
-  );
+  final file = await openFile(acceptedTypeGroups: const [_backupType]);
   if (file == null) return null;
   return file.readAsBytes();
 }

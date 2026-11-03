@@ -5,7 +5,7 @@ class FoodSnapshotService {
   final NutriDatabase database;
 
   FoodSnapshotService({NutriDatabase? database})
-      : database = database ?? NutriDatabase.instance;
+    : database = database ?? NutriDatabase.instance;
 
   Future<Food> materializeOfficialFood(Food officialFood) async {
     if (officialFood.sourceType != FoodSourceType.officialDatabase) {

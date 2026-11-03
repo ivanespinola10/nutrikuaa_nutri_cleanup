@@ -390,7 +390,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
           return;
         }
         final portionNote = _usePortion && _selectedPortion != null
-            ? '${_portionAmount.text.trim()} Ã— ${_selectedPortion!.measure ?? 'porción'}'
+            ? '${_portionAmount.text.trim()} × ${_selectedPortion!.measure ?? 'porción'}'
             : null;
 
         await _placement.addSelectedFoodToMeal(
@@ -727,7 +727,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
             mealId: mealId,
             selectedFood: item.food,
             quantityGrams: item.grams,
-            notes: 'nutrikuaa:assistant-draft',
+            notes: null,
             sortOrder: itemIndex,
           );
         }
@@ -825,7 +825,7 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
           ),
           const Padding(
             padding: EdgeInsets.only(right: 18),
-            child: Center(child: Text('PREVENTA Ã‚· V0.6')),
+            child: Center(child: Text(NutriBuildInfo.displayLabel)),
           ),
         ],
       ),
@@ -1469,11 +1469,13 @@ class _WeeklyPlannerPageState extends State<WeeklyPlannerPage> {
 
   Widget _mealItemTile(MealItem item) {
     final label = _itemLabels[item.id] ?? NutriI18n.t('Elemento');
+    final visibleNote = PatientDocumentText.patientFacingPortionNote(
+      item.notes,
+    );
     final detail = item.itemType == MealItemType.food
         ? [
             '${(item.quantityGrams ?? 0).toStringAsFixed(0)} g',
-            if (item.notes != null && item.notes!.trim().isNotEmpty)
-              item.notes!.trim(),
+            if (visibleNote != null) visibleNote,
           ].join(' · ')
         : _itemServings(item.servings ?? 0);
 

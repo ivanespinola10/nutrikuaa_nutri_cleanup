@@ -148,7 +148,7 @@ void main() {
     expect(result.hasBlockingIssues, isTrue);
   });
 
-  test('large nutrient deviation warns but does not auto-block', () {
+  test('extreme nutrient deviation blocks applying the draft', () {
     final rice = food('Rice', kcal: 130, protein: 2.7, carbs: 28);
 
     final result = validator.validate(
@@ -160,6 +160,25 @@ void main() {
         ),
         prompt: 'variado',
         targetKcal: 2000,
+      ),
+    );
+
+    expect(result.hasBlockingIssues, isTrue);
+    expect(result.canApply, isFalse);
+  });
+
+  test('moderate nutrient deviation warns without blocking', () {
+    final rice = food('Rice', kcal: 130, protein: 2.7, carbs: 28);
+
+    final result = validator.validate(
+      OfflinePlanValidationRequest(
+        draft: draft(
+          items: [OfflinePlanDraftItem(food: rice, grams: 800)],
+          targetKcal: 1200,
+          targetProtein: null,
+        ),
+        prompt: 'variado',
+        targetKcal: 1200,
       ),
     );
 

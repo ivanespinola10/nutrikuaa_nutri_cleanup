@@ -50,3 +50,6 @@ web/sqflite_sw.js
 
 # Per-project tester configuration; template is committed.
 tester_firebase.local.json
+
+# Firebase CLI local cache
+.firebase/

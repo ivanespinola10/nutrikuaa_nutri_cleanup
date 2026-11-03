@@ -1,10 +1,4 @@
-enum NutrientUnit {
-  kilocalorie,
-  gram,
-  milligram,
-  microgram,
-  internationalUnit,
-}
+enum NutrientUnit { kilocalorie, gram, milligram, microgram, internationalUnit }
 
 class NutrientCodes {
   NutrientCodes._();

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../localization/nutri_i18n.dart';
 
 import '../application/meal_plan_service.dart';
+import '../config/app_build_info.dart';
 import '../data/app_settings_repository.dart';
 import '../data/patient_repository.dart';
 import '../domain/app_settings.dart';
@@ -270,8 +271,9 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
       _selectedPatientId = patientId;
       _firstName.text = patient.firstName;
       _lastName.text = patient.lastName;
-      _birthDate.text =
-          patient.dateOfBirth == null ? '' : _date(patient.dateOfBirth!);
+      _birthDate.text = patient.dateOfBirth == null
+          ? ''
+          : _date(patient.dateOfBirth!);
       _sex = patient.sex;
       _email.text = patient.email ?? '';
       _phone.text = patient.phone ?? '';
@@ -384,15 +386,15 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
       return;
     }
     if ([
-      _reason,
-      _dietaryHistory,
-      _foodContext,
-      _reportedAllergies,
-      _reportedIntolerances,
-      _clinicalContext,
-    ].any((field) => field.text.trim().isNotEmpty) &&
+          _reason,
+          _dietaryHistory,
+          _foodContext,
+          _reportedAllergies,
+          _reportedIntolerances,
+          _clinicalContext,
+        ].any((field) => field.text.trim().isNotEmpty) &&
         _historySource.text.trim().isEmpty) {
-      _message('Indica la fuente de la evaluación inicial.');
+      _message('Indica la fuente de la evaluaciÃ³n inicial.');
       return;
     }
 
@@ -452,20 +454,18 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
 
       await _saveTargets(patientId);
       await _refreshPatients(selectId: patientId);
-      _message(currentId == null
-          ? NutriI18n.t('Paciente creado.')
-          : NutriI18n.t('Paciente actualizado.'));
+      _message(
+        currentId == null
+            ? NutriI18n.t('Paciente creado.')
+            : NutriI18n.t('Paciente actualizado.'),
+      );
     });
   }
 
   Future<void> _saveTargets(int patientId) async {
     final targets = <NutritionTarget>[];
 
-    void add(
-      TextEditingController controller,
-      String code,
-      NutrientUnit unit,
-    ) {
+    void add(TextEditingController controller, String code, NutrientUnit unit) {
       final value = _optionalNumber(controller);
       if (value == null || value <= 0) return;
       targets.add(
@@ -500,7 +500,7 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
     final waist = _lengthInputToCm(_optionalNumber(_waist));
 
     if (weight == null && height == null && waist == null) {
-      _message(NutriI18n.t('Ingresa al menos una medición.'));
+      _message(NutriI18n.t('Ingresa al menos una mediciÃ³n.'));
       return;
     }
 
@@ -522,7 +522,7 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
         _measurements = measurements;
         _clearMeasurementDraft();
       });
-      _message(NutriI18n.t('Evaluación guardada.'));
+      _message(NutriI18n.t('EvaluaciÃ³n guardada.'));
     });
   }
 
@@ -550,13 +550,12 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
       _message('Revisa la fecha AAAA-MM-DD de la consulta.');
       return;
     }
-    if (reviewText.isNotEmpty &&
-        (review == null || review.isBefore(date))) {
+    if (reviewText.isNotEmpty && (review == null || review.isBefore(date))) {
       _message('Revisa las fechas AAAA-MM-DD de la consulta y seguimiento.');
       return;
     }
     if (_encounterSource.text.trim().isEmpty) {
-      _message('Indica la fuente de la información de esta consulta.');
+      _message('Indica la fuente de la informaciÃ³n de esta consulta.');
       return;
     }
     if ([
@@ -565,22 +564,24 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
       _encounterIntervention,
       _encounterMonitoring,
     ].every((field) => field.text.trim().isEmpty)) {
-      _message('Registra al menos una observación o intervención.');
+      _message('Registra al menos una observaciÃ³n o intervenciÃ³n.');
       return;
     }
 
     await _execute(() async {
-      await _patients.addEncounter(PatientEncounter(
-        patientId: patientId,
-        occurredAt: date,
-        assessment: _nullIfBlank(_encounterAssessment.text),
-        nutritionProblem: _nullIfBlank(_encounterProblem.text),
-        intervention: _nullIfBlank(_encounterIntervention.text),
-        monitoring: _nullIfBlank(_encounterMonitoring.text),
-        nextReviewAt: review,
-        informationSource: _encounterSource.text.trim(),
-        planId: _encounterPlanId,
-      ));
+      await _patients.addEncounter(
+        PatientEncounter(
+          patientId: patientId,
+          occurredAt: date,
+          assessment: _nullIfBlank(_encounterAssessment.text),
+          nutritionProblem: _nullIfBlank(_encounterProblem.text),
+          intervention: _nullIfBlank(_encounterIntervention.text),
+          monitoring: _nullIfBlank(_encounterMonitoring.text),
+          nextReviewAt: review,
+          informationSource: _encounterSource.text.trim(),
+          planId: _encounterPlanId,
+        ),
+      );
       final encounters = await _patients.encountersFor(patientId);
       if (!mounted) return;
       setState(() {
@@ -599,7 +600,9 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
       _message('Guarda primero la ficha del paciente.');
       return;
     }
-    if (date == null || value == null || !value.isFinite ||
+    if (date == null ||
+        value == null ||
+        !value.isFinite ||
         _observationIndicator.text.trim().isEmpty ||
         _observationUnit.text.trim().isEmpty ||
         _observationSource.text.trim().isEmpty) {
@@ -607,22 +610,24 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
       return;
     }
     await _execute(() async {
-      await _patients.addObservation(PatientObservation(
-        patientId: patientId,
-        observedAt: date,
-        indicator: _observationIndicator.text.trim(),
-        value: value,
-        unit: _observationUnit.text.trim(),
-        source: _observationSource.text.trim(),
-        referenceRange: _nullIfBlank(_observationRange.text),
-      ));
+      await _patients.addObservation(
+        PatientObservation(
+          patientId: patientId,
+          observedAt: date,
+          indicator: _observationIndicator.text.trim(),
+          value: value,
+          unit: _observationUnit.text.trim(),
+          source: _observationSource.text.trim(),
+          referenceRange: _nullIfBlank(_observationRange.text),
+        ),
+      );
       final observations = await _patients.observationsFor(patientId);
       if (!mounted) return;
       setState(() {
         _observations = observations;
         _clearObservationDraft();
       });
-      _message('Indicador guardado sin interpretación automática.');
+      _message('Indicador guardado sin interpretaciÃ³n automÃ¡tica.');
     });
   }
 
@@ -658,13 +663,14 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(NutriI18n.t('Pacientes'),
+        title: Text(
+          NutriI18n.t('Pacientes'),
           style: TextStyle(fontWeight: FontWeight.w700),
         ),
         actions: const [
           Padding(
             padding: EdgeInsets.only(right: 18),
-            child: Center(child: Text('V0.6')),
+            child: Center(child: Text(NutriBuildInfo.displayLabel)),
           ),
         ],
       ),
@@ -703,7 +709,7 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
         ),
         Expanded(
           child: _patientList.isEmpty
-              ? Center(child: Text(NutriI18n.t('Todavía no hay pacientes.')))
+              ? Center(child: Text(NutriI18n.t('TodavÃ­a no hay pacientes.')))
               : ListView.builder(
                   itemCount: _patientList.length,
                   itemBuilder: (context, index) {
@@ -746,11 +752,18 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
               Card(
                 child: ListTile(
                   leading: const Icon(Icons.privacy_tip_outlined),
-                  title: const Text('Beta: utiliza pacientes ficticios'),
-                  subtitle: const Text(
-                    'Los expedientes se guardan en este navegador. '
-                    'Aún no hay bloqueo local ni cifrado de la base activa. '
-                    'Exporta backups cifrados si necesitas conservar pruebas.',
+                  title: Text(
+                    NutriBuildInfo.isProduction
+                        ? 'Privacidad local'
+                        : 'RC: utiliza pacientes ficticios',
+                  ),
+                  subtitle: Text(
+                    NutriBuildInfo.isProduction
+                        ? 'Los expedientes se guardan localmente en este dispositivo. '
+                              'Protege el acceso al equipo y utiliza backups cifrados.'
+                        : 'Los expedientes se guardan localmente. '
+                              'La base activa todavÃ­a no tiene protecciÃ³n propia de Nutrikuaa; '
+                              'usa datos ficticios hasta cerrar el gate de seguridad.',
                   ),
                 ),
               ),
@@ -772,9 +785,7 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
                 const SizedBox(height: 12),
                 SelectableText(
                   _error!,
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.error,
-                  ),
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
                 ),
               ],
             ],
@@ -827,7 +838,8 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(NutriI18n.t('Ficha del paciente'),
+            Text(
+              NutriI18n.t('Ficha del paciente'),
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 12),
@@ -856,9 +868,18 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
                       labelText: NutriI18n.t('Sexo (opcional)'),
                     ),
                     items: [
-                      DropdownMenuItem(value: 'female', child: Text(NutriI18n.t('Femenino'))),
-                      DropdownMenuItem(value: 'male', child: Text(NutriI18n.t('Masculino'))),
-                      DropdownMenuItem(value: 'other', child: Text(NutriI18n.t('Otro'))),
+                      DropdownMenuItem(
+                        value: 'female',
+                        child: Text(NutriI18n.t('Femenino')),
+                      ),
+                      DropdownMenuItem(
+                        value: 'male',
+                        child: Text(NutriI18n.t('Masculino')),
+                      ),
+                      DropdownMenuItem(
+                        value: 'other',
+                        child: Text(NutriI18n.t('Otro')),
+                      ),
                     ],
                     onChanged: (value) => setState(() => _sex = value),
                   ),
@@ -870,7 +891,7 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
               children: [
                 Expanded(child: _field(_email, 'Email')),
                 const SizedBox(width: 8),
-                Expanded(child: _field(_phone, 'Teléfono')),
+                Expanded(child: _field(_phone, 'TelÃ©fono')),
               ],
             ),
             const SizedBox(height: 8),
@@ -912,7 +933,7 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
     return Card(
       child: ExpansionTile(
         leading: const Icon(Icons.assignment_outlined),
-        title: const Text('Evaluación inicial y contexto'),
+        title: const Text('EvaluaciÃ³n inicial y contexto'),
         subtitle: const Text('Campos opcionales que el profesional revisa'),
         children: [
           Padding(
@@ -920,29 +941,43 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Text('Registra sólo información pertinente. Alergia '
-                    'reportada, intolerancia y preferencia son conceptos distintos.'),
+                const Text(
+                  'Registra sÃ³lo informaciÃ³n pertinente. Alergia '
+                  'reportada, intolerancia y preferencia son conceptos distintos.',
+                ),
                 const SizedBox(height: 12),
                 _longField(_reason, 'Motivo y objetivo acordado'),
-                _longField(_dietaryHistory,
-                    'Historia alimentaria: patrón, horarios y hábitos'),
-                _longField(_foodContext,
-                    'Preferencias, restricciones, cultura, presupuesto y acceso'),
-                _longField(_reportedAllergies,
-                    'Alergias reportadas, reacción y confirmación'),
-                _longField(_reportedIntolerances,
-                    'Intolerancias reportadas (separadas de alergias)'),
-                _longField(_clinicalContext,
-                    'Condiciones y medicación relevantes para la atención'),
-                _field(_historySource,
-                    'Fuente: paciente, cuidador, derivación o documento'),
+                _longField(
+                  _dietaryHistory,
+                  'Historia alimentaria: patrÃ³n, horarios y hÃ¡bitos',
+                ),
+                _longField(
+                  _foodContext,
+                  'Preferencias, restricciones, cultura, presupuesto y acceso',
+                ),
+                _longField(
+                  _reportedAllergies,
+                  'Alergias reportadas, reacciÃ³n y confirmaciÃ³n',
+                ),
+                _longField(
+                  _reportedIntolerances,
+                  'Intolerancias reportadas (separadas de alergias)',
+                ),
+                _longField(
+                  _clinicalContext,
+                  'Condiciones y medicaciÃ³n relevantes para la atenciÃ³n',
+                ),
+                _field(
+                  _historySource,
+                  'Fuente: paciente, cuidador, derivaciÃ³n o documento',
+                ),
                 const SizedBox(height: 10),
                 Align(
                   alignment: Alignment.centerLeft,
                   child: FilledButton.tonalIcon(
                     onPressed: _busy ? null : _savePatient,
                     icon: const Icon(Icons.save_outlined),
-                    label: const Text('Guardar evaluación y ficha'),
+                    label: const Text('Guardar evaluaciÃ³n y ficha'),
                   ),
                 ),
               ],
@@ -960,26 +995,42 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('Indicadores y analíticas relevantes',
-                style: Theme.of(context).textTheme.titleLarge),
-            const Text('Carga manual con fecha, unidad y fuente. '
-                'La app no interpreta resultados ni indica diagnósticos.'),
+            Text(
+              'Indicadores y analÃ­ticas relevantes',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const Text(
+              'Carga manual con fecha, unidad y fuente. '
+              'La app no interpreta resultados ni indica diagnÃ³sticos.',
+            ),
             if (_selectedPatientId != null) ...[
               ExpansionTile(
                 title: const Text('Agregar indicador'),
                 children: [
-                  _field(_observationDate, 'Fecha del resultado',
-                      hint: 'AAAA-MM-DD'),
+                  _field(
+                    _observationDate,
+                    'Fecha del resultado',
+                    hint: 'AAAA-MM-DD',
+                  ),
                   const SizedBox(height: 10),
-                  _field(_observationIndicator,
-                      'Indicador (ej.: un análisis relevante)'),
+                  _field(
+                    _observationIndicator,
+                    'Indicador (ej.: un anÃ¡lisis relevante)',
+                  ),
                   const SizedBox(height: 10),
-                  Row(children: [
-                    Expanded(child: _field(_observationValue, 'Valor',
-                        numeric: true)),
-                    const SizedBox(width: 8),
-                    Expanded(child: _field(_observationUnit, 'Unidad')),
-                  ]),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _field(
+                          _observationValue,
+                          'Valor',
+                          numeric: true,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(child: _field(_observationUnit, 'Unidad')),
+                    ],
+                  ),
                   const SizedBox(height: 10),
                   _field(_observationRange, 'Rango informado (opcional)'),
                   const SizedBox(height: 10),
@@ -1003,19 +1054,29 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
                   ListTile(
                     contentPadding: EdgeInsets.zero,
                     leading: const Icon(Icons.science_outlined),
-                    title: Text(observation.indicator + ' · ' +
-                        observation.value.toString() + ' ' + observation.unit),
-                    subtitle: Text(_date(observation.observedAt) +
-                        ' · ' + observation.source +
-                        (observation.referenceRange == null
-                            ? ''
-                            : ' · Rango informado: ' +
-                                observation.referenceRange!)),
+                    title: Text(
+                      observation.indicator +
+                          ' Â· ' +
+                          observation.value.toString() +
+                          ' ' +
+                          observation.unit,
+                    ),
+                    subtitle: Text(
+                      _date(observation.observedAt) +
+                          ' Â· ' +
+                          observation.source +
+                          (observation.referenceRange == null
+                              ? ''
+                              : ' Â· Rango informado: ' +
+                                    observation.referenceRange!),
+                    ),
                   ),
             ] else
               const Padding(
                 padding: EdgeInsets.only(top: 10),
-                child: Text('Guarda primero el paciente para agregar indicadores.'),
+                child: Text(
+                  'Guarda primero el paciente para agregar indicadores.',
+                ),
               ),
           ],
         ),
@@ -1030,10 +1091,14 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('Consultas y seguimiento',
-                style: Theme.of(context).textTheme.titleLarge),
-            const Text('Cada consulta queda fechada. La interpretación y '
-                'las decisiones corresponden al profesional.'),
+            Text(
+              'Consultas y seguimiento',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const Text(
+              'Cada consulta queda fechada. La interpretaciÃ³n y '
+              'las decisiones corresponden al profesional.',
+            ),
             const SizedBox(height: 8),
             if (_selectedPatientId == null)
               const Text('Guarda primero el paciente para registrar consultas.')
@@ -1041,33 +1106,51 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
               ExpansionTile(
                 title: const Text('Registrar consulta'),
                 children: [
-                  _field(_encounterDate, 'Fecha de consulta',
-                      hint: 'AAAA-MM-DD'),
+                  _field(
+                    _encounterDate,
+                    'Fecha de consulta',
+                    hint: 'AAAA-MM-DD',
+                  ),
                   const SizedBox(height: 10),
-                  _longField(_encounterAssessment,
-                      'Evaluación: cambios y datos relevantes'),
-                  _longField(_encounterProblem,
-                      'Problema nutricional identificado por el profesional'),
-                  _longField(_encounterIntervention,
-                      'Intervención y objetivos acordados'),
-                  _longField(_encounterMonitoring,
-                      'Indicadores, barreras y seguimiento previsto'),
-                  _field(_encounterReview, 'Próxima revisión (opcional)',
-                      hint: 'AAAA-MM-DD'),
+                  _longField(
+                    _encounterAssessment,
+                    'EvaluaciÃ³n: cambios y datos relevantes',
+                  ),
+                  _longField(
+                    _encounterProblem,
+                    'Problema nutricional identificado por el profesional',
+                  ),
+                  _longField(
+                    _encounterIntervention,
+                    'IntervenciÃ³n y objetivos acordados',
+                  ),
+                  _longField(
+                    _encounterMonitoring,
+                    'Indicadores, barreras y seguimiento previsto',
+                  ),
+                  _field(
+                    _encounterReview,
+                    'PrÃ³xima revisiÃ³n (opcional)',
+                    hint: 'AAAA-MM-DD',
+                  ),
                   const SizedBox(height: 10),
-                  _field(_encounterSource,
-                      'Fuente de los datos (obligatoria)'),
+                  _field(_encounterSource, 'Fuente de los datos (obligatoria)'),
                   if (_planHistory.isNotEmpty) ...[
                     const SizedBox(height: 10),
                     DropdownButtonFormField<int>(
                       value: _encounterPlanId,
                       isExpanded: true,
                       decoration: const InputDecoration(
-                          labelText: 'Plan vinculado (opcional)'),
-                      items: _planHistory.map((plan) => DropdownMenuItem(
-                        value: plan.id,
-                        child: Text(plan.name),
-                      )).toList(),
+                        labelText: 'Plan vinculado (opcional)',
+                      ),
+                      items: _planHistory
+                          .map(
+                            (plan) => DropdownMenuItem(
+                              value: plan.id,
+                              child: Text(plan.name),
+                            ),
+                          )
+                          .toList(),
                       onChanged: (value) =>
                           setState(() => _encounterPlanId = value),
                     ),
@@ -1091,7 +1174,7 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
                 ],
               ),
               if (_encounters.isEmpty)
-                const Text('Aún no hay consultas registradas.')
+                const Text('AÃºn no hay consultas registradas.')
               else
                 for (final encounter in _encounters)
                   ExpansionTile(
@@ -1100,30 +1183,35 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
                     title: Text(_date(encounter.occurredAt)),
                     subtitle: Text(
                       encounter.intervention ??
-                      encounter.assessment ??
-                      encounter.nutritionProblem ??
-                      'Consulta profesional',
+                          encounter.assessment ??
+                          encounter.nutritionProblem ??
+                          'Consulta profesional',
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                     children: [
-                      _encounterDetail('Evaluación', encounter.assessment),
+                      _encounterDetail('EvaluaciÃ³n', encounter.assessment),
                       _encounterDetail(
-                          'Problema nutricional', encounter.nutritionProblem),
-                      _encounterDetail(
-                          'Intervención', encounter.intervention),
-                      _encounterDetail(
-                          'Seguimiento', encounter.monitoring),
+                        'Problema nutricional',
+                        encounter.nutritionProblem,
+                      ),
+                      _encounterDetail('IntervenciÃ³n', encounter.intervention),
+                      _encounterDetail('Seguimiento', encounter.monitoring),
                       _encounterDetail('Fuente', encounter.informationSource),
                       if (encounter.nextReviewAt != null)
-                        _encounterDetail('Próxima revisión',
-                            _date(encounter.nextReviewAt!)),
+                        _encounterDetail(
+                          'PrÃ³xima revisiÃ³n',
+                          _date(encounter.nextReviewAt!),
+                        ),
                       if (encounter.planId != null)
-                        _encounterDetail('Plan vinculado',
-                            _planHistory
-                                .where((plan) => plan.id == encounter.planId)
-                                .map((plan) => plan.name)
-                                .firstOrNull ?? 'Plan anterior'),
+                        _encounterDetail(
+                          'Plan vinculado',
+                          _planHistory
+                                  .where((plan) => plan.id == encounter.planId)
+                                  .map((plan) => plan.name)
+                                  .firstOrNull ??
+                              'Plan anterior',
+                        ),
                     ],
                   ),
             ],
@@ -1135,11 +1223,7 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
 
   Widget _encounterDetail(String title, String? value) {
     if (value == null || value.isEmpty) return const SizedBox.shrink();
-    return ListTile(
-      title: Text(title),
-      subtitle: Text(value),
-      dense: true,
-    );
+    return ListTile(title: Text(title), subtitle: Text(value), dense: true);
   }
 
   Widget _longField(TextEditingController controller, String label) {
@@ -1161,19 +1245,23 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(NutriI18n.t('Objetivos nutricionales diarios'),
+            Text(
+              NutriI18n.t('Objetivos nutricionales diarios'),
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 4),
-            Text(NutriI18n.t('Los objetivos los define el profesional. Nutrikuaa los usa para comparar el plan.'),
+            Text(
+              NutriI18n.t(
+                'Los objetivos los define el profesional. Nutrikuaa los usa para comparar el plan.',
+              ),
             ),
             const SizedBox(height: 12),
             Wrap(
               spacing: 10,
               runSpacing: 10,
               children: [
-                _targetField(_energy, 'Energía', 'kcal'),
-                _targetField(_protein, 'Proteína', 'g'),
+                _targetField(_energy, 'EnergÃ­a', 'kcal'),
+                _targetField(_protein, 'ProteÃ­na', 'g'),
                 _targetField(_carbs, 'Carbohidratos', 'g'),
                 _targetField(_fat, 'Grasas', 'g'),
                 _targetField(_fiber, 'Fibra', 'g'),
@@ -1201,11 +1289,15 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(NutriI18n.t('Evaluación antropométrica'),
+            Text(
+              NutriI18n.t('EvaluaciÃ³n antropomÃ©trica'),
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 4),
-            Text(NutriI18n.t('Registro longitudinal. El IMC se muestra solo como cálculo kg/m².'),
+            Text(
+              NutriI18n.t(
+                'Registro longitudinal. El IMC se muestra solo como cÃ¡lculo kg/mÂ².',
+              ),
             ),
             const SizedBox(height: 12),
             Wrap(
@@ -1244,14 +1336,15 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
                   width: 180,
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color:
-                        Theme.of(context).colorScheme.surfaceContainerHighest,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
                     draft.bmi == null
-                        ? '${_bmiLabel()}: —'
-                        : '${_bmiLabel()}: ${draft.bmi!.toStringAsFixed(1)} kg/m²',
+                        ? '${_bmiLabel()}: â€”'
+                        : '${_bmiLabel()}: ${draft.bmi!.toStringAsFixed(1)} kg/mÂ²',
                     style: const TextStyle(fontWeight: FontWeight.w700),
                   ),
                 ),
@@ -1261,7 +1354,7 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
             TextField(
               controller: _measurementNotes,
               decoration: InputDecoration(
-                labelText: NutriI18n.t('Notas de esta evaluación (opcional)'),
+                labelText: NutriI18n.t('Notas de esta evaluaciÃ³n (opcional)'),
               ),
             ),
             const SizedBox(height: 10),
@@ -1272,12 +1365,12 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
                     ? null
                     : _addMeasurement,
                 icon: const Icon(Icons.add_chart),
-                label: Text(NutriI18n.t('Guardar evaluación')),
+                label: Text(NutriI18n.t('Guardar evaluaciÃ³n')),
               ),
             ),
             const SizedBox(height: 14),
             if (_measurements.isEmpty)
-              Text(NutriI18n.t('Todavía no hay mediciones registradas.'))
+              Text(NutriI18n.t('TodavÃ­a no hay mediciones registradas.'))
             else
               ..._measurements.take(10).map(_measurementTile),
           ],
@@ -1288,10 +1381,8 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
 
   Widget _measurementTile(PatientMeasurement measurement) {
     final parts = <String>[
-      if (measurement.weightKg != null)
-        _displayWeight(measurement.weightKg!),
-      if (measurement.heightCm != null)
-        _displayLength(measurement.heightCm!),
+      if (measurement.weightKg != null) _displayWeight(measurement.weightKg!),
+      if (measurement.heightCm != null) _displayLength(measurement.heightCm!),
       if (measurement.waistCm != null)
         '${_waistLabel()} ${_displayLength(measurement.waistCm!)}',
       if (measurement.bmi != null)
@@ -1304,12 +1395,12 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
       title: Text(_date(measurement.measuredAt)),
       subtitle: Text(
         [
-          parts.join(' · '),
+          parts.join(' Â· '),
           if (measurement.notes != null) measurement.notes!,
         ].where((value) => value.isNotEmpty).join('\n'),
       ),
       trailing: IconButton(
-        tooltip: NutriI18n.t('Eliminar medición'),
+        tooltip: NutriI18n.t('Eliminar mediciÃ³n'),
         onPressed: _busy || measurement.id == null
             ? null
             : () => _deleteMeasurement(measurement.id!),
@@ -1328,7 +1419,8 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
             Row(
               children: [
                 Expanded(
-                  child: Text(NutriI18n.t('Historial de planes'),
+                  child: Text(
+                    NutriI18n.t('Historial de planes'),
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
                   ),
                 ),
@@ -1342,7 +1434,8 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
                 child: FilledButton.tonalIcon(
                   onPressed: _busy
                       ? null
-                      : () => widget.onPlanForPatient?.call(_selectedPatientId!),
+                      : () =>
+                            widget.onPlanForPatient?.call(_selectedPatientId!),
                   icon: const Icon(Icons.calendar_view_week_outlined),
                   label: Text(NutriI18n.t('Planificar para este paciente')),
                 ),
@@ -1352,20 +1445,19 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
             if (_selectedPatientId == null)
               Text(NutriI18n.t('Guarda el paciente para ver su historial.'))
             else if (_planHistory.isEmpty)
-              Text(NutriI18n.t('Este paciente todavía no tiene planes.'))
+              Text(NutriI18n.t('Este paciente todavÃ­a no tiene planes.'))
             else
               ..._planHistory.map((plan) {
-                final start =
-                    plan.startDate == null ? NutriI18n.t('Sin fecha') : _date(plan.startDate!);
+                final start = plan.startDate == null
+                    ? NutriI18n.t('Sin fecha')
+                    : _date(plan.startDate!);
                 final end = plan.endDate == null ? null : _date(plan.endDate!);
 
                 return ListTile(
                   contentPadding: EdgeInsets.zero,
                   leading: const Icon(Icons.calendar_view_week_outlined),
                   title: Text(plan.name),
-                  subtitle: Text(
-                    end == null ? start : '$start → $end',
-                  ),
+                  subtitle: Text(end == null ? start : '$start â†’ $end'),
                 );
               }),
           ],
@@ -1391,8 +1483,7 @@ class _PatientWorkspacePageState extends State<PatientWorkspacePage> {
     return _imperial ? 'Cintura (in)' : 'Cintura (cm)';
   }
 
-  String _bmiLabel() =>
-      NutriI18n.languageCode == 'en' ? 'BMI' : 'IMC';
+  String _bmiLabel() => NutriI18n.languageCode == 'en' ? 'BMI' : 'IMC';
 
   String _waistLabel() {
     if (NutriI18n.languageCode == 'en') return 'waist';

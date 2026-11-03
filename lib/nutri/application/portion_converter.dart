@@ -9,8 +9,9 @@ class PortionConverter {
   }) {
     if (requestedAmount <= 0) return 0;
 
-    final baseAmount =
-        portion.amount == null || portion.amount! <= 0 ? 1.0 : portion.amount!;
+    final baseAmount = portion.amount == null || portion.amount! <= 0
+        ? 1.0
+        : portion.amount!;
 
     return portion.gramWeight * requestedAmount / baseAmount;
   }

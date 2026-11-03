@@ -32,30 +32,33 @@ class UnifiedFoodSearchService {
     bool includeProfessional = true,
     bool includeOfficial = true,
   }) async {
-    final officialQuery = OfficialFoodSearchAliases.forOfficialCatalog(query);
+    final trimmed = query.trim();
+    final officialQuery = OfficialFoodSearchAliases.forOfficialCatalog(trimmed);
 
-    final professional = includeProfessional
-        ? await privateDatabase.searchFoods(
-            query,
-            countryCode: countryCode,
-            limit: professionalLimit,
-          )
-        : <Food>[];
-
-    if (includeProfessional &&
-        officialQuery.toLowerCase() != query.trim().toLowerCase()) {
-      final translatedProfessional = await privateDatabase.searchFoods(
+    final professional = <Food>[];
+    if (includeProfessional) {
+      final privateQueries = <String>{
+        trimmed,
         officialQuery,
-        countryCode: countryCode,
-        limit: professionalLimit,
-      );
+        ...OfficialFoodSearchAliases.forProfessionalCatalog(trimmed),
+      };
+      final seen = <String>{};
 
-      final existingIds = professional.map((food) => food.id).toSet();
-      for (final food in translatedProfessional) {
-        if (!existingIds.contains(food.id)) {
-          professional.add(food);
-          existingIds.add(food.id);
+      for (final privateQuery in privateQueries) {
+        final matches = await privateDatabase.searchFoods(
+          privateQuery,
+          countryCode: countryCode,
+          limit: professionalLimit,
+        );
+
+        for (final food in matches) {
+          final key = food.id != null
+              ? 'id:${food.id}'
+              : '${food.sourceType.name}|${food.name}|${food.brand ?? ''}';
+          if (seen.add(key)) professional.add(food);
+          if (professional.length >= professionalLimit) break;
         }
+        if (professional.length >= professionalLimit) break;
       }
     }
 

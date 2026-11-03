@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../config/app_build_info.dart';
+
 import '../localization/nutri_i18n.dart';
 
 import '../application/food_placement_service.dart';
@@ -336,7 +338,7 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
         title: Text(NutriI18n.t('Eliminar receta')),
         content: Text(
           NutriI18n.t(
-            'La receta se eliminará si todavía no está utilizada en un plan.',
+            'La receta se eliminarÃƒÂ¡ si todavÃƒÂ­a no estÃƒÂ¡ utilizada en un plan.',
           ),
         ),
         actions: [
@@ -414,7 +416,7 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
         actions: const [
           Padding(
             padding: EdgeInsets.only(right: 18),
-            child: Center(child: Text('V0.5')),
+            child: Center(child: Text(NutriBuildInfo.displayLabel)),
           ),
         ],
       ),
@@ -438,7 +440,7 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
         ),
         Expanded(
           child: _recipeList.isEmpty
-              ? Center(child: Text(NutriI18n.t('Todavía no hay recetas.')))
+              ? Center(child: Text(NutriI18n.t('TodavÃƒÂ­a no hay recetas.')))
               : ListView.builder(
                   itemCount: _recipeList.length,
                   itemBuilder: (context, index) {
@@ -544,7 +546,7 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
             TextField(
               controller: _description,
               decoration: InputDecoration(
-                labelText: NutriI18n.t('Descripción (opcional)'),
+                labelText: NutriI18n.t('DescripciÃƒÂ³n (opcional)'),
               ),
             ),
             const SizedBox(height: 10),
@@ -585,7 +587,9 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
               minLines: 2,
               maxLines: 4,
               decoration: InputDecoration(
-                labelText: NutriI18n.t('Preparación / indicaciones (opcional)'),
+                labelText: NutriI18n.t(
+                  'PreparaciÃƒÂ³n / indicaciones (opcional)',
+                ),
               ),
             ),
             const SizedBox(height: 12),
@@ -669,7 +673,9 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
             ),
             const SizedBox(height: 10),
             if (_foodResults.isEmpty)
-              Text(NutriI18n.t('Busca en tu biblioteca y en el catálogo USDA.'))
+              Text(
+                NutriI18n.t('Busca en tu biblioteca y en el catÃƒÂ¡logo USDA.'),
+              )
             else
               ..._foodResults.combined.take(8).map(_foodResultTile),
           ],
@@ -687,11 +693,11 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
             : Icons.inventory_2_outlined,
       ),
       title: Text(
-        food.brand == null ? food.name : '${food.name} · ${food.brand}',
+        food.brand == null ? food.name : '${food.name} Ã‚Â· ${food.brand}',
       ),
       subtitle: Text(
         food.sourceType == FoodSourceType.officialDatabase
-            ? 'USDA · FDC ${food.sourceFoodId}'
+            ? 'USDA Ã‚Â· FDC ${food.sourceFoodId}'
             : NutriI18n.t('Biblioteca profesional'),
       ),
       trailing: FilledButton.tonal(
@@ -714,7 +720,7 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
             ),
             const SizedBox(height: 8),
             if (_ingredients.isEmpty)
-              Text(NutriI18n.t('Todavía no agregaste ingredientes.'))
+              Text(NutriI18n.t('TodavÃƒÂ­a no agregaste ingredientes.'))
             else
               ..._ingredients.map((ingredient) {
                 final food = ingredient.food;
@@ -724,11 +730,11 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
                   title: Text(
                     food.brand == null
                         ? food.name
-                        : '${food.name} · ${food.brand}',
+                        : '${food.name} Ã‚Â· ${food.brand}',
                   ),
                   subtitle: Text(
                     '${ingredient.grams.toStringAsFixed(0)} g'
-                    '${food.sourceFoodId == null ? '' : ' · FDC ${food.sourceFoodId}'}',
+                    '${food.sourceFoodId == null ? '' : ' Ã‚Â· FDC ${food.sourceFoodId}'}',
                   ),
                   trailing: Wrap(
                     spacing: 2,
@@ -771,14 +777,14 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              NutriI18n.t('Nutrición calculada'),
+              NutriI18n.t('NutriciÃƒÂ³n calculada'),
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 4),
             Text(
               servings > 0
                   ? _nutritionDescription(servings)
-                  : NutriI18n.t('Define un número de porciones válido.'),
+                  : NutriI18n.t('Define un nÃƒÂºmero de porciones vÃƒÂ¡lido.'),
             ),
             const SizedBox(height: 12),
             Wrap(
@@ -786,13 +792,13 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
               runSpacing: 10,
               children: [
                 _nutritionMetric(
-                  'Energía',
+                  'EnergÃƒÂ­a',
                   total.value(NutrientCodes.energyKcal),
                   perServing.value(NutrientCodes.energyKcal),
                   'kcal',
                 ),
                 _nutritionMetric(
-                  'Proteína',
+                  'ProteÃƒÂ­na',
                   total.value(NutrientCodes.protein),
                   perServing.value(NutrientCodes.protein),
                   'g',
@@ -819,15 +825,15 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
 
   String _copySuffix() {
     if (NutriI18n.languageCode == 'en') return '(copy)';
-    if (NutriI18n.languageCode == 'pt') return '(cópia)';
+    if (NutriI18n.languageCode == 'pt') return '(cÃƒÂ³pia)';
     return '(copia)';
   }
 
   String _servingsText(double servings) {
     final value = servings.toStringAsFixed(1);
     if (NutriI18n.languageCode == 'en') return '$value serving(s)';
-    if (NutriI18n.languageCode == 'pt') return '$value porção(ões)';
-    return '$value porción(es)';
+    if (NutriI18n.languageCode == 'pt') return '$value porÃƒÂ§ÃƒÂ£o(ÃƒÂµes)';
+    return '$value porciÃƒÂ³n(es)';
   }
 
   String _ingredientsWeightText(double grams) {
@@ -848,16 +854,16 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
       return 'Whole recipe and per 1 of $value serving(s).';
     }
     if (NutriI18n.languageCode == 'pt') {
-      return 'Receita completa e por 1 de $value porção(ões).';
+      return 'Receita completa e por 1 de $value porÃƒÂ§ÃƒÂ£o(ÃƒÂµes).';
     }
-    return 'Por receta completa y por 1 de $value porción(es).';
+    return 'Por receta completa y por 1 de $value porciÃƒÂ³n(es).';
   }
 
   String _perServingText(double value, String unit) {
     final amount = value.toStringAsFixed(1);
     if (NutriI18n.languageCode == 'en') return '$amount $unit / serving';
-    if (NutriI18n.languageCode == 'pt') return '$amount $unit / porção';
-    return '$amount $unit / porción';
+    if (NutriI18n.languageCode == 'pt') return '$amount $unit / porÃƒÂ§ÃƒÂ£o';
+    return '$amount $unit / porciÃƒÂ³n';
   }
 
   String _totalText(double value, String unit) {

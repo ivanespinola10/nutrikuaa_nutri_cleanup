@@ -6,11 +6,9 @@ class FoodPlacementService {
   final FoodSnapshotService snapshots;
   final MealPlanService plans;
 
-  FoodPlacementService({
-    FoodSnapshotService? snapshots,
-    MealPlanService? plans,
-  })  : snapshots = snapshots ?? FoodSnapshotService(),
-        plans = plans ?? MealPlanService();
+  FoodPlacementService({FoodSnapshotService? snapshots, MealPlanService? plans})
+    : snapshots = snapshots ?? FoodSnapshotService(),
+      plans = plans ?? MealPlanService();
 
   Future<Food> resolveForProfessionalUse(Food selectedFood) async {
     if (selectedFood.sourceType == FoodSourceType.officialDatabase) {

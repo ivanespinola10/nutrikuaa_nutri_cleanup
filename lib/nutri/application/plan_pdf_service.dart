@@ -157,7 +157,7 @@ class PlanPdfService {
               0,
               (count, meal) => count + meal.items.length,
             );
-            return itemCount <= 10
+            return itemCount <= 12
                 ? pw.Inseparable(child: daySection)
                 : daySection;
           }),

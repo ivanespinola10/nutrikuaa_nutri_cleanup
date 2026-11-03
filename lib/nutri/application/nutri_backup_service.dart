@@ -85,7 +85,7 @@ class NutriBackupService {
   final NutriDatabase database;
 
   NutriBackupService({NutriDatabase? database})
-      : database = database ?? NutriDatabase.instance;
+    : database = database ?? NutriDatabase.instance;
 
   Future<Uint8List> exportBackup() async {
     final db = await database.database;
@@ -104,9 +104,7 @@ class NutriBackupService {
       'tables': tables,
     };
 
-    return Uint8List.fromList(
-      utf8.encode(jsonEncode(payload)),
-    );
+    return Uint8List.fromList(utf8.encode(jsonEncode(payload)));
   }
 
   bool isEncrypted(Uint8List bytes) {
@@ -119,10 +117,7 @@ class NutriBackupService {
     }
   }
 
-  Future<Uint8List> encryptBackup(
-    Uint8List plainBytes,
-    String password,
-  ) async {
+  Future<Uint8List> encryptBackup(Uint8List plainBytes, String password) async {
     final normalizedPassword = password.trim();
     if (normalizedPassword.length < 8) {
       throw ArgumentError('Password must contain at least 8 characters.');
@@ -163,9 +158,7 @@ class NutriBackupService {
       'mac': base64Encode(box.mac.bytes),
     };
 
-    return Uint8List.fromList(
-      utf8.encode(jsonEncode(envelope)),
-    );
+    return Uint8List.fromList(utf8.encode(jsonEncode(envelope)));
   }
 
   Future<Uint8List> decryptBackup(
@@ -220,11 +213,7 @@ class NutriBackupService {
     final algorithm = AesGcm.with256bits();
     try {
       final clear = await algorithm.decrypt(
-        SecretBox(
-          cipher,
-          nonce: nonce,
-          mac: Mac(mac),
-        ),
+        SecretBox(cipher, nonce: nonce, mac: Mac(mac)),
         secretKey: secretKey,
       );
       return Uint8List.fromList(clear);
@@ -252,9 +241,7 @@ class NutriBackupService {
     final schemaVersion = payload['database_version'];
     if (schemaVersion is num &&
         schemaVersion.toInt() > NutriDatabase.databaseVersion) {
-      throw StateError(
-        'This backup was created by a newer Nutrikuaa version.',
-      );
+      throw StateError('This backup was created by a newer Nutrikuaa version.');
     }
 
     final db = await database.database;
@@ -315,10 +302,7 @@ class NutriBackupService {
     return Map<String, Object?>.from(value);
   }
 
-  List<Object?> _rows(
-    Map<String, Object?> tables,
-    String table,
-  ) {
+  List<Object?> _rows(Map<String, Object?> tables, String table) {
     final value = tables[table];
     if (value == null) return const [];
     if (value is! List) {
@@ -329,8 +313,7 @@ class NutriBackupService {
 
   Map<String, Object?> _encodeRow(Map<String, Object?> row) {
     return {
-      for (final entry in row.entries)
-        entry.key: _encodeValue(entry.value),
+      for (final entry in row.entries) entry.key: _encodeValue(entry.value),
     };
   }
 
@@ -351,8 +334,7 @@ class NutriBackupService {
 
     final row = Map<String, Object?>.from(rawRow);
     return {
-      for (final entry in row.entries)
-        entry.key: _decodeValue(entry.value),
+      for (final entry in row.entries) entry.key: _decodeValue(entry.value),
     };
   }
 

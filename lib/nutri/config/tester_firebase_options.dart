@@ -18,10 +18,10 @@ class TesterFirebaseOptions {
       !contact.contains('ejemplo.com');
 
   static FirebaseOptions get web => const FirebaseOptions(
-        apiKey: apiKey,
-        appId: appId,
-        messagingSenderId: senderId,
-        projectId: projectId,
-        authDomain: 'nutrikuaa-nutri.firebaseapp.com',
-      );
+    apiKey: apiKey,
+    appId: appId,
+    messagingSenderId: senderId,
+    projectId: projectId,
+    authDomain: 'nutrikuaa-nutri.firebaseapp.com',
+  );
 }

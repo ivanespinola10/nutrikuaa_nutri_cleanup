@@ -83,6 +83,7 @@ class OfflinePlanValidatorService {
         target: targetKcal,
         unit: 'kcal',
         passTolerance: 0.10,
+        blockTolerance: 0.20,
       ),
     );
 
@@ -95,6 +96,7 @@ class OfflinePlanValidatorService {
           target: targetProtein,
           unit: 'g',
           passTolerance: 0.15,
+          blockTolerance: 0.35,
         ),
       );
     }
@@ -109,6 +111,7 @@ class OfflinePlanValidatorService {
           target: targetCarbs,
           unit: 'g',
           passTolerance: 0.15,
+          blockTolerance: 0.35,
         ),
       );
     }
@@ -123,6 +126,7 @@ class OfflinePlanValidatorService {
           target: targetFat,
           unit: 'g',
           passTolerance: 0.15,
+          blockTolerance: 0.35,
         ),
       );
     }
@@ -231,6 +235,7 @@ class OfflinePlanValidatorService {
     required double target,
     required String unit,
     required double passTolerance,
+    required double blockTolerance,
   }) {
     if (target <= 0 || !target.isFinite) {
       return PlanValidationCheck(
@@ -246,17 +251,27 @@ class OfflinePlanValidatorService {
     final percent = difference / target * 100;
     final sign = percent >= 0 ? '+' : '';
 
+    final severity = relative <= passTolerance
+        ? PlanValidationSeverity.pass
+        : relative > blockTolerance
+        ? PlanValidationSeverity.blocking
+        : PlanValidationSeverity.warning;
+
+    final message = switch (severity) {
+      PlanValidationSeverity.pass => 'Dentro del rango de control.',
+      PlanValidationSeverity.warning => 'Revisar y ajustar.',
+      PlanValidationSeverity.blocking =>
+        'Desviación excesiva: corrige el borrador antes de aplicarlo.',
+    };
+
     return PlanValidationCheck(
       id: id,
       title: title,
       detail:
           '${actual.toStringAsFixed(1)} $unit vs '
           '${target.toStringAsFixed(1)} $unit '
-          '($sign${percent.toStringAsFixed(1)}%). '
-          '${relative <= passTolerance ? 'Dentro del rango de control.' : 'Revisar y ajustar.'}',
-      severity: relative <= passTolerance
-          ? PlanValidationSeverity.pass
-          : PlanValidationSeverity.warning,
+          '($sign${percent.toStringAsFixed(1)}%). $message',
+      severity: severity,
     );
   }
 

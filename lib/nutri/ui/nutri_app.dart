@@ -16,21 +16,28 @@ class NutrikuaaNutriApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(seedColor: seed, brightness: Brightness.light),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: seed,
+          brightness: Brightness.light,
+        ),
         scaffoldBackgroundColor: const Color(0xFFF6F8F7),
         inputDecorationTheme: const InputDecorationTheme(
-          border: OutlineInputBorder(), filled: true, fillColor: Colors.white,
+          border: OutlineInputBorder(),
+          filled: true,
+          fillColor: Colors.white,
         ),
         cardTheme: const CardThemeData(elevation: 0, margin: EdgeInsets.zero),
       ),
       home: kIsWeb
           ? TesterFirebaseOptions.ready
-              ? const TesterAccessGate()
-              : const Scaffold(
-                  body: Center(
-                    child: Text('Configuración de acceso para testers pendiente. Consulta docs/TESTER_ACCESS.md.'),
-                  ),
-                )
+                ? const TesterAccessGate()
+                : const Scaffold(
+                    body: Center(
+                      child: Text(
+                        'Configuración de acceso para testers pendiente. Consulta docs/TESTER_ACCESS.md.',
+                      ),
+                    ),
+                  )
           : const NutriMainShell(),
     );
   }

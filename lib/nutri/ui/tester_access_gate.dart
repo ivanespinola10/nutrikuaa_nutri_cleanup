@@ -36,9 +36,10 @@ class _TesterAccessGateState extends State<TesterAccessGate> {
     final settings = await AppSettingsRepository().load();
     NutriI18n.setLanguage(settings.languageCode);
     await profile.setString('nutri_tester_browser_uid', user.uid);
-    await FirebaseFirestore.instance.collection('tester_activity').doc(user.uid).set({
-      'lastSeenAt': FieldValue.serverTimestamp(),
-    });
+    await FirebaseFirestore.instance
+        .collection('tester_activity')
+        .doc(user.uid)
+        .set({'lastSeenAt': FieldValue.serverTimestamp()});
   }
 
   @override
@@ -54,14 +55,21 @@ class _TesterAccessGateState extends State<TesterAccessGate> {
         }
         final user = auth.data!;
         return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-          stream: FirebaseFirestore.instance.collection('testers').doc(user.uid).snapshots(),
+          stream: FirebaseFirestore.instance
+              .collection('testers')
+              .doc(user.uid)
+              .snapshots(),
           builder: (context, access) {
             if (access.hasError) {
-              return _message('No se pudo comprobar la invitación. Comprueba la conexión y las reglas de acceso.');
+              return _message(
+                'No se pudo comprobar la invitación. Comprueba la conexión y las reglas de acceso.',
+              );
             }
             if (!access.hasData) return const _AccessLoading();
             if (access.data!.data()?['approved'] != true) {
-              return _message('Esta cuenta no está habilitada para la beta. Contacta al responsable de la invitación.');
+              return _message(
+                'Esta cuenta no está habilitada para la beta. Contacta al responsable de la invitación.',
+              );
             }
             return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
               stream: FirebaseFirestore.instance
@@ -71,7 +79,10 @@ class _TesterAccessGateState extends State<TesterAccessGate> {
                   .doc(TesterAccessPolicy.version)
                   .snapshots(),
               builder: (context, consent) {
-                if (consent.hasError) return _message('No se pudo consultar la aceptación de políticas.');
+                if (consent.hasError)
+                  return _message(
+                    'No se pudo consultar la aceptación de políticas.',
+                  );
                 if (!consent.hasData) return const _AccessLoading();
                 if (!consent.data!.exists) return TesterConsentPage(user: user);
                 if (_activeUid != user.uid) {
@@ -82,8 +93,11 @@ class _TesterAccessGateState extends State<TesterAccessGate> {
                   future: _activation,
                   builder: (context, ready) {
                     if (ready.hasError) return _message(ready.error.toString());
-                    if (ready.connectionState != ConnectionState.done) return const _AccessLoading();
-                    return NutriMainShell(onSignOut: () => FirebaseAuth.instance.signOut());
+                    if (ready.connectionState != ConnectionState.done)
+                      return const _AccessLoading();
+                    return NutriMainShell(
+                      onSignOut: () => FirebaseAuth.instance.signOut(),
+                    );
                   },
                 );
               },
@@ -95,39 +109,38 @@ class _TesterAccessGateState extends State<TesterAccessGate> {
   }
 
   Widget _message(String message) => Scaffold(
-        body: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 520),
-            child: Card(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.lock_outline, size: 36),
-                    const SizedBox(height: 16),
-                    Text(message, textAlign: TextAlign.center),
-                    const SizedBox(height: 16),
-                    TextButton(
-                      onPressed: () => FirebaseAuth.instance.signOut(),
-                      child: const Text('Cerrar sesión'),
-                    ),
-                  ],
+    body: Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 520),
+        child: Card(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.lock_outline, size: 36),
+                const SizedBox(height: 16),
+                Text(message, textAlign: TextAlign.center),
+                const SizedBox(height: 16),
+                TextButton(
+                  onPressed: () => FirebaseAuth.instance.signOut(),
+                  child: const Text('Cerrar sesión'),
                 ),
-              ),
+              ],
             ),
           ),
         ),
-      );
+      ),
+    ),
+  );
 }
 
 class _AccessLoading extends StatelessWidget {
   const _AccessLoading();
 
   @override
-  Widget build(BuildContext context) => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+  Widget build(BuildContext context) =>
+      const Scaffold(body: Center(child: CircularProgressIndicator()));
 }
 
 void showTesterPolicy(BuildContext context) {
@@ -144,7 +157,12 @@ void showTesterPolicy(BuildContext context) {
           ),
         ),
       ),
-      actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cerrar'))],
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cerrar'),
+        ),
+      ],
     ),
   );
 }
@@ -171,7 +189,10 @@ class _TesterLoginPageState extends State<TesterLoginPage> {
 
   Future<void> _submit({bool reset = false}) async {
     if (_busy) return;
-    setState(() { _busy = true; _error = null; });
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
     try {
       final email = _email.text.trim();
       if (email.isEmpty) throw StateError('Escribe tu correo.');
@@ -179,16 +200,25 @@ class _TesterLoginPageState extends State<TesterLoginPage> {
         await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
       } else {
         await FirebaseAuth.instance.signInWithEmailAndPassword(
-          email: email, password: _password.text,
+          email: email,
+          password: _password.text,
         );
       }
       if (mounted && reset) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Si la cuenta existe, recibirás instrucciones de recuperación.')),
+          const SnackBar(
+            content: Text(
+              'Si la cuenta existe, recibirás instrucciones de recuperación.',
+            ),
+          ),
         );
       }
     } on FirebaseAuthException {
-      if (mounted) setState(() => _error = 'No se pudo iniciar sesión. Revisa tus credenciales o contacta a Nutrikuaa.');
+      if (mounted)
+        setState(
+          () => _error =
+              'No se pudo iniciar sesión. Revisa tus credenciales o contacta a Nutrikuaa.',
+        );
     } catch (error) {
       if (mounted) setState(() => _error = error.toString());
     } finally {
@@ -198,44 +228,86 @@ class _TesterLoginPageState extends State<TesterLoginPage> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        body: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 440),
-              child: Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(28),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const Icon(Icons.eco_outlined, size: 48, color: Color(0xFF176B57)),
-                      const SizedBox(height: 12),
-                      Text('Nutrikuaa Nutri', style: Theme.of(context).textTheme.headlineSmall, textAlign: TextAlign.center),
-                      const SizedBox(height: 6),
-                      const Text('Acceso a la prueba por invitación', textAlign: TextAlign.center),
-                      const SizedBox(height: 24),
-                      TextField(controller: _email, keyboardType: TextInputType.emailAddress,
-                        autofillHints: const [AutofillHints.email], decoration: const InputDecoration(labelText: 'Correo electrónico')),
-                      const SizedBox(height: 12),
-                      TextField(controller: _password, obscureText: true,
-                        autofillHints: const [AutofillHints.password], decoration: const InputDecoration(labelText: 'Contraseña'),
-                        onSubmitted: (_) => _submit()),
-                      if (_error != null) Padding(padding: const EdgeInsets.only(top: 12), child: Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error))),
-                      const SizedBox(height: 18),
-                      FilledButton(onPressed: _busy ? null : _submit, child: const Text('Entrar')),
-                      TextButton(onPressed: _busy ? null : () => _submit(reset: true), child: const Text('Recuperar acceso')),
-                      TextButton(onPressed: () => showTesterPolicy(context), child: const Text('Privacidad y condiciones de prueba')),
-                      const Text('Sólo para pruebas con pacientes ficticios. El trabajo se guarda en este navegador.', textAlign: TextAlign.center),
-                    ],
+    body: Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 440),
+          child: Card(
+            child: Padding(
+              padding: const EdgeInsets.all(28),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Icon(
+                    Icons.eco_outlined,
+                    size: 48,
+                    color: Color(0xFF176B57),
                   ),
-                ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Nutrikuaa Nutri',
+                    style: Theme.of(context).textTheme.headlineSmall,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    'Acceso a la prueba por invitación',
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 24),
+                  TextField(
+                    controller: _email,
+                    keyboardType: TextInputType.emailAddress,
+                    autofillHints: const [AutofillHints.email],
+                    decoration: const InputDecoration(
+                      labelText: 'Correo electrónico',
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _password,
+                    obscureText: true,
+                    autofillHints: const [AutofillHints.password],
+                    decoration: const InputDecoration(labelText: 'Contraseña'),
+                    onSubmitted: (_) => _submit(),
+                  ),
+                  if (_error != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 12),
+                      child: Text(
+                        _error!,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.error,
+                        ),
+                      ),
+                    ),
+                  const SizedBox(height: 18),
+                  FilledButton(
+                    onPressed: _busy ? null : _submit,
+                    child: const Text('Entrar'),
+                  ),
+                  TextButton(
+                    onPressed: _busy ? null : () => _submit(reset: true),
+                    child: const Text('Recuperar acceso'),
+                  ),
+                  TextButton(
+                    onPressed: () => showTesterPolicy(context),
+                    child: const Text('Privacidad y condiciones de prueba'),
+                  ),
+                  const Text(
+                    'Sólo para pruebas con pacientes ficticios. El trabajo se guarda en este navegador.',
+                    textAlign: TextAlign.center,
+                  ),
+                ],
               ),
             ),
           ),
         ),
-      );
+      ),
+    ),
+  );
 }
 
 class TesterConsentPage extends StatefulWidget {
@@ -252,7 +324,10 @@ class _TesterConsentPageState extends State<TesterConsentPage> {
   String? _error;
 
   Future<void> _accept() async {
-    setState(() { _busy = true; _error = null; });
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
     try {
       await FirebaseFirestore.instance
           .collection('tester_consents')
@@ -260,12 +335,16 @@ class _TesterConsentPageState extends State<TesterConsentPage> {
           .collection('versions')
           .doc(TesterAccessPolicy.version)
           .set({
-        'version': TesterAccessPolicy.version,
-        'acceptedAt': FieldValue.serverTimestamp(),
-      });
+            'version': TesterAccessPolicy.version,
+            'acceptedAt': FieldValue.serverTimestamp(),
+          });
       if (mounted) setState(() {});
     } catch (_) {
-      if (mounted) setState(() => _error = 'No se pudo registrar la aceptación. Comprueba tu conexión.');
+      if (mounted)
+        setState(
+          () => _error =
+              'No se pudo registrar la aceptación. Comprueba tu conexión.',
+        );
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -273,29 +352,50 @@ class _TesterConsentPageState extends State<TesterConsentPage> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(title: const Text('Condiciones de la prueba')),
-        body: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 700),
-            child: ListView(
-              padding: const EdgeInsets.all(20),
-              children: [
-                const Text('Antes de comenzar, lee las condiciones y el tratamiento de datos de esta prueba.'),
-                const SizedBox(height: 16),
-                Card(child: Padding(padding: const EdgeInsets.all(20), child: SelectableText(
-                  '${TesterAccessPolicy.privacy}\n\nContacto: ${TesterFirebaseOptions.contact}\n\n${TesterAccessPolicy.terms}\n\nVersión: ${TesterAccessPolicy.version}',
-                ))),
-                CheckboxListTile(
-                  value: _checked,
-                  onChanged: _busy ? null : (value) => setState(() => _checked = value ?? false),
-                  title: const Text('Leí y acepto estas condiciones para participar en la beta cerrada.'),
-                ),
-                if (_error != null) Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
-                FilledButton(onPressed: _checked && !_busy ? _accept : null, child: const Text('Aceptar y continuar')),
-                TextButton(onPressed: () => FirebaseAuth.instance.signOut(), child: const Text('No acepto; cerrar sesión')),
-              ],
+    appBar: AppBar(title: const Text('Condiciones de la prueba')),
+    body: Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 700),
+        child: ListView(
+          padding: const EdgeInsets.all(20),
+          children: [
+            const Text(
+              'Antes de comenzar, lee las condiciones y el tratamiento de datos de esta prueba.',
             ),
-          ),
+            const SizedBox(height: 16),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: SelectableText(
+                  '${TesterAccessPolicy.privacy}\n\nContacto: ${TesterFirebaseOptions.contact}\n\n${TesterAccessPolicy.terms}\n\nVersión: ${TesterAccessPolicy.version}',
+                ),
+              ),
+            ),
+            CheckboxListTile(
+              value: _checked,
+              onChanged: _busy
+                  ? null
+                  : (value) => setState(() => _checked = value ?? false),
+              title: const Text(
+                'Leí y acepto estas condiciones para participar en la beta cerrada.',
+              ),
+            ),
+            if (_error != null)
+              Text(
+                _error!,
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+            FilledButton(
+              onPressed: _checked && !_busy ? _accept : null,
+              child: const Text('Aceptar y continuar'),
+            ),
+            TextButton(
+              onPressed: () => FirebaseAuth.instance.signOut(),
+              child: const Text('No acepto; cerrar sesión'),
+            ),
+          ],
         ),
-      );
+      ),
+    ),
+  );
 }

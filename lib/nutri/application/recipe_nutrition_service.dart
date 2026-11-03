@@ -23,11 +23,9 @@ class RecipeNutritionService {
   final NutriDatabase database;
   final RecipeService recipes;
 
-  RecipeNutritionService({
-    NutriDatabase? database,
-    RecipeService? recipes,
-  })  : database = database ?? NutriDatabase.instance,
-        recipes = recipes ?? RecipeService(database: database);
+  RecipeNutritionService({NutriDatabase? database, RecipeService? recipes})
+    : database = database ?? NutriDatabase.instance,
+      recipes = recipes ?? RecipeService(database: database);
 
   Future<RecipeNutritionSummary> calculate(int recipeId) async {
     final details = await recipes.getById(recipeId);
@@ -45,11 +43,7 @@ class RecipeNutritionService {
       }
 
       ingredientGrams += item.quantityGrams;
-      total = total +
-          NutritionCalculator.forFood(
-            food,
-            item.quantityGrams,
-          );
+      total = total + NutritionCalculator.forFood(food, item.quantityGrams);
     }
 
     final servings = details.recipe.servings <= 0
