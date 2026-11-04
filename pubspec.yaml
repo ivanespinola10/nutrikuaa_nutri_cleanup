@@ -19,9 +19,6 @@ dependencies:
   file_selector: ^1.1.0
   cryptography: ^2.9.0
 
-  firebase_core: ^4.0.0
-  firebase_auth: ^6.0.0
-  cloud_firestore: ^6.0.0
 
   # --- BASE DE DATOS Y ARCHIVOS ---
   sqflite: ^2.4.1
@@ -31,8 +28,7 @@ dependencies:
   csv: ^6.0.0
   excel: 4.0.6
 
-  # Firebase is used only by the closed tester access gate.
-  # Patient records and plans remain in the local database.
+  # Commercial desktop build: no Firebase runtime dependency.
   # --- UI ---
   cupertino_icons: ^1.0.8
   url_launcher: ^6.2.5

@@ -8,7 +8,7 @@ import 'patient_workspace_page.dart';
 import 'recipe_editor_page.dart';
 import 'settings_workspace_page.dart';
 import 'weekly_planner_page.dart';
-import 'tester_access_gate.dart';
+import 'commercial_policy_dialog.dart';
 
 class NutriMainShell extends StatefulWidget {
   const NutriMainShell({super.key, this.onSignOut});
@@ -99,7 +99,7 @@ class _NutriMainShellState extends State<NutriMainShell> {
               title: const Text('Privacidad y condiciones'),
               onTap: () {
                 Navigator.pop(sheetContext);
-                showTesterPolicy(context);
+                showCommercialPolicy(context);
               },
             ),
             if (widget.onSignOut != null)
@@ -152,23 +152,22 @@ class _NutriMainShellState extends State<NutriMainShell> {
                       ],
                     ),
                   ),
-                  trailing: widget.onSignOut == null
-                      ? null
-                      : Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              tooltip: 'Privacidad y condiciones',
-                              icon: const Icon(Icons.policy_outlined),
-                              onPressed: () => showTesterPolicy(context),
-                            ),
-                            IconButton(
-                              tooltip: 'Cerrar sesión',
-                              icon: const Icon(Icons.logout),
-                              onPressed: () => widget.onSignOut!(),
-                            ),
-                          ],
+                  trailing: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        tooltip: 'Privacidad y condiciones',
+                        icon: const Icon(Icons.policy_outlined),
+                        onPressed: () => showCommercialPolicy(context),
+                      ),
+                      if (widget.onSignOut != null)
+                        IconButton(
+                          tooltip: 'Cerrar sesión',
+                          icon: const Icon(Icons.logout),
+                          onPressed: () => widget.onSignOut!(),
                         ),
+                    ],
+                  ),
                   destinations: [
                     NavigationRailDestination(
                       icon: const Icon(Icons.calendar_view_week_outlined),

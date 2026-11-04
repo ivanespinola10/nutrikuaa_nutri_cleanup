@@ -102,6 +102,20 @@ class PatientRepository {
     );
   }
 
+  Future<void> deletePermanently(int patientId) async {
+    final db = await database.database;
+    await db.transaction((txn) async {
+      final deleted = await txn.delete(
+        'patients',
+        where: 'id = ?',
+        whereArgs: [patientId],
+      );
+      if (deleted != 1) {
+        throw StateError('Patient does not exist or was already deleted.');
+      }
+    });
+  }
+
   Future<void> setTargets(
     int patientId,
     Iterable<NutritionTarget> targets,

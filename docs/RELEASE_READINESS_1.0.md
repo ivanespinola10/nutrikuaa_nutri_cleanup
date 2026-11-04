@@ -17,11 +17,12 @@ Nutrikuaa Nutri 1.0 is feature-frozen.
 - Firebase CLI cache is ignored.
 
 ## Gate 2 — before real clinical data
-- Protect the active Windows database.
-- Add definitive patient deletion with related local records.
-- Publish privacy notice and commercial terms.
-- Test encrypted backup/restore.
-- Review runtime network traffic and dependencies.
+- Definitive patient deletion with related local records: implemented in RC1.
+- Commercial privacy/terms dialog: implemented as product draft; legal review by market remains.
+- Firebase/tester runtime removed from the commercial release branch.
+- Protect the active Windows database at rest: pending.
+- Test encrypted backup/restore on a clean Windows install: pending.
+- Review runtime network traffic and dependencies: pending.
 
 ## Gate 3 — before payment
 - Production build without tester/Firebase gate.

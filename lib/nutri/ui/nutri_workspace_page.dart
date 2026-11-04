@@ -113,7 +113,7 @@ class _NutriWorkspacePageState extends State<NutriWorkspacePage> {
         _initializing = false;
         _databaseReady = true;
         _error = null;
-        _status = 'SQLite local activo Â· persistencia del navegador';
+        _status = 'SQLite local activo · persistencia del navegador';
       });
     } catch (error) {
       if (!mounted) return;
@@ -381,7 +381,7 @@ class _NutriWorkspacePageState extends State<NutriWorkspacePage> {
     } catch (error) {
       if (!mounted) return;
       setState(() => _error = error.toString());
-      _message('OcurriÃ³ un error. Revisa el mensaje superior.');
+      _message('Ocurrió un error. Revisa el mensaje superior.');
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -513,8 +513,8 @@ class _NutriWorkspacePageState extends State<NutriWorkspacePage> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Prueba el flujo real: paciente â†’ objetivos â†’ alimento â†’ '
-              'plan â†’ cÃ¡lculo. Los datos quedan en SQLite local.',
+              'Prueba el flujo real: paciente → objetivos → alimento → '
+              'plan → cálculo. Los datos quedan en SQLite local.',
               style: Theme.of(context).textTheme.bodyLarge,
             ),
             if (_error != null) ...[
@@ -558,11 +558,7 @@ class _NutriWorkspacePageState extends State<NutriWorkspacePage> {
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: _field(
-                  _proteinTarget,
-                  'Meta proteÃ­na g',
-                  numeric: true,
-                ),
+                child: _field(_proteinTarget, 'Meta proteína g', numeric: true),
               ),
             ],
           ),
@@ -628,7 +624,7 @@ class _NutriWorkspacePageState extends State<NutriWorkspacePage> {
     return _panel(
       step: '3',
       title: 'Plan de prueba',
-      subtitle: 'DÃ­a 1 Â· Desayuno',
+      subtitle: 'Día 1 · Desayuno',
       child: Column(
         children: [
           DropdownButtonFormField<int>(
@@ -657,7 +653,7 @@ class _NutriWorkspacePageState extends State<NutriWorkspacePage> {
                     child: Text(
                       food.brand == null
                           ? food.name
-                          : '${food.name} Â· ${food.brand}',
+                          : '${food.name} · ${food.brand}',
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
@@ -701,8 +697,8 @@ class _NutriWorkspacePageState extends State<NutriWorkspacePage> {
               const SizedBox(width: 16),
               Expanded(
                 child: Text(
-                  'El resultado aparecerÃ¡ aquÃ­. Para la prueba rÃ¡pida, pulsa '
-                  'â€œCargar datos demoâ€ y luego â€œCrear y calcular planâ€.',
+                  'El resultado aparecerá aquí. Para la prueba rápida, pulsa '
+                  '“Cargar datos demo” y luego “Crear y calcular plan”.',
                   style: Theme.of(context).textTheme.bodyLarge,
                 ),
               ),
@@ -734,15 +730,15 @@ class _NutriWorkspacePageState extends State<NutriWorkspacePage> {
             Text(
               food == null
                   ? 'Desayuno'
-                  : 'Desayuno Â· ${food.name} Â· ${_grams.text} g',
+                  : 'Desayuno · ${food.name} · ${_grams.text} g',
             ),
             const SizedBox(height: 18),
             Wrap(
               spacing: 12,
               runSpacing: 12,
               children: [
-                _metric('EnergÃ­a', energy, 'kcal', energyTarget),
-                _metric('ProteÃ­na', protein, 'g', proteinTarget),
+                _metric('Energía', energy, 'kcal', energyTarget),
+                _metric('Proteína', protein, 'g', proteinTarget),
                 _metric('Carbohidratos', carbs, 'g', null),
                 _metric('Grasas', fat, 'g', null),
               ],
@@ -751,7 +747,7 @@ class _NutriWorkspacePageState extends State<NutriWorkspacePage> {
             const Divider(),
             const SizedBox(height: 10),
             Text(
-              'El plan se guardÃ³ en SQLite y PlanNutritionService volviÃ³ a '
+              'El plan se guardó en SQLite y PlanNutritionService volvió a '
               'leerlo para calcular estos totales.',
               style: Theme.of(context).textTheme.bodyMedium,
             ),

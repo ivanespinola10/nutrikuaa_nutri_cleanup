@@ -3,18 +3,9 @@ import 'package:nutrikuaa_app/nutri/application/official_food_search_aliases.dar
 
 void main() {
   test('maps common Spanish foods to official English catalog terms', () {
-    expect(
-      OfficialFoodSearchAliases.forOfficialCatalog('leche'),
-      'milk',
-    );
-    expect(
-      OfficialFoodSearchAliases.forOfficialCatalog('arroz'),
-      'rice',
-    );
-    expect(
-      OfficialFoodSearchAliases.forOfficialCatalog('pollo'),
-      'chicken',
-    );
+    expect(OfficialFoodSearchAliases.forOfficialCatalog('leche'), 'milk');
+    expect(OfficialFoodSearchAliases.forOfficialCatalog('arroz'), 'rice');
+    expect(OfficialFoodSearchAliases.forOfficialCatalog('pollo'), 'chicken');
   });
 
   test('maps multiword Spanish searches without changing source names', () {
@@ -30,28 +21,16 @@ void main() {
       OfficialFoodSearchAliases.forOfficialCatalog('arroz integral'),
       'rice brown',
     );
-    expect(
-      OfficialFoodSearchAliases.forOfficialCatalog('porotos'),
-      'beans',
-    );
+    expect(OfficialFoodSearchAliases.forOfficialCatalog('porotos'), 'beans');
   });
 
   test('maps common Portuguese foods to official English catalog terms', () {
-    expect(
-      OfficialFoodSearchAliases.forOfficialCatalog('leite'),
-      'milk',
-    );
-    expect(
-      OfficialFoodSearchAliases.forOfficialCatalog('frango'),
-      'chicken',
-    );
+    expect(OfficialFoodSearchAliases.forOfficialCatalog('leite'), 'milk');
+    expect(OfficialFoodSearchAliases.forOfficialCatalog('frango'), 'chicken');
   });
 
   test('keeps unknown search terms unchanged', () {
-    expect(
-      OfficialFoodSearchAliases.forOfficialCatalog('quinoa'),
-      'quinoa',
-    );
+    expect(OfficialFoodSearchAliases.forOfficialCatalog('quinoa'), 'quinoa');
   });
 
   test('maps English assistant terms back to local professional foods', () {
@@ -68,5 +47,4 @@ void main() {
       contains('brócoli'),
     );
   });
-
 }

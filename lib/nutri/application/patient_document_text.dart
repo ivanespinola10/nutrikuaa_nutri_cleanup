@@ -18,9 +18,9 @@ class PatientDocumentText {
     'egg, burrito': 'Burrito de huevo',
     'egg, burrito, with bacon': 'Burrito de huevo con tocino',
     'oat milk, unsweetened, plain, refrigerated':
-        'Bebida de avena sin azÃºcar, natural, refrigerada',
+        'Bebida de avena sin azúcar, natural, refrigerada',
     'almond milk, unsweetened, plain, refrigerated':
-        'Bebida de almendras sin azÃºcar, natural, refrigerada',
+        'Bebida de almendras sin azúcar, natural, refrigerada',
     'flour, almond': 'Harina de almendras',
     'oats, whole grain, rolled, old fashioned': 'Avena integral en hojuelas',
     'oat bran cereal, cooked': 'Cereal de salvado de avena cocido',
@@ -34,7 +34,7 @@ class PatientDocumentText {
     'chicken, breast, boneless, skinless, raw':
         'Pechuga de pollo sin piel ni hueso, cruda',
     'chicken, "wings" with hot sauce, from fast food / restaurant':
-        'Alitas de pollo con salsa picante, comida rÃ¡pida/restaurante',
+        'Alitas de pollo con salsa picante, comida rápida/restaurante',
     'rice, black, unenriched, raw': 'Arroz negro crudo',
     'rice, white, long-grain, regular, raw, unenriched':
         'Arroz blanco de grano largo, crudo',
@@ -44,9 +44,9 @@ class PatientDocumentText {
     'carrots, baby, raw': 'Zanahoria baby cruda',
     'carrots, raw': 'Zanahoria cruda',
     'carrot juice, 100%': 'Jugo de zanahoria 100%',
-    'broccoli, raw': 'BrÃ³coli crudo',
+    'broccoli, raw': 'Brócoli crudo',
     'broccoli and cauliflower, cooked, fat added':
-        'BrÃ³coli y coliflor cocidos con grasa aÃ±adida',
+        'Brócoli y coliflor cocidos con grasa añadida',
     'potatoes, gold, without skin, raw': 'Papa amarilla pelada, cruda',
     'potatoes, raw, skin': 'Papa con piel, cruda',
     'potato chips, baked, flavored': 'Chips de papa horneados saborizados',
@@ -59,7 +59,7 @@ class PatientDocumentText {
     'apples, raw, with skin': 'Manzana con piel, cruda',
     'tomatoes, red, ripe, raw, year round average': 'Tomate rojo maduro, crudo',
     'spinach, raw': 'Espinaca cruda',
-    'corn, sweet, yellow, raw': 'MaÃ­z dulce amarillo, crudo',
+    'corn, sweet, yellow, raw': 'Maíz dulce amarillo, crudo',
   };
 
   static String foodDisplayName(Food food, String languageCode) {
@@ -98,13 +98,13 @@ class PatientDocumentText {
   static String _normalize(String value) => _repairMojibake(value)
       .trim()
       .toLowerCase()
-      .replaceAll('Ã¡', 'a')
-      .replaceAll('Ã©', 'e')
-      .replaceAll('Ã­', 'i')
-      .replaceAll('Ã³', 'o')
-      .replaceAll('Ãº', 'u')
-      .replaceAll('Ã¼', 'u')
-      .replaceAll('Ã±', 'n')
+      .replaceAll('á', 'a')
+      .replaceAll('é', 'e')
+      .replaceAll('í', 'i')
+      .replaceAll('ó', 'o')
+      .replaceAll('ú', 'u')
+      .replaceAll('ü', 'u')
+      .replaceAll('ñ', 'n')
       .replaceAll(RegExp(r'\s+'), ' ');
 
   static String _repairMojibake(String value) {

@@ -693,11 +693,11 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
             : Icons.inventory_2_outlined,
       ),
       title: Text(
-        food.brand == null ? food.name : '${food.name} Ã‚Â· ${food.brand}',
+        food.brand == null ? food.name : '${food.name} · ${food.brand}',
       ),
       subtitle: Text(
         food.sourceType == FoodSourceType.officialDatabase
-            ? 'USDA Ã‚Â· FDC ${food.sourceFoodId}'
+            ? 'USDA · FDC ${food.sourceFoodId}'
             : NutriI18n.t('Biblioteca profesional'),
       ),
       trailing: FilledButton.tonal(
@@ -730,11 +730,11 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
                   title: Text(
                     food.brand == null
                         ? food.name
-                        : '${food.name} Ã‚Â· ${food.brand}',
+                        : '${food.name} · ${food.brand}',
                   ),
                   subtitle: Text(
                     '${ingredient.grams.toStringAsFixed(0)} g'
-                    '${food.sourceFoodId == null ? '' : ' Ã‚Â· FDC ${food.sourceFoodId}'}',
+                    '${food.sourceFoodId == null ? '' : ' · FDC ${food.sourceFoodId}'}',
                   ),
                   trailing: Wrap(
                     spacing: 2,
@@ -832,7 +832,7 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
   String _servingsText(double servings) {
     final value = servings.toStringAsFixed(1);
     if (NutriI18n.languageCode == 'en') return '$value serving(s)';
-    if (NutriI18n.languageCode == 'pt') return '$value porÃƒÂ§ÃƒÂ£o(ÃƒÂµes)';
+    if (NutriI18n.languageCode == 'pt') return '$value porÃƒÂ§ÃƒÂ£o(Ãƒµes)';
     return '$value porciÃƒÂ³n(es)';
   }
 
@@ -854,7 +854,7 @@ class _RecipeEditorPageState extends State<RecipeEditorPage> {
       return 'Whole recipe and per 1 of $value serving(s).';
     }
     if (NutriI18n.languageCode == 'pt') {
-      return 'Receita completa e por 1 de $value porÃƒÂ§ÃƒÂ£o(ÃƒÂµes).';
+      return 'Receita completa e por 1 de $value porÃƒÂ§ÃƒÂ£o(Ãƒµes).';
     }
     return 'Por receta completa y por 1 de $value porciÃƒÂ³n(es).';
   }

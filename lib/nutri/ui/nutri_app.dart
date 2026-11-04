@@ -1,9 +1,6 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
-import '../config/tester_firebase_options.dart';
 import 'nutri_main_shell.dart';
-import 'tester_access_gate.dart';
 
 class NutrikuaaNutriApp extends StatelessWidget {
   const NutrikuaaNutriApp({super.key});
@@ -28,17 +25,7 @@ class NutrikuaaNutriApp extends StatelessWidget {
         ),
         cardTheme: const CardThemeData(elevation: 0, margin: EdgeInsets.zero),
       ),
-      home: kIsWeb
-          ? TesterFirebaseOptions.ready
-                ? const TesterAccessGate()
-                : const Scaffold(
-                    body: Center(
-                      child: Text(
-                        'Configuración de acceso para testers pendiente. Consulta docs/TESTER_ACCESS.md.',
-                      ),
-                    ),
-                  )
-          : const NutriMainShell(),
+      home: const NutriMainShell(),
     );
   }
 }

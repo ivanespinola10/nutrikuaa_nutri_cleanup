@@ -111,19 +111,21 @@ void main() {
     expect(items.any((item) => item.food.allergens.contains('milk')), isFalse);
   });
 
-  test('avoids prepared catalog matches for automatic draft building', () async {
-    final service = OfflinePlanAssistantService(search: search);
-    final draft = await service.generate(
-      const OfflinePlanAssistantRequest(prompt: '2000 kcal, práctico'),
-    );
+  test(
+    'avoids prepared catalog matches for automatic draft building',
+    () async {
+      final service = OfflinePlanAssistantService(search: search);
+      final draft = await service.generate(
+        const OfflinePlanAssistantRequest(prompt: '2000 kcal, práctico'),
+      );
 
-    final names = draft.meals
-        .expand((meal) => meal.items)
-        .map((item) => item.food.name.toLowerCase())
-        .join(' ');
+      final names = draft.meals
+          .expand((meal) => meal.items)
+          .map((item) => item.food.name.toLowerCase())
+          .join(' ');
 
-    expect(names, isNot(contains('burrito')));
-    expect(names, isNot(contains('potato chips')));
-  });
-
+      expect(names, isNot(contains('burrito')));
+      expect(names, isNot(contains('potato chips')));
+    },
+  );
 }
